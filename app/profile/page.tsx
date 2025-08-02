@@ -190,7 +190,7 @@ function ProfilePageContent() {
     try {
       setSaving(true)
       
-      // Clean up the profile data - convert empty strings to null for database
+      // Clean the profile data - preserve actual user input
       const cleanedProfile = {
         user_id: user.id,
         full_name: profile.full_name || null,
@@ -205,8 +205,8 @@ function ProfilePageContent() {
         location: profile.location || null,
         industry: profile.industry || null,
         experience_years: profile.experience_years || null,
-        skills: profile.skills || [],
-        interests: profile.interests || [],
+        skills: profile.skills.length > 0 ? profile.skills : [],
+        interests: profile.interests.length > 0 ? profile.interests : [],
         background: profile.background || null,
         linkedin_url: profile.linkedin_url || null,
         website: profile.website || null,
@@ -311,7 +311,7 @@ function ProfilePageContent() {
     try {
       console.log('Silent save triggered for user:', user.id)
       
-      // Clean the profile data - convert empty strings to null for database
+      // Clean the profile data - preserve actual user input
       const cleanedProfile = {
         user_id: user.id,
         full_name: profile.full_name || null,
@@ -326,8 +326,8 @@ function ProfilePageContent() {
         location: profile.location || null,
         industry: profile.industry || null,
         experience_years: profile.experience_years || null,
-        skills: profile.skills || [],
-        interests: profile.interests || [],
+        skills: profile.skills.length > 0 ? profile.skills : [],
+        interests: profile.interests.length > 0 ? profile.interests : [],
         background: profile.background || null,
         linkedin_url: profile.linkedin_url || null,
         website: profile.website || null,
