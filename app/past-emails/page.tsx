@@ -25,6 +25,8 @@ import {
 import { supabase } from '@/lib/supabase'
 import Header from '@/components/Header'
 import Link from 'next/link'
+import { AuthProvider } from '@/contexts/AuthContext'
+import ProtectedRoute from '@/components/ProtectedRoute'
 
 // Force dynamic rendering to prevent static generation issues
 export const dynamic = 'force-dynamic'
@@ -44,7 +46,7 @@ interface GeneratedEmail {
   created_at: string
 }
 
-export default function PastEmailsPage() {
+function PastEmailsPageContent() {
   const { user } = useAuth()
   const { toast } = useToast()
   const [emails, setEmails] = useState<GeneratedEmail[]>([])
@@ -360,5 +362,15 @@ export default function PastEmailsPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function PastEmailsPage() {
+  return (
+    <AuthProvider>
+      <ProtectedRoute>
+        <PastEmailsPageContent />
+      </ProtectedRoute>
+    </AuthProvider>
   )
 } 
