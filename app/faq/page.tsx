@@ -20,6 +20,9 @@ import {
 import Link from 'next/link'
 import Header from '@/components/Header'
 
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic'
+
 interface FAQItem {
   question: string
   answer: string

@@ -16,6 +16,10 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import Link from 'next/link'
 import Header from '@/components/Header'
+import dynamic from 'next/dynamic'
+
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic'
 
 interface UserProfile {
   id?: string

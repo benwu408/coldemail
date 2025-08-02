@@ -20,7 +20,15 @@ export default function Header({
   title,
   subtitle 
 }: HeaderProps) {
-  const { user } = useAuth()
+  // Handle case where AuthProvider might not be available during static generation
+  let user = null
+  try {
+    const auth = useAuth()
+    user = auth?.user
+  } catch (error) {
+    // AuthProvider not available, continue without user data
+    user = null
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100">
