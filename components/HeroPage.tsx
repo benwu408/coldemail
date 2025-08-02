@@ -33,22 +33,10 @@ export default function HeroPage() {
   const { user } = useAuth()
   const [demoEmail, setDemoEmail] = useState('')
   const [isTyping, setIsTyping] = useState(false)
-  const [showDemo, setShowDemo] = useState(false)
-  const [demoStep, setDemoStep] = useState(0)
-  const [demoName, setDemoName] = useState('')
-  const [demoCompanyRole, setDemoCompanyRole] = useState('')
-  const [demoPurpose, setDemoPurpose] = useState('')
-  const [demoResearch, setDemoResearch] = useState<string[]>([])
-  const [isResearching, setIsResearching] = useState(false)
-  const [finalEmail, setFinalEmail] = useState('')
   const [emailVisible, setEmailVisible] = useState(false)
   const [scrollY, setScrollY] = useState(0)
   const [currentPersona, setCurrentPersona] = useState(0)
   const [isTypingComplete, setIsTypingComplete] = useState(false)
-
-  // Refs for auto-scrolling
-  const researchRef = useRef<HTMLDivElement>(null)
-  const emailRef = useRef<HTMLDivElement>(null)
 
   // Persona data for carousel
   const personas = [
@@ -114,20 +102,6 @@ Founder & CEO, DataSync`,
     }
   ]
 
-  // Auto-scroll research findings to bottom when new items are added
-  useEffect(() => {
-    if (researchRef.current && demoResearch.length > 0) {
-      researchRef.current.scrollTop = researchRef.current.scrollHeight
-    }
-  }, [demoResearch])
-
-  // Auto-scroll email to bottom when new content is added
-  useEffect(() => {
-    if (emailRef.current && finalEmail.length > 0) {
-      emailRef.current.scrollTop = emailRef.current.scrollHeight
-    }
-  }, [finalEmail])
-
   // Scroll event listener for dynamic animations
   useEffect(() => {
     const handleScroll = () => {
@@ -171,105 +145,6 @@ Founder & CEO, DataSync`,
     return () => clearInterval(typeInterval)
   }, [currentPersona]) // Now depends on currentPersona
 
-  // Interactive demo sequence
-  const startDemo = () => {
-    setShowDemo(true)
-    setDemoStep(0)
-    setDemoName('')
-    setDemoCompanyRole('')
-    setDemoPurpose('')
-    setDemoResearch([])
-    setFinalEmail('')
-    runDemoSequence()
-  }
-
-  const runDemoSequence = async () => {
-    // Step 1: Type the name, company/role, and purpose
-    setDemoStep(1)
-    await typeName('David Thompson')
-    await typeCompanyRole('Senior Product Manager at Microsoft')
-    await typePurpose('Networking')
-    
-    // Step 2: Show research being done
-    setDemoStep(2)
-    setIsResearching(true)
-    await simulateResearch()
-    
-    // Step 3: Show final email with research
-    setDemoStep(3)
-    await generateFinalEmail()
-  }
-
-  const typeName = async (name: string) => {
-    for (let i = 0; i <= name.length; i++) {
-      setDemoName(name.slice(0, i))
-      await new Promise(resolve => setTimeout(resolve, 100))
-    }
-    await new Promise(resolve => setTimeout(resolve, 500))
-  }
-
-  const typeCompanyRole = async (companyRole: string) => {
-    for (let i = 0; i <= companyRole.length; i++) {
-      setDemoCompanyRole(companyRole.slice(0, i))
-      await new Promise(resolve => setTimeout(resolve, 50))
-    }
-    await new Promise(resolve => setTimeout(resolve, 500))
-  }
-
-  const typePurpose = async (purpose: string) => {
-    for (let i = 0; i <= purpose.length; i++) {
-      setDemoPurpose(purpose.slice(0, i))
-      await new Promise(resolve => setTimeout(resolve, 100))
-    }
-    await new Promise(resolve => setTimeout(resolve, 1000))
-  }
-
-  const simulateResearch = async () => {
-    const researchSteps = [
-      'Searching for David Thompson on LinkedIn...',
-      'Found: Senior Product Manager at Microsoft, 7+ years experience',
-      'Discovered: Stanford alum (Computer Science, 2017)',
-      'Found recent post: "Building Scalable Product Teams"',
-      'Located: Seattle, Washington',
-      'Found: Previous experience at Amazon',
-      'Discovered: Active in Product Management community'
-    ]
-
-    for (const step of researchSteps) {
-      setDemoResearch(prev => [...prev, step])
-      await new Promise(resolve => setTimeout(resolve, 800))
-    }
-    
-    setIsResearching(false)
-    await new Promise(resolve => setTimeout(resolve, 1000))
-  }
-
-  const generateFinalEmail = async () => {
-    const email = `Hi David,
-
-I came across your work at Microsoft and was particularly impressed by your recent LinkedIn post about building scalable product teams. Your insights on team dynamics and product strategy really resonated with me.
-
-As a fellow Stanford Computer Science grad (I graduated in 2020), I was excited to see another Cardinal making waves in the tech industry. Your journey from Amazon to Microsoft is inspiring, and I'd love to learn from your experience scaling products at such innovative companies.
-
-I'm currently working on a startup in the productivity space, and given your expertise in product management and your recent focus on team building, I'd love to get your perspective on some challenges we're facing with product development.
-
-Would you be open to a 15-minute chat next week? I'd be happy to work around your schedule.
-
-Best,
-Emma Rodriguez
-Software Engineer & Co-founder`
-
-    let currentIndex = 0
-    const typeInterval = setInterval(() => {
-      if (currentIndex <= email.length) {
-        setFinalEmail(email.slice(0, currentIndex))
-        currentIndex++
-      } else {
-        clearInterval(typeInterval)
-      }
-    }, 30)
-  }
-
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-[#111827]">
       {/* Navigation */}
@@ -303,15 +178,6 @@ Software Engineer & Co-founder`
                 Start generating emails
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 rounded-full px-8 py-4 text-base font-medium transition-all duration-200"
-                onClick={startDemo}
-              >
-                <Play className="mr-2 h-5 w-5" />
-                Watch demo
-              </Button>
             </div>
 
             <div className="flex items-center gap-8 text-sm text-gray-500">
@@ -900,154 +766,174 @@ Software Engineer & Co-founder`
         </div>
       </footer>
 
-      {/* Interactive Demo Modal */}
-      {showDemo && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-[#3B82F6] rounded-lg flex items-center justify-center">
-                  <Mail className="h-4 w-4 text-white" />
+      {/* Scroll-to-Play Demo Section */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-6 max-w-7xl">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl font-bold text-[#111827] mb-6 tracking-tight">See it in action</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              Watch how our AI transforms basic information into personalized emails that get responses
+            </p>
+          </div>
+          
+          {/* Step 1: Enter Details */}
+          <div className="mb-16">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-[#6366F1] text-sm font-medium rounded-full border border-indigo-100">
+                  <Search className="h-3 w-3" />
+                  Step 1: Enter prospect details
                 </div>
-                <h2 className="text-xl font-semibold text-[#111]">Live Demo</h2>
+                <h3 className="text-3xl font-bold text-[#111827] tracking-tight">
+                  Start with basic information
+                </h3>
+                <p className="text-lg text-gray-600 leading-relaxed">
+                  Provide the recipient's name, role, company, and your outreach purpose. 
+                  Our AI will do the heavy lifting to find personalization opportunities.
+                </p>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowDemo(false)}
-                className="text-gray-500 hover:text-[#111]"
-              >
-                ✕
-              </Button>
-            </div>
-
-            {/* Demo Content */}
-            <div className="p-6 space-y-6">
-              {/* Step Indicator */}
-              <div className="flex items-center justify-center gap-4 mb-6">
-                <div className={`flex items-center gap-2 ${demoStep >= 1 ? 'text-[#3B82F6]' : 'text-gray-400'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    demoStep >= 1 ? 'bg-[#3B82F6] text-white' : 'bg-gray-100 text-gray-400'
-                  }`}>
-                    1
-                  </div>
-                  <span className="text-sm font-medium">Enter Name</span>
-                </div>
-                <div className={`w-12 h-0.5 ${demoStep >= 2 ? 'bg-[#3B82F6]' : 'bg-gray-200'}`}></div>
-                <div className={`flex items-center gap-2 ${demoStep >= 2 ? 'text-[#3B82F6]' : 'text-gray-400'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    demoStep >= 2 ? 'bg-[#3B82F6] text-white' : 'bg-gray-100 text-gray-400'
-                  }`}>
-                    2
-                  </div>
-                  <span className="text-sm font-medium">AI Research</span>
-                </div>
-                <div className={`w-12 h-0.5 ${demoStep >= 3 ? 'bg-[#3B82F6]' : 'bg-gray-200'}`}></div>
-                <div className={`flex items-center gap-2 ${demoStep >= 3 ? 'text-[#3B82F6]' : 'text-gray-400'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    demoStep >= 3 ? 'bg-[#3B82F6] text-white' : 'bg-gray-100 text-gray-400'
-                  }`}>
-                    3
-                  </div>
-                  <span className="text-sm font-medium">Generate Email</span>
-                </div>
-              </div>
-
-              {/* Demo Interface */}
-              <div className="grid lg:grid-cols-2 gap-6">
-                {/* Left: Input Form */}
+              
+              <div className="bg-gray-50 rounded-2xl p-8 border border-gray-200">
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-[#111]">Input Form</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Recipient Name</label>
-                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <span className="text-gray-900">{demoName}</span>
-                        {demoStep === 1 && (
-                          <span className="inline-block w-2 h-5 bg-[#3B82F6] animate-pulse ml-1"></span>
-                        )}
-                      </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Recipient Name</label>
+                    <div className="p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
+                      <span className="text-gray-900 font-medium">David Thompson</span>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Company & Role</label>
-                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <span className="text-gray-900">{demoCompanyRole}</span>
-                        {demoStep === 1 && demoName === 'David Thompson' && demoCompanyRole.length < 'Senior Product Manager at Microsoft'.length && (
-                          <span className="inline-block w-2 h-5 bg-[#3B82F6] animate-pulse ml-1"></span>
-                        )}
-                      </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Company & Role</label>
+                    <div className="p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
+                      <span className="text-gray-900 font-medium">Senior Product Manager at Microsoft</span>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Purpose</label>
-                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <span className="text-gray-900">{demoPurpose}</span>
-                        {demoStep === 1 && demoCompanyRole === 'Senior Product Manager at Microsoft' && demoPurpose.length < 'Networking'.length && (
-                          <span className="inline-block w-2 h-5 bg-[#3B82F6] animate-pulse ml-1"></span>
-                        )}
-                      </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Purpose</label>
+                    <div className="p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
+                      <span className="text-gray-900 font-medium">Networking</span>
                     </div>
                   </div>
                 </div>
-
-                {/* Right: Output */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-[#111]">AI Research & Email</h3>
-                  
-                  {/* Research Section */}
-                  {demoStep >= 2 && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm font-medium text-[#3B82F6]">
-                        <Search className="h-4 w-4" />
-                        AI Research in Progress
-                        {isResearching && (
-                          <div className="w-2 h-2 bg-[#3B82F6] rounded-full animate-pulse"></div>
-                        )}
-                      </div>
-                      <div className="space-y-2 max-h-32 overflow-y-auto" ref={researchRef}>
-                        {demoResearch.map((finding, index) => (
-                          <div key={index} className="flex items-start gap-2 p-2 bg-blue-50 rounded text-xs">
-                            <div className="w-1.5 h-1.5 bg-[#3B82F6] rounded-full mt-1.5 flex-shrink-0"></div>
-                            <span className="text-gray-700">{finding}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Email Output */}
-                  {demoStep >= 3 && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm font-medium text-green-600">
-                        <Mail className="h-4 w-4" />
-                        Generated Email
-                      </div>
-                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 max-h-64 overflow-y-auto" ref={emailRef}>
-                        <div className="font-mono text-xs leading-relaxed text-gray-800 whitespace-pre-wrap">
-                          {finalEmail}
-                          {demoStep === 3 && (
-                            <span className="inline-block w-2 h-5 bg-[#3B82F6] animate-pulse ml-1"></span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Demo Actions */}
-              <div className="flex justify-center pt-6 border-t border-gray-100">
-                <Link 
-                  href="/generate"
-                  className="inline-flex items-center justify-center bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl px-8 py-3 text-base font-medium transition-all duration-200"
-                >
-                  Try it yourself
-                </Link>
               </div>
             </div>
           </div>
+
+          {/* Step 2: AI Research */}
+          <div className="mb-16">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="lg:order-2 space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 text-[#6366F1] text-sm font-medium rounded-full border border-purple-100">
+                  <Brain className="h-3 w-3" />
+                  Step 2: AI research & analysis
+                </div>
+                <h3 className="text-3xl font-bold text-[#111827] tracking-tight">
+                  AI discovers personal connections
+                </h3>
+                <p className="text-lg text-gray-600 leading-relaxed">
+                  Our AI searches LinkedIn, company websites, and news to find genuine 
+                  commonalities and recent activities that make your email personal.
+                </p>
+              </div>
+              
+              <div className="lg:order-1 bg-gray-50 rounded-2xl p-8 border border-gray-200">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-[#6366F1] mb-4">
+                    <div className="w-2 h-2 bg-[#6366F1] rounded-full animate-pulse"></div>
+                    AI Research in Progress
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2 p-3 bg-white rounded-lg border border-gray-200">
+                      <div className="w-1.5 h-1.5 bg-[#6366F1] rounded-full mt-1.5 flex-shrink-0"></div>
+                      <span className="text-sm text-gray-700">Found: Stanford alum (Computer Science, 2017)</span>
+                    </div>
+                    <div className="flex items-start gap-2 p-3 bg-white rounded-lg border border-gray-200">
+                      <div className="w-1.5 h-1.5 bg-[#6366F1] rounded-full mt-1.5 flex-shrink-0"></div>
+                      <span className="text-sm text-gray-700">Recent post: "Building Scalable Product Teams"</span>
+                    </div>
+                    <div className="flex items-start gap-2 p-3 bg-white rounded-lg border border-gray-200">
+                      <div className="w-1.5 h-1.5 bg-[#6366F1] rounded-full mt-1.5 flex-shrink-0"></div>
+                      <span className="text-sm text-gray-700">Previous experience at Amazon</span>
+                    </div>
+                    <div className="flex items-start gap-2 p-3 bg-white rounded-lg border border-gray-200">
+                      <div className="w-1.5 h-1.5 bg-[#6366F1] rounded-full mt-1.5 flex-shrink-0"></div>
+                      <span className="text-sm text-gray-700">Located: Seattle, Washington</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3: Generated Email */}
+          <div className="mb-16">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-50 text-[#0F766E] text-sm font-medium rounded-full border border-teal-100">
+                  <Mail className="h-3 w-3" />
+                  Step 3: Get your personalized email
+                </div>
+                <h3 className="text-3xl font-bold text-[#111827] tracking-tight">
+                  Ready-to-send personalized email
+                </h3>
+                <p className="text-lg text-gray-600 leading-relaxed">
+                  Receive a professional, personalized cold email that incorporates 
+                  the research findings and creates genuine connections.
+                </p>
+              </div>
+              
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+                {/* Email Header */}
+                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-600">From:</span>
+                      <span className="text-sm text-gray-900">emma.rodriguez@startup.com</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-600">To:</span>
+                      <span className="text-sm text-gray-900">david.thompson@microsoft.com</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-600">Subject:</span>
+                      <span className="text-sm text-gray-900">Coffee chat - Product development insights</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Email Body */}
+                <div className="p-6">
+                  <div className="font-mono text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
+{`Hi David,
+
+I came across your work at Microsoft and was particularly impressed by your recent LinkedIn post about building scalable product teams. Your insights on team dynamics and product strategy really resonated with me.
+
+As a fellow Stanford Computer Science grad (I graduated in 2020), I was excited to see another Cardinal making waves in the tech industry. Your journey from Amazon to Microsoft is inspiring, and I'd love to learn from your experience scaling products at such innovative companies.
+
+I'm currently working on a startup in the productivity space, and given your expertise in product management and your recent focus on team building, I'd love to get your perspective on some challenges we're facing with product development.
+
+Would you be open to a 15-minute chat next week? I'd be happy to work around your schedule.
+
+Best,
+Emma Rodriguez
+Software Engineer & Co-founder`}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center">
+            <Link 
+              href="/generate"
+              className="inline-flex items-center justify-center bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+            >
+              Try it yourself
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Link>
+          </div>
         </div>
-      )}
+      </section>
     </div>
   )
 } 
