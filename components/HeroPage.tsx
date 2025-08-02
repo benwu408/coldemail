@@ -266,10 +266,10 @@ Founder & CEO, DataSync`,
       <Header />
 
       {/* Hero Section */}
-      <section className="container mx-auto px-6 py-24 max-w-7xl relative overflow-hidden">
+      <section className="container mx-auto px-6 py-16 max-w-7xl relative overflow-hidden">
         <div className="grid lg:grid-cols-2 gap-20 items-center relative z-10">
           {/* Left side - Content */}
-          <div className="space-y-10">
+          <div className="space-y-6">
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-[#6366F1] text-sm font-medium rounded-full border border-indigo-100">
                 <Sparkles className="h-3 w-3" />
@@ -307,7 +307,7 @@ Founder & CEO, DataSync`,
             </div>
 
             {/* Social Proof */}
-            <div className="pt-6 border-t border-gray-100">
+            <div className="pt-4 border-t border-gray-100">
               <div className="flex items-center gap-4">
                 <div className="flex -space-x-2">
                   <img 
