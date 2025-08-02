@@ -295,7 +295,7 @@ Founder & CEO, DataSync`,
             
             <div className="flex flex-col sm:flex-row gap-4">
               <Link 
-                href="/generate"
+                href={user ? "/generate" : "/login"}
                 className="inline-flex items-center justify-center bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
               >
                 Start generating emails
@@ -848,7 +848,7 @@ Software Engineer & Co-founder`
           {/* CTA */}
           <div className="text-center">
             <Link 
-              href="/generate"
+              href={user ? "/generate" : "/login"}
               className="inline-flex items-center justify-center bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
             >
               Try it yourself
@@ -1109,7 +1109,7 @@ Software Engineer & Co-founder`
             Join thousands of professionals who are getting better responses with AI-powered personalization.
           </p>
           <Link 
-            href="/generate"
+            href={user ? "/generate" : "/login"}
             className="inline-flex items-center justify-center bg-white text-[#111827] hover:bg-gray-100 rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
           >
             Start generating now
