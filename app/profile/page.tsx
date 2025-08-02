@@ -360,6 +360,7 @@ function ProfilePageContent() {
 
     try {
       console.log('Silent save triggered for user:', user.id)
+      console.log('Current profile state:', profile)
       
       // Clean the profile data - preserve actual user input
       const cleanedProfile = {
@@ -385,16 +386,25 @@ function ProfilePageContent() {
       }
 
       console.log('Saving cleaned profile:', cleanedProfile)
+      console.log('Education data being saved in silent save:', cleanedProfile.education)
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_profiles')
         .upsert(cleanedProfile, {
           onConflict: 'user_id',
           ignoreDuplicates: false
         })
 
+      console.log('Silent save result:', { data, error })
+
       if (error) {
         console.error('Supabase error during silent save:', error)
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        })
       } else {
         console.log('Silent save successful')
         setLastSaved(new Date().toLocaleTimeString())
@@ -446,6 +456,8 @@ function ProfilePageContent() {
 
   // Debounced auto-save function
   const triggerAutoSave = () => {
+    console.log('Auto-save triggered for field change')
+    
     // Clear existing timeout
     if (autoSaveTimeout) {
       clearTimeout(autoSaveTimeout)
@@ -453,8 +465,11 @@ function ProfilePageContent() {
 
     // Set new timeout for auto-save - always save after 2 seconds of inactivity
     const timeout = setTimeout(() => {
+      console.log('Auto-save timeout fired, calling saveProfileSilently')
       if (user?.id) {
         saveProfileSilently()
+      } else {
+        console.log('No user ID available for auto-save')
       }
     }, 2000) // 2 seconds delay
 
