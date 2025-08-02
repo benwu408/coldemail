@@ -8,11 +8,6 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Reachful - Cold outreach that feels warm',
   description: 'AI-powered personalized outreach that sounds human and gets responses.',
-  icons: {
-    icon: '/reachful_logo.png',
-    shortcut: '/reachful_logo.png',
-    apple: '/reachful_logo.png',
-  },
 }
 
 // Force dynamic rendering to prevent static generation and caching
@@ -26,6 +21,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Add favicon */}
+        <link rel="icon" type="image/png" href="/reachful_logo.png" />
+        <link rel="shortcut icon" type="image/png" href="/reachful_logo.png" />
+        <link rel="apple-touch-icon" href="/reachful_logo.png" />
         {/* Add meta tags to prevent caching */}
         <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
         <meta httpEquiv="Pragma" content="no-cache" />

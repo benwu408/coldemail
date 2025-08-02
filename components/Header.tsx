@@ -51,7 +51,7 @@ export default function Header({
               <img 
                 src="/reachful_logo.png" 
                 alt="Reachful" 
-                className="h-8 w-auto"
+                className="h-16 w-auto"
               />
               <span className="text-lg font-bold text-[#111827]">
                 Reachful
