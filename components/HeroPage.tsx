@@ -296,14 +296,12 @@ Software Engineer & Co-founder`
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/generate">
-                <Button 
-                  size="lg"
-                  className="bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-                >
-                  Start generating emails
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
+              <Link 
+                href="/generate"
+                className="inline-flex items-center justify-center bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+              >
+                Start generating emails
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
               <Button 
                 variant="outline" 
@@ -685,12 +683,13 @@ Software Engineer & Co-founder`
               </div>
 
               <div className="pt-4">
-                <Button 
-                  onClick={() => {}}
-                  className="bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-                >
-                  Set up your profile
-                </Button>
+                <Link href="/profile">
+                  <Button 
+                    className="bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                  >
+                    Set up your profile
+                  </Button>
+                </Link>
               </div>
             </div>
 
@@ -846,15 +845,12 @@ Software Engineer & Co-founder`
           <p className="text-xl mb-10 opacity-90 max-w-2xl mx-auto leading-relaxed">
             Join thousands of professionals who are getting better responses with AI-powered personalization.
           </p>
-          <Link href="/generate">
-            <Button 
-              size="lg"
-              variant="secondary"
-              className="bg-white text-[#111827] hover:bg-gray-100 rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-            >
-              Start generating now
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+          <Link 
+            href="/generate"
+            className="inline-flex items-center justify-center bg-white text-[#111827] hover:bg-gray-100 rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+          >
+            Start generating now
+            <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
         </div>
       </section>
@@ -1024,12 +1020,11 @@ Software Engineer & Co-founder`
 
               {/* Demo Actions */}
               <div className="flex justify-center pt-6 border-t border-gray-100">
-                <Link href="/generate">
-                  <Button
-                    className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl px-8 py-3"
-                  >
-                    Try it yourself
-                  </Button>
+                <Link 
+                  href="/generate"
+                  className="inline-flex items-center justify-center bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl px-8 py-3 text-base font-medium transition-all duration-200"
+                >
+                  Try it yourself
                 </Link>
               </div>
             </div>
