@@ -136,51 +136,46 @@ Founder & CEO, DataSync`,
       if (demoSection) {
         const rect = demoSection.getBoundingClientRect()
         const windowHeight = window.innerHeight
-        const sectionHeight = demoSection.offsetHeight
         
-        // Calculate scroll progress within the demo section
-        // Make it more gradual - start earlier and end later
-        const scrollProgress = Math.max(0, Math.min(1, (windowHeight - rect.top) / (sectionHeight * 0.8)))
+        // Calculate when each step crosses the bottom fifth of the screen
+        const bottomFifth = windowHeight * 0.8 // 80% down the screen
         
         console.log('Scroll Debug:', {
           rectTop: rect.top,
           windowHeight,
-          sectionHeight,
-          scrollProgress,
-          step1Visible: scrollProgress > 0.02,
-          step2Visible: scrollProgress > 0.3,
-          step3Visible: scrollProgress > 0.6,
-          researchItems: Math.floor((scrollProgress - 0.3) / 0.3 * 4),
-          emailContent: Math.floor((scrollProgress - 0.6) / 0.4 * 100)
+          bottomFifth,
+          step1Visible: rect.top < bottomFifth,
+          step2Visible: rect.top < bottomFifth - 400,
+          step3Visible: rect.top < bottomFifth - 800
         })
         
-        // Step 1: Show when section comes into view (0-30% of scroll)
-        if (scrollProgress > 0.02) {
+        // Step 1: Show when section crosses bottom fifth
+        if (rect.top < bottomFifth) {
           setDemoStep1Visible(true)
           
           // Progressive filling of basic info fields
-          if (scrollProgress > 0.05) {
+          if (rect.top < bottomFifth - 100) {
             setRecipientNameVisible(true)
           }
-          if (scrollProgress > 0.1) {
+          if (rect.top < bottomFifth - 200) {
             setCompanyRoleVisible(true)
           }
-          if (scrollProgress > 0.15) {
+          if (rect.top < bottomFifth - 300) {
             setPurposeVisible(true)
           }
         }
         
-        // Step 2: Show research items progressively (30-60% of scroll)
-        if (scrollProgress > 0.3) {
+        // Step 2: Show research items progressively
+        if (rect.top < bottomFifth - 400) {
           setDemoStep2Visible(true)
-          const step2Progress = Math.max(0, Math.min(1, (scrollProgress - 0.3) / 0.3))
+          const step2Progress = Math.max(0, Math.min(1, (bottomFifth - 400 - rect.top) / 200))
           setResearchItemsVisible(Math.floor(step2Progress * 4))
         }
         
-        // Step 3: Show email content progressively (60-100% of scroll)
-        if (scrollProgress > 0.6) {
+        // Step 3: Show email content progressively
+        if (rect.top < bottomFifth - 800) {
           setDemoStep3Visible(true)
-          const step3Progress = Math.max(0, Math.min(1, (scrollProgress - 0.6) / 0.4))
+          const step3Progress = Math.max(0, Math.min(1, (bottomFifth - 800 - rect.top) / 400))
           setEmailContentVisible(Math.floor(step3Progress * 100))
         }
       }
@@ -716,7 +711,7 @@ Would you be open to a 15-minute chat next week? I'd be happy to work around you
 
 Best,
 Emma Rodriguez
-Software Engineer & Co-founder`.slice(0, Math.floor(emailContentVisible * 4.5))}
+Software Engineer & Co-founder`.slice(0, Math.floor(emailContentVisible * 3.5))}
                     {emailContentVisible < 100 && (
                       <span className="inline-block w-2 h-5 bg-[#6366F1] animate-pulse ml-1"></span>
                     )}
