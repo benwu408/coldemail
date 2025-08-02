@@ -496,12 +496,7 @@ function ProfilePageContent() {
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-[#111]">
       {/* Header */}
-      <Header
-        showBackButton
-        showNavigation={false}
-        title="Your Profile"
-        subtitle="Help us personalize your networking outreach by sharing your background"
-      />
+      <Header />
 
       {/* Main Content */}
       <div className="container mx-auto px-6 py-8 max-w-4xl">
