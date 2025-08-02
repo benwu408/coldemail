@@ -799,11 +799,12 @@ Founder & CEO, DataSync`,
                   <div 
                     className="font-mono text-sm leading-relaxed text-gray-800 whitespace-pre-wrap"
                     dangerouslySetInnerHTML={{
-                      __html: `Hi David,
+                      __html: (() => {
+                        const fullText = `Hi David,
 
-I came across your work at Microsoft and was particularly impressed by <span class="animate-pulse bg-yellow-100 px-1 rounded">your recent LinkedIn post about building scalable product teams</span>. Your insights on team dynamics and product strategy really resonated with me.
+I came across your work at Microsoft and was particularly impressed by your recent LinkedIn post about building scalable product teams. Your insights on team dynamics and product strategy really resonated with me.
 
-As a <span class="animate-pulse bg-indigo-100 px-1 rounded">fellow Stanford Computer Science grad</span> (I graduated in 2020), I was excited to see another Cardinal making waves in the tech industry. Your <span class="animate-pulse bg-yellow-100 px-1 rounded">journey from Amazon to Microsoft</span> is inspiring, and I'd love to learn from your experience scaling products at such innovative companies.
+As a fellow Stanford Computer Science grad (I graduated in 2020), I was excited to see another Cardinal making waves in the tech industry. Your journey from Amazon to Microsoft is inspiring, and I'd love to learn from your experience scaling products at such innovative companies.
 
 I'm currently working on a startup in the productivity space, and given your expertise in product management and your recent focus on team building, I'd love to get your perspective on some challenges we're facing with product development.
 
@@ -811,7 +812,24 @@ Would you be open to a 15-minute chat next week? I'd be happy to work around you
 
 Best,
 Emma Rodriguez
-Software Engineer & Co-founder`.substring(0, Math.floor(emailContentVisible * 8))
+Software Engineer & Co-founder`
+                        
+                        const visibleText = fullText.slice(0, Math.floor(emailContentVisible * fullText.length / 100))
+                        
+                        return visibleText
+                          .replace(
+                            /(your recent LinkedIn post about building scalable product teams)/g,
+                            '<span class="animate-pulse bg-yellow-100 px-1 rounded">$1</span>'
+                          )
+                          .replace(
+                            /(fellow Stanford Computer Science grad)/g,
+                            '<span class="animate-pulse bg-indigo-100 px-1 rounded">$1</span>'
+                          )
+                          .replace(
+                            /(journey from Amazon to Microsoft)/g,
+                            '<span class="animate-pulse bg-yellow-100 px-1 rounded">$1</span>'
+                          )
+                      })()
                     }}
                   />
                   {emailContentVisible < 100 && (
