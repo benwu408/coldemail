@@ -49,6 +49,12 @@ export default function HeroPage() {
   const [recipientNameVisible, setRecipientNameVisible] = useState(false)
   const [companyRoleVisible, setCompanyRoleVisible] = useState(false)
   const [purposeVisible, setPurposeVisible] = useState(false)
+  
+  // Research completion states
+  const [researchStep1Complete, setResearchStep1Complete] = useState(false)
+  const [researchStep2Complete, setResearchStep2Complete] = useState(false)
+  const [researchStep3Complete, setResearchStep3Complete] = useState(false)
+  const [researchStep4Complete, setResearchStep4Complete] = useState(false)
 
   // Persona data for carousel
   const personas = [
@@ -169,7 +175,14 @@ Founder & CEO, DataSync`,
         if (rect.top < bottomFifth - 400) {
           setDemoStep2Visible(true)
           const step2Progress = Math.max(0, Math.min(1, (bottomFifth - 400 - rect.top) / 200))
-          setResearchItemsVisible(Math.floor(step2Progress * 4))
+          const researchItemsCount = Math.floor(step2Progress * 4)
+          setResearchItemsVisible(researchItemsCount)
+          
+          // Set research completion states based on progress
+          setResearchStep1Complete(researchItemsCount >= 1)
+          setResearchStep2Complete(researchItemsCount >= 2)
+          setResearchStep3Complete(researchItemsCount >= 3)
+          setResearchStep4Complete(researchItemsCount >= 4)
         }
         
         // Step 3: Show email content progressively
@@ -226,8 +239,27 @@ Founder & CEO, DataSync`,
       <Header />
 
       {/* Hero Section */}
-      <section className="container mx-auto px-6 py-24 max-w-7xl">
-        <div className="grid lg:grid-cols-2 gap-20 items-center">
+      <section className="container mx-auto px-6 py-24 max-w-7xl relative overflow-hidden">
+        {/* Background Animation */}
+        <div className="absolute top-0 right-0 w-96 h-96 opacity-10 pointer-events-none">
+          <div className="relative w-full h-full">
+            {/* Data pulse circles */}
+            <div className="absolute top-10 right-10 w-4 h-4 bg-[#6366F1] rounded-full animate-pulse"></div>
+            <div className="absolute top-20 right-32 w-3 h-3 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+            <div className="absolute top-40 right-20 w-2 h-2 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute top-60 right-40 w-5 h-5 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+            <div className="absolute top-80 right-10 w-3 h-3 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
+            <div className="absolute top-32 right-60 w-4 h-4 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '2.5s' }}></div>
+            <div className="absolute top-72 right-80 w-2 h-2 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '3s' }}></div>
+            
+            {/* Connecting lines */}
+            <div className="absolute top-14 right-14 w-20 h-0.5 bg-[#6366F1] opacity-30 transform rotate-45"></div>
+            <div className="absolute top-44 right-24 w-16 h-0.5 bg-[#6366F1] opacity-30 transform -rotate-12"></div>
+            <div className="absolute top-64 right-32 w-24 h-0.5 bg-[#6366F1] opacity-30 transform rotate-30"></div>
+          </div>
+        </div>
+        
+        <div className="grid lg:grid-cols-2 gap-20 items-center relative z-10">
           {/* Left side - Content */}
           <div className="space-y-10">
             <div className="space-y-6">
@@ -248,10 +280,10 @@ Founder & CEO, DataSync`,
             <div className="flex flex-col sm:flex-row gap-4">
               <Link 
                 href="/generate"
-                className="inline-flex items-center justify-center bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                className="inline-flex items-center justify-center bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
               >
                 Start generating emails
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:animate-pulse transition-all duration-200" />
               </Link>
             </div>
 
@@ -316,7 +348,7 @@ Founder & CEO, DataSync`,
                 emailVisible 
                   ? `opacity-100 translate-y-0 scale-100` 
                   : 'opacity-0 translate-y-8 scale-95'
-              } hover:shadow-lg hover:translate-y-[-4px] hover:scale-[1.02] transition-all duration-300 ease-out`}
+              } hover:shadow-xl hover:translate-y-[-4px] hover:scale-[1.02] hover:border-[#6366F1]/20 hover:shadow-[#6366F1]/10 transition-all duration-300 ease-out`}
               style={{
                 transform: `translateY(${Math.min(scrollY * 0.1, 20)}px) scale(${1 + Math.min(scrollY * 0.0001, 0.02)})`
               }}
@@ -428,6 +460,18 @@ Founder & CEO, DataSync`,
               ))}
             </div>
             
+            {/* Flying paper plane animation */}
+            <div className="absolute -top-8 -right-8 w-12 h-12 opacity-60 pointer-events-none">
+              <div className="relative w-full h-full">
+                <div className="absolute inset-0 transform rotate-45">
+                  <div className="w-6 h-6 bg-[#6366F1] rounded-tl-full rounded-tr-full rounded-bl-full transform rotate-45"></div>
+                  <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-tl-full rounded-tr-full rounded-bl-full transform rotate-45"></div>
+                </div>
+                <div className="absolute top-2 right-2 w-2 h-8 bg-[#6366F1] transform rotate-45 origin-bottom"></div>
+              </div>
+              <div className="absolute inset-0 animate-bounce" style={{ animationDuration: '2s' }}></div>
+            </div>
+            
             <div 
               className={`absolute -top-4 -right-4 bg-white rounded-xl shadow-md border border-gray-100 p-3 transition-all duration-700 ease-out delay-300 ${
                 emailVisible 
@@ -524,9 +568,10 @@ Founder & CEO, DataSync`,
               <div className="pt-4">
                 <Link href="/profile">
                   <Button 
-                    className="bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                    className="bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
                   >
                     Set up your profile
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:animate-pulse transition-all duration-200" />
                   </Button>
                 </Link>
               </div>
@@ -669,7 +714,25 @@ Founder & CEO, DataSync`,
                 </p>
               </div>
               
-              <div className="lg:order-1 bg-gray-50 rounded-2xl p-8 border border-gray-200">
+              <div className="lg:order-1 bg-gray-50 rounded-2xl p-8 border border-gray-200 relative overflow-hidden">
+                {/* Search metaphor animation */}
+                <div className="absolute top-4 right-4 w-16 h-16 opacity-20 pointer-events-none">
+                  <div className="relative w-full h-full">
+                    {/* Magnifying glass */}
+                    <div className="absolute top-2 left-2 w-8 h-8 border-2 border-[#6366F1] rounded-full"></div>
+                    <div className="absolute top-6 left-6 w-3 h-3 bg-[#6366F1] transform rotate-45"></div>
+                    
+                    {/* AI brain */}
+                    <div className="absolute top-8 right-2 w-6 h-6">
+                      <div className="w-full h-full bg-[#6366F1] rounded-full animate-pulse"></div>
+                      <div className="absolute inset-1 w-4 h-4 bg-white rounded-full"></div>
+                      <div className="absolute top-1 left-1 w-1 h-1 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '0.3s' }}></div>
+                      <div className="absolute top-1 right-1 w-1 h-1 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '0.6s' }}></div>
+                      <div className="absolute bottom-1 left-1 w-1 h-1 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '0.9s' }}></div>
+                    </div>
+                  </div>
+                </div>
+                
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm font-medium text-[#6366F1] mb-4">
                     <div className="w-2 h-2 bg-[#6366F1] rounded-full animate-pulse"></div>
@@ -689,7 +752,19 @@ Founder & CEO, DataSync`,
                         }`}
                         style={{ transitionDelay: `${index * 200}ms` }}
                       >
-                        <div className="w-1.5 h-1.5 bg-[#6366F1] rounded-full mt-1.5 flex-shrink-0"></div>
+                        <div className="flex-shrink-0 mt-1.5">
+                          {index === 0 && researchStep1Complete ? (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          ) : index === 1 && researchStep2Complete ? (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          ) : index === 2 && researchStep3Complete ? (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          ) : index === 3 && researchStep4Complete ? (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <div className="w-1.5 h-1.5 bg-[#6366F1] rounded-full animate-pulse"></div>
+                          )}
+                        </div>
                         <span className="text-sm text-gray-700">{item}</span>
                       </div>
                     ))}
@@ -767,7 +842,7 @@ Software Engineer & Co-founder`.slice(0, Math.floor(emailContentVisible * 3.5))
           <div className="text-center">
             <Link 
               href="/generate"
-              className="inline-flex items-center justify-center bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+              className="inline-flex items-center justify-center bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
             >
               Try it yourself
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -1028,7 +1103,7 @@ Software Engineer & Co-founder`.slice(0, Math.floor(emailContentVisible * 3.5))
           </p>
           <Link 
             href="/generate"
-            className="inline-flex items-center justify-center bg-white text-[#111827] hover:bg-gray-100 rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+            className="inline-flex items-center justify-center bg-white text-[#111827] hover:bg-gray-100 rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
           >
             Start generating now
             <ArrowRight className="ml-2 h-5 w-5" />
