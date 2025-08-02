@@ -61,7 +61,7 @@ export default function HeroPage() {
 
 I came across your work at Microsoft and was impressed by your recent post about building scalable product teams.
 
-I'm a Stanford grad currently working on a startup in the productivity space. Given your experience, I'd love to get your perspective on some challenges we're facing.
+I'm a Stanford grad currently working on a startup in the productivity space. Given your experience at Amazon and now Microsoft, I'd love to get your perspective on some challenges we're facing.
 
 Would you be open to a 15-minute chat next week?
 
@@ -81,7 +81,7 @@ Software Engineer & Co-founder`,
 
 I've been following Stripe's engineering culture and was impressed by your recent talk about scaling engineering teams.
 
-As a senior engineer with 8+ years of experience, I'm exploring opportunities where I can have significant impact on technical architecture and team development.
+As a senior engineer with 8+ years of experience at Google and Meta, I'm exploring opportunities where I can have significant impact on technical architecture and team development.
 
 Would you be open to a brief conversation about potential opportunities on your team?
 
@@ -101,7 +101,7 @@ Senior Software Engineer`,
 
 I came across TechFlow's Series A announcement and was excited to see your vision for democratizing AI tools for small businesses.
 
-I'm the founder of DataSync, a startup focused on helping small businesses integrate and automate their data workflows.
+I'm the founder of DataSync, a startup focused on helping small businesses integrate and automate their data workflows. I noticed we both graduated from MIT and share a passion for empowering small businesses.
 
 I believe there could be a great partnership opportunity between our companies. Would you be interested in a 20-minute call to explore synergies?
 
@@ -347,12 +347,51 @@ Founder & CEO, DataSync`,
               
               {/* Email Body */}
               <div className="p-6">
-                <div className="font-mono text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
-                  {demoEmail}
-                  {isTyping && (
-                    <span className="inline-block w-2 h-5 bg-[#6366F1] animate-pulse ml-1"></span>
-                  )}
-                </div>
+                <div 
+                  className="font-mono text-sm leading-relaxed text-gray-800 whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{
+                    __html: demoEmail
+                      .replace(
+                        /(your recent post about building scalable product teams)/g,
+                        '<span class="animate-pulse bg-yellow-100 px-1 rounded">$1</span>'
+                      )
+                      .replace(
+                        /(Stanford grad)/g,
+                        '<span class="animate-pulse bg-indigo-100 px-1 rounded">$1</span>'
+                      )
+                      .replace(
+                        /(startup in the productivity space)/g,
+                        '<span class="animate-pulse bg-yellow-100 px-1 rounded">$1</span>'
+                      )
+                      .replace(
+                        /(experience at Amazon and now Microsoft)/g,
+                        '<span class="animate-pulse bg-yellow-100 px-1 rounded">$1</span>'
+                      )
+                      .replace(
+                        /(recent talk about scaling engineering teams)/g,
+                        '<span class="animate-pulse bg-yellow-100 px-1 rounded">$1</span>'
+                      )
+                      .replace(
+                        /(8\+ years of experience at Google and Meta)/g,
+                        '<span class="animate-pulse bg-indigo-100 px-1 rounded">$1</span>'
+                      )
+                      .replace(
+                        /(Series A announcement)/g,
+                        '<span class="animate-pulse bg-yellow-100 px-1 rounded">$1</span>'
+                      )
+                      .replace(
+                        /(both graduated from MIT)/g,
+                        '<span class="animate-pulse bg-indigo-100 px-1 rounded">$1</span>'
+                      )
+                      .replace(
+                        /(passion for empowering small businesses)/g,
+                        '<span class="animate-pulse bg-yellow-100 px-1 rounded">$1</span>'
+                      )
+                  }}
+                />
+                {isTyping && (
+                  <span className="inline-block w-2 h-5 bg-[#6366F1] animate-pulse ml-1"></span>
+                )}
               </div>
 
               {/* Animated typing indicator - moved to bottom */}
@@ -698,12 +737,14 @@ Founder & CEO, DataSync`,
                 
                 {/* Email Body */}
                 <div className="p-6">
-                  <div className="font-mono text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
-                    {`Hi David,
+                  <div 
+                    className="font-mono text-sm leading-relaxed text-gray-800 whitespace-pre-wrap"
+                    dangerouslySetInnerHTML={{
+                      __html: `Hi David,
 
-I came across your work at Microsoft and was particularly impressed by your recent LinkedIn post about building scalable product teams. Your insights on team dynamics and product strategy really resonated with me.
+I came across your work at Microsoft and was particularly impressed by <span class="animate-pulse bg-yellow-100 px-1 rounded">your recent LinkedIn post about building scalable product teams</span>. Your insights on team dynamics and product strategy really resonated with me.
 
-As a fellow Stanford Computer Science grad (I graduated in 2020), I was excited to see another Cardinal making waves in the tech industry. Your journey from Amazon to Microsoft is inspiring, and I'd love to learn from your experience scaling products at such innovative companies.
+As a <span class="animate-pulse bg-indigo-100 px-1 rounded">fellow Stanford Computer Science grad</span> (I graduated in 2020), I was excited to see another Cardinal making waves in the tech industry. Your <span class="animate-pulse bg-yellow-100 px-1 rounded">journey from Amazon to Microsoft</span> is inspiring, and I'd love to learn from your experience scaling products at such innovative companies.
 
 I'm currently working on a startup in the productivity space, and given your expertise in product management and your recent focus on team building, I'd love to get your perspective on some challenges we're facing with product development.
 
@@ -711,11 +752,12 @@ Would you be open to a 15-minute chat next week? I'd be happy to work around you
 
 Best,
 Emma Rodriguez
-Software Engineer & Co-founder`.slice(0, Math.floor(emailContentVisible * 3.5))}
-                    {emailContentVisible < 100 && (
-                      <span className="inline-block w-2 h-5 bg-[#6366F1] animate-pulse ml-1"></span>
-                    )}
-                  </div>
+Software Engineer & Co-founder`.slice(0, Math.floor(emailContentVisible * 3.5))
+                    }}
+                  />
+                  {emailContentVisible < 100 && (
+                    <span className="inline-block w-2 h-5 bg-[#6366F1] animate-pulse ml-1"></span>
+                  )}
                 </div>
               </div>
             </div>
