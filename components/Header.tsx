@@ -53,7 +53,7 @@ export default function Header({
                 alt="Reachful" 
                 className="h-16 w-auto"
               />
-              <span className="text-lg font-bold text-[#111827]">
+              <span className="text-3xl font-bold text-[#111827]">
                 Reachful
               </span>
             </Link>
