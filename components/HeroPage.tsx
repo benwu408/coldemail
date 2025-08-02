@@ -159,21 +159,21 @@ Founder & CEO, DataSync`,
         })
         
         // Step 1: Show when section crosses bottom fifth
-        if (rect.top < bottomFifth) {
+        if (rect.top < bottomFifth + 100) {
           setDemoStep1Visible(true)
           
           // Progressive filling of basic info fields
-          if (rect.top < bottomFifth - 100) {
+          if (rect.top < bottomFifth) {
             setRecipientNameVisible(true)
           } else {
             setRecipientNameVisible(false)
           }
-          if (rect.top < bottomFifth - 200) {
+          if (rect.top < bottomFifth - 100) {
             setCompanyRoleVisible(true)
           } else {
             setCompanyRoleVisible(false)
           }
-          if (rect.top < bottomFifth - 300) {
+          if (rect.top < bottomFifth - 200) {
             setPurposeVisible(true)
           } else {
             setPurposeVisible(false)
@@ -186,9 +186,9 @@ Founder & CEO, DataSync`,
         }
         
         // Step 2: Show research items progressively
-        if (rect.top < bottomFifth - 400) {
+        if (rect.top < bottomFifth - 200) {
           setDemoStep2Visible(true)
-          const step2Progress = Math.max(0, Math.min(1, (bottomFifth - 400 - rect.top) / 200))
+          const step2Progress = Math.max(0, Math.min(1, (bottomFifth - 200 - rect.top) / 200))
           const researchItemsCount = Math.floor(step2Progress * 4)
           setResearchItemsVisible(researchItemsCount)
           
@@ -207,9 +207,9 @@ Founder & CEO, DataSync`,
         }
         
         // Step 3: Show email content progressively
-        if (rect.top < bottomFifth - 800) {
+        if (rect.top < bottomFifth - 600) {
           setDemoStep3Visible(true)
-          const step3Progress = Math.max(0, Math.min(1, (bottomFifth - 800 - rect.top) / 800))
+          const step3Progress = Math.max(0, Math.min(1, (bottomFifth - 600 - rect.top) / 800))
           const emailProgress = Math.floor(step3Progress * 100)
           setEmailContentVisible(emailProgress)
           setEmailComplete(emailProgress >= 100)
