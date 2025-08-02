@@ -31,7 +31,6 @@ import Link from 'next/link'
 
 export default function HeroPage() {
   const { user } = useAuth()
-  const [showApp, setShowApp] = useState(false)
   const [demoEmail, setDemoEmail] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [showDemo, setShowDemo] = useState(false)
@@ -271,15 +270,6 @@ Software Engineer & Co-founder`
     }, 30)
   }
 
-  // If user is authenticated, show the main app
-  if (user && showApp) {
-    return (
-      <ProtectedRoute>
-        <ColdEmailGenerator />
-      </ProtectedRoute>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-[#111827]">
       {/* Navigation */}
@@ -306,14 +296,15 @@ Software Engineer & Co-founder`
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                onClick={() => setShowApp(true)}
-                size="lg"
-                className="bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-              >
-                Start generating emails
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              <Link href="/generate">
+                <Button 
+                  size="lg"
+                  className="bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                >
+                  Start generating emails
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
               <Button 
                 variant="outline" 
                 size="lg"
@@ -695,7 +686,7 @@ Software Engineer & Co-founder`
 
               <div className="pt-4">
                 <Button 
-                  onClick={() => setShowApp(true)}
+                  onClick={() => {}}
                   className="bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
                 >
                   Set up your profile
@@ -855,15 +846,16 @@ Software Engineer & Co-founder`
           <p className="text-xl mb-10 opacity-90 max-w-2xl mx-auto leading-relaxed">
             Join thousands of professionals who are getting better responses with AI-powered personalization.
           </p>
-          <Button 
-            onClick={() => setShowApp(true)}
-            size="lg"
-            variant="secondary"
-            className="bg-white text-[#111827] hover:bg-gray-100 rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-          >
-            Start generating now
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+          <Link href="/generate">
+            <Button 
+              size="lg"
+              variant="secondary"
+              className="bg-white text-[#111827] hover:bg-gray-100 rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+            >
+              Start generating now
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
         </div>
       </section>
 
@@ -1032,12 +1024,13 @@ Software Engineer & Co-founder`
 
               {/* Demo Actions */}
               <div className="flex justify-center pt-6 border-t border-gray-100">
-                <Button
-                  onClick={() => setShowDemo(false)}
-                  className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl px-8 py-3"
-                >
-                  Try it yourself
-                </Button>
+                <Link href="/generate">
+                  <Button
+                    className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl px-8 py-3"
+                  >
+                    Try it yourself
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
