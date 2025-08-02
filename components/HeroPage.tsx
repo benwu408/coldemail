@@ -162,13 +162,24 @@ Founder & CEO, DataSync`,
           // Progressive filling of basic info fields
           if (rect.top < bottomFifth - 100) {
             setRecipientNameVisible(true)
+          } else {
+            setRecipientNameVisible(false)
           }
           if (rect.top < bottomFifth - 200) {
             setCompanyRoleVisible(true)
+          } else {
+            setCompanyRoleVisible(false)
           }
           if (rect.top < bottomFifth - 300) {
             setPurposeVisible(true)
+          } else {
+            setPurposeVisible(false)
           }
+        } else {
+          setDemoStep1Visible(false)
+          setRecipientNameVisible(false)
+          setCompanyRoleVisible(false)
+          setPurposeVisible(false)
         }
         
         // Step 2: Show research items progressively
@@ -183,6 +194,13 @@ Founder & CEO, DataSync`,
           setResearchStep2Complete(researchItemsCount >= 2)
           setResearchStep3Complete(researchItemsCount >= 3)
           setResearchStep4Complete(researchItemsCount >= 4)
+        } else {
+          setDemoStep2Visible(false)
+          setResearchItemsVisible(0)
+          setResearchStep1Complete(false)
+          setResearchStep2Complete(false)
+          setResearchStep3Complete(false)
+          setResearchStep4Complete(false)
         }
         
         // Step 3: Show email content progressively
@@ -190,6 +208,9 @@ Founder & CEO, DataSync`,
           setDemoStep3Visible(true)
           const step3Progress = Math.max(0, Math.min(1, (bottomFifth - 800 - rect.top) / 400))
           setEmailContentVisible(Math.floor(step3Progress * 100))
+        } else {
+          setDemoStep3Visible(false)
+          setEmailContentVisible(0)
         }
       }
     }
@@ -827,7 +848,7 @@ Would you be open to a 15-minute chat next week? I'd be happy to work around you
 
 Best,
 Emma Rodriguez
-Software Engineer & Co-founder`.slice(0, Math.floor(emailContentVisible * 3.5))
+Software Engineer & Co-founder`.slice(0, Math.floor(emailContentVisible * 2.5))
                     }}
                   />
                   {emailContentVisible < 100 && (
