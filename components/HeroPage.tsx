@@ -37,6 +37,13 @@ export default function HeroPage() {
   const [scrollY, setScrollY] = useState(0)
   const [currentPersona, setCurrentPersona] = useState(0)
   const [isTypingComplete, setIsTypingComplete] = useState(false)
+  
+  // Demo section scroll states
+  const [demoStep1Visible, setDemoStep1Visible] = useState(false)
+  const [demoStep2Visible, setDemoStep2Visible] = useState(false)
+  const [demoStep3Visible, setDemoStep3Visible] = useState(false)
+  const [researchItemsVisible, setResearchItemsVisible] = useState(0)
+  const [emailContentVisible, setEmailContentVisible] = useState(0)
 
   // Persona data for carousel
   const personas = [
@@ -106,6 +113,34 @@ Founder & CEO, DataSync`,
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY)
+      
+      // Demo section scroll animations
+      const demoSection = document.getElementById('demo-section')
+      if (demoSection) {
+        const rect = demoSection.getBoundingClientRect()
+        const windowHeight = window.innerHeight
+        
+        // Step 1 animations
+        if (rect.top < windowHeight * 0.8 && rect.top > -rect.height * 0.2) {
+          setDemoStep1Visible(true)
+        }
+        
+        // Step 2 animations
+        if (rect.top < windowHeight * 0.6 && rect.top > -rect.height * 0.4) {
+          setDemoStep2Visible(true)
+          // Gradually show research items
+          const progress = Math.max(0, Math.min(1, (windowHeight * 0.6 - rect.top) / 200))
+          setResearchItemsVisible(Math.floor(progress * 4))
+        }
+        
+        // Step 3 animations
+        if (rect.top < windowHeight * 0.4 && rect.top > -rect.height * 0.6) {
+          setDemoStep3Visible(true)
+          // Gradually show email content
+          const progress = Math.max(0, Math.min(1, (windowHeight * 0.4 - rect.top) / 300))
+          setEmailContentVisible(Math.floor(progress * 100))
+        }
+      }
     }
 
     window.addEventListener('scroll', handleScroll)
@@ -329,6 +364,179 @@ Founder & CEO, DataSync`,
                 <span className="text-xs font-medium text-gray-600">AI researching...</span>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Scroll-to-Play Demo Section - Moved right after hero */}
+      <section id="demo-section" className="py-24 bg-white">
+        <div className="container mx-auto px-6 max-w-7xl">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl font-bold text-[#111827] mb-6 tracking-tight">See it in action</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              Watch how our AI transforms basic information into personalized emails that get responses
+            </p>
+          </div>
+          
+          {/* Step 1: Enter Details */}
+          <div className={`mb-16 transition-all duration-1000 ${demoStep1Visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-[#6366F1] text-sm font-medium rounded-full border border-indigo-100">
+                  <Search className="h-3 w-3" />
+                  Step 1: Enter prospect details
+                </div>
+                <h3 className="text-3xl font-bold text-[#111827] tracking-tight">
+                  Start with basic information
+                </h3>
+                <p className="text-lg text-gray-600 leading-relaxed">
+                  Provide the recipient's name, role, company, and your outreach purpose. 
+                  Our AI will do the heavy lifting to find personalization opportunities.
+                </p>
+              </div>
+              
+              <div className="bg-gray-50 rounded-2xl p-8 border border-gray-200">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Recipient Name</label>
+                    <div className="p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
+                      <span className="text-gray-900 font-medium">David Thompson</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Company & Role</label>
+                    <div className="p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
+                      <span className="text-gray-900 font-medium">Senior Product Manager at Microsoft</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Purpose</label>
+                    <div className="p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
+                      <span className="text-gray-900 font-medium">Networking</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 2: AI Research */}
+          <div className={`mb-16 transition-all duration-1000 delay-300 ${demoStep2Visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="lg:order-2 space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 text-[#6366F1] text-sm font-medium rounded-full border border-purple-100">
+                  <Brain className="h-3 w-3" />
+                  Step 2: AI research & analysis
+                </div>
+                <h3 className="text-3xl font-bold text-[#111827] tracking-tight">
+                  AI discovers personal connections
+                </h3>
+                <p className="text-lg text-gray-600 leading-relaxed">
+                  Our AI searches LinkedIn, company websites, and news to find genuine 
+                  commonalities and recent activities that make your email personal.
+                </p>
+              </div>
+              
+              <div className="lg:order-1 bg-gray-50 rounded-2xl p-8 border border-gray-200">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-[#6366F1] mb-4">
+                    <div className="w-2 h-2 bg-[#6366F1] rounded-full animate-pulse"></div>
+                    AI Research in Progress
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      "Found: Stanford alum (Computer Science, 2017)",
+                      "Recent post: \"Building Scalable Product Teams\"",
+                      "Previous experience at Amazon",
+                      "Located: Seattle, Washington"
+                    ].map((item, index) => (
+                      <div 
+                        key={index}
+                        className={`flex items-start gap-2 p-3 bg-white rounded-lg border border-gray-200 transition-all duration-500 ${
+                          index < researchItemsVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
+                        }`}
+                        style={{ transitionDelay: `${index * 200}ms` }}
+                      >
+                        <div className="w-1.5 h-1.5 bg-[#6366F1] rounded-full mt-1.5 flex-shrink-0"></div>
+                        <span className="text-sm text-gray-700">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Step 3: Generated Email */}
+          <div className={`mb-16 transition-all duration-1000 delay-600 ${demoStep3Visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-50 text-[#0F766E] text-sm font-medium rounded-full border border-teal-100">
+                  <Mail className="h-3 w-3" />
+                  Step 3: Get your personalized email
+                </div>
+                <h3 className="text-3xl font-bold text-[#111827] tracking-tight">
+                  Ready-to-send personalized email
+                </h3>
+                <p className="text-lg text-gray-600 leading-relaxed">
+                  Receive a professional, personalized cold email that incorporates 
+                  the research findings and creates genuine connections.
+                </p>
+              </div>
+              
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+                {/* Email Header */}
+                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-600">From:</span>
+                      <span className="text-sm text-gray-900">emma.rodriguez@startup.com</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-600">To:</span>
+                      <span className="text-sm text-gray-900">david.thompson@microsoft.com</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-600">Subject:</span>
+                      <span className="text-sm text-gray-900">Coffee chat - Product development insights</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Email Body */}
+                <div className="p-6">
+                  <div className="font-mono text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
+                    {`Hi David,
+
+I came across your work at Microsoft and was particularly impressed by your recent LinkedIn post about building scalable product teams. Your insights on team dynamics and product strategy really resonated with me.
+
+As a fellow Stanford Computer Science grad (I graduated in 2020), I was excited to see another Cardinal making waves in the tech industry. Your journey from Amazon to Microsoft is inspiring, and I'd love to learn from your experience scaling products at such innovative companies.
+
+I'm currently working on a startup in the productivity space, and given your expertise in product management and your recent focus on team building, I'd love to get your perspective on some challenges we're facing with product development.
+
+Would you be open to a 15-minute chat next week? I'd be happy to work around your schedule.
+
+Best,
+Emma Rodriguez
+Software Engineer & Co-founder`.slice(0, emailContentVisible)}
+                    {emailContentVisible < 100 && (
+                      <span className="inline-block w-2 h-5 bg-[#6366F1] animate-pulse ml-1"></span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center">
+            <Link 
+              href="/generate"
+              className="inline-flex items-center justify-center bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+            >
+              Try it yourself
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Link>
           </div>
         </div>
       </section>
@@ -767,175 +975,6 @@ Founder & CEO, DataSync`,
           </div>
         </div>
       </footer>
-
-      {/* Scroll-to-Play Demo Section */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl font-bold text-[#111827] mb-6 tracking-tight">See it in action</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Watch how our AI transforms basic information into personalized emails that get responses
-            </p>
-          </div>
-          
-          {/* Step 1: Enter Details */}
-          <div className="mb-16">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-[#6366F1] text-sm font-medium rounded-full border border-indigo-100">
-                  <Search className="h-3 w-3" />
-                  Step 1: Enter prospect details
-                </div>
-                <h3 className="text-3xl font-bold text-[#111827] tracking-tight">
-                  Start with basic information
-                </h3>
-                <p className="text-lg text-gray-600 leading-relaxed">
-                  Provide the recipient's name, role, company, and your outreach purpose. 
-                  Our AI will do the heavy lifting to find personalization opportunities.
-                </p>
-              </div>
-              
-              <div className="bg-gray-50 rounded-2xl p-8 border border-gray-200">
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Recipient Name</label>
-                    <div className="p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
-                      <span className="text-gray-900 font-medium">David Thompson</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Company & Role</label>
-                    <div className="p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
-                      <span className="text-gray-900 font-medium">Senior Product Manager at Microsoft</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Purpose</label>
-                    <div className="p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
-                      <span className="text-gray-900 font-medium">Networking</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 2: AI Research */}
-          <div className="mb-16">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <div className="lg:order-2 space-y-6">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 text-[#6366F1] text-sm font-medium rounded-full border border-purple-100">
-                  <Brain className="h-3 w-3" />
-                  Step 2: AI research & analysis
-                </div>
-                <h3 className="text-3xl font-bold text-[#111827] tracking-tight">
-                  AI discovers personal connections
-                </h3>
-                <p className="text-lg text-gray-600 leading-relaxed">
-                  Our AI searches LinkedIn, company websites, and news to find genuine 
-                  commonalities and recent activities that make your email personal.
-                </p>
-              </div>
-              
-              <div className="lg:order-1 bg-gray-50 rounded-2xl p-8 border border-gray-200">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-medium text-[#6366F1] mb-4">
-                    <div className="w-2 h-2 bg-[#6366F1] rounded-full animate-pulse"></div>
-                    AI Research in Progress
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-start gap-2 p-3 bg-white rounded-lg border border-gray-200">
-                      <div className="w-1.5 h-1.5 bg-[#6366F1] rounded-full mt-1.5 flex-shrink-0"></div>
-                      <span className="text-sm text-gray-700">Found: Stanford alum (Computer Science, 2017)</span>
-                    </div>
-                    <div className="flex items-start gap-2 p-3 bg-white rounded-lg border border-gray-200">
-                      <div className="w-1.5 h-1.5 bg-[#6366F1] rounded-full mt-1.5 flex-shrink-0"></div>
-                      <span className="text-sm text-gray-700">Recent post: "Building Scalable Product Teams"</span>
-                    </div>
-                    <div className="flex items-start gap-2 p-3 bg-white rounded-lg border border-gray-200">
-                      <div className="w-1.5 h-1.5 bg-[#6366F1] rounded-full mt-1.5 flex-shrink-0"></div>
-                      <span className="text-sm text-gray-700">Previous experience at Amazon</span>
-                    </div>
-                    <div className="flex items-start gap-2 p-3 bg-white rounded-lg border border-gray-200">
-                      <div className="w-1.5 h-1.5 bg-[#6366F1] rounded-full mt-1.5 flex-shrink-0"></div>
-                      <span className="text-sm text-gray-700">Located: Seattle, Washington</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 3: Generated Email */}
-          <div className="mb-16">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-50 text-[#0F766E] text-sm font-medium rounded-full border border-teal-100">
-                  <Mail className="h-3 w-3" />
-                  Step 3: Get your personalized email
-                </div>
-                <h3 className="text-3xl font-bold text-[#111827] tracking-tight">
-                  Ready-to-send personalized email
-                </h3>
-                <p className="text-lg text-gray-600 leading-relaxed">
-                  Receive a professional, personalized cold email that incorporates 
-                  the research findings and creates genuine connections.
-                </p>
-              </div>
-              
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-                {/* Email Header */}
-                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-600">From:</span>
-                      <span className="text-sm text-gray-900">emma.rodriguez@startup.com</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-600">To:</span>
-                      <span className="text-sm text-gray-900">david.thompson@microsoft.com</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-600">Subject:</span>
-                      <span className="text-sm text-gray-900">Coffee chat - Product development insights</span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Email Body */}
-                <div className="p-6">
-                  <div className="font-mono text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
-{`Hi David,
-
-I came across your work at Microsoft and was particularly impressed by your recent LinkedIn post about building scalable product teams. Your insights on team dynamics and product strategy really resonated with me.
-
-As a fellow Stanford Computer Science grad (I graduated in 2020), I was excited to see another Cardinal making waves in the tech industry. Your journey from Amazon to Microsoft is inspiring, and I'd love to learn from your experience scaling products at such innovative companies.
-
-I'm currently working on a startup in the productivity space, and given your expertise in product management and your recent focus on team building, I'd love to get your perspective on some challenges we're facing with product development.
-
-Would you be open to a 15-minute chat next week? I'd be happy to work around your schedule.
-
-Best,
-Emma Rodriguez
-Software Engineer & Co-founder`}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* CTA */}
-          <div className="text-center">
-            <Link 
-              href="/generate"
-              className="inline-flex items-center justify-center bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-            >
-              Try it yourself
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </div>
-        </div>
-      </section>
     </div>
   )
 } 
