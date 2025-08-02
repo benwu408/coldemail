@@ -76,6 +76,27 @@ body {
   animation-delay: 2s;
 }
 
+@keyframes float-delay-2 {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Typing indicator animations */
+@keyframes typing-dot {
+  0%, 60%, 100% { 
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  30% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.typing-dot-1 { animation: typing-dot 1.4s infinite; animation-delay: 0ms; }
+.typing-dot-2 { animation: typing-dot 1.4s infinite; animation-delay: 200ms; }
+.typing-dot-3 { animation: typing-dot 1.4s infinite; animation-delay: 400ms; }
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
