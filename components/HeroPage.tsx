@@ -114,6 +114,18 @@ Founder & CEO, DataSync`,
     }
   ]
 
+  // Reset demo states on mount
+  useEffect(() => {
+    setDemoStep1Visible(false)
+    setDemoStep2Visible(false)
+    setDemoStep3Visible(false)
+    setResearchItemsVisible(0)
+    setEmailContentVisible(0)
+    setRecipientNameVisible(false)
+    setCompanyRoleVisible(false)
+    setPurposeVisible(false)
+  }, [])
+
   // Scroll event listener for dynamic animations
   useEffect(() => {
     const handleScroll = () => {
@@ -127,48 +139,48 @@ Founder & CEO, DataSync`,
         const sectionHeight = demoSection.offsetHeight
         
         // Calculate scroll progress within the demo section
-        // Adjusted to make email complete by upper third of screen
-        const scrollProgress = Math.max(0, Math.min(1, (windowHeight - rect.top) / (sectionHeight * 0.6)))
+        // Make it more gradual - start earlier and end later
+        const scrollProgress = Math.max(0, Math.min(1, (windowHeight - rect.top) / (sectionHeight * 0.8)))
         
         console.log('Scroll Debug:', {
           rectTop: rect.top,
           windowHeight,
           sectionHeight,
           scrollProgress,
-          step1Visible: scrollProgress > 0.05,
-          step2Visible: scrollProgress > 0.15,
-          step3Visible: scrollProgress > 0.25,
-          researchItems: Math.floor((scrollProgress - 0.15) / 0.1 * 4),
-          emailContent: Math.floor((scrollProgress - 0.25) / 0.35 * 100)
+          step1Visible: scrollProgress > 0.02,
+          step2Visible: scrollProgress > 0.3,
+          step3Visible: scrollProgress > 0.6,
+          researchItems: Math.floor((scrollProgress - 0.3) / 0.3 * 4),
+          emailContent: Math.floor((scrollProgress - 0.6) / 0.4 * 100)
         })
         
-        // Step 1: Show when section comes into view (0-15% of scroll)
-        if (scrollProgress > 0.05) {
+        // Step 1: Show when section comes into view (0-30% of scroll)
+        if (scrollProgress > 0.02) {
           setDemoStep1Visible(true)
           
           // Progressive filling of basic info fields
-          if (scrollProgress > 0.08) {
+          if (scrollProgress > 0.05) {
             setRecipientNameVisible(true)
           }
           if (scrollProgress > 0.1) {
             setCompanyRoleVisible(true)
           }
-          if (scrollProgress > 0.12) {
+          if (scrollProgress > 0.15) {
             setPurposeVisible(true)
           }
         }
         
-        // Step 2: Show research items progressively (15-25% of scroll)
-        if (scrollProgress > 0.15) {
+        // Step 2: Show research items progressively (30-60% of scroll)
+        if (scrollProgress > 0.3) {
           setDemoStep2Visible(true)
-          const step2Progress = Math.max(0, Math.min(1, (scrollProgress - 0.15) / 0.1))
+          const step2Progress = Math.max(0, Math.min(1, (scrollProgress - 0.3) / 0.3))
           setResearchItemsVisible(Math.floor(step2Progress * 4))
         }
         
-        // Step 3: Show email content progressively (25-60% of scroll)
-        if (scrollProgress > 0.25) {
+        // Step 3: Show email content progressively (60-100% of scroll)
+        if (scrollProgress > 0.6) {
           setDemoStep3Visible(true)
-          const step3Progress = Math.max(0, Math.min(1, (scrollProgress - 0.25) / 0.35))
+          const step3Progress = Math.max(0, Math.min(1, (scrollProgress - 0.6) / 0.4))
           setEmailContentVisible(Math.floor(step3Progress * 100))
         }
       }
