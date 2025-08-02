@@ -29,6 +29,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import Header from './Header'
+import { supabase } from '@/lib/supabase'
 
 type ToneType = 'casual' | 'formal' | 'confident'
 
@@ -100,14 +101,15 @@ export default function ColdEmailGenerator() {
     if (!formData.recipientName || !formData.outreachPurpose) {
       toast({
         title: "Missing Information",
-        description: "Please fill in at least the recipient name and outreach purpose.",
+        description: "Please fill in the recipient name and purpose of outreach.",
         variant: "destructive"
       })
       return
     }
 
     setIsGenerating(true)
-    
+    setResearchError('')
+
     try {
       const response = await fetch('/api/generate-email', {
         method: 'POST',
@@ -115,12 +117,7 @@ export default function ColdEmailGenerator() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          recipientName: formData.recipientName,
-          recipientRole: formData.recipientRole,
-          outreachPurpose: formData.outreachPurpose,
-          context: formData.context,
-          additionalNotes: formData.additionalNotes,
-          tone: currentTone,
+          ...formData,
           userId: user?.id
         }),
       })
@@ -131,26 +128,27 @@ export default function ColdEmailGenerator() {
 
       const data = await response.json()
       
-      if (data.email) {
-        setGeneratedEmail(data.email)
-        setSubjectLine(data.subject || `Reaching out - ${formData.outreachPurpose}`)
-        if (data.researchFindings && data.researchFindings.length > 0) {
-          setResearchFindings(data.researchFindings)
-          setShowResearch(true)
-        }
-        if (data.researchError) {
-          setResearchError(data.researchError)
-        }
-        toast({
-          title: "Email Generated!",
-          description: "Your personalized cold email is ready.",
-        })
+      if (data.error) {
+        throw new Error(data.error)
       }
+
+      setGeneratedEmail(data.email)
+      setSubjectLine(data.subject || '')
+      setResearchFindings(data.researchFindings || [])
+      setShowResearch(true)
+
+      // Save the generated email to the database
+      await saveEmailToDatabase(data.email, data.subject || '')
+
+      toast({
+        title: "Email Generated!",
+        description: "Your personalized email has been created successfully.",
+      })
     } catch (error) {
       console.error('Error generating email:', error)
       toast({
         title: "Generation Failed",
-        description: "An error occurred while generating your email. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to generate email. Please try again.",
         variant: "destructive"
       })
     } finally {
@@ -158,15 +156,77 @@ export default function ColdEmailGenerator() {
     }
   }
 
+  const saveEmailToDatabase = async (emailContent: string, subject: string) => {
+    if (!user?.id) return
+
+    try {
+      const { error } = await supabase
+        .from('generated_emails')
+        .insert({
+          user_id: user.id,
+          recipient_name: formData.recipientName,
+          recipient_role: formData.recipientRole,
+          recipient_company: formData.recipientRole.includes(' at ') ? 
+            formData.recipientRole.split(' at ')[1] : undefined,
+          outreach_purpose: formData.outreachPurpose,
+          context: formData.context,
+          additional_notes: formData.additionalNotes,
+          generated_email: emailContent,
+          subject_line: subject,
+          tone: currentTone,
+          research_findings: researchFindings.length > 0 ? researchFindings : null
+        })
+
+      if (error) {
+        console.error('Error saving email:', error)
+        // Don't show error toast to user as this is a background operation
+      }
+    } catch (error) {
+      console.error('Error saving email to database:', error)
+      // Don't show error toast to user as this is a background operation
+    }
+  }
+
   const regenerateEmail = async () => {
     setIsProcessing(true)
-    await generateEmail()
-    setIsProcessing(false)
+    try {
+      const response = await fetch('/api/generate-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          userId: user?.id
+        }),
+      })
+
+      if (!response.ok) throw new Error('Failed to regenerate email')
+
+      const data = await response.json()
+      setGeneratedEmail(data.email)
+      setSubjectLine(data.subject || '')
+
+      // Save the regenerated email
+      await saveEmailToDatabase(data.email, data.subject || '')
+
+      toast({
+        title: "Email Regenerated!",
+        description: "Your email has been regenerated successfully.",
+      })
+    } catch (error) {
+      console.error('Error regenerating email:', error)
+      toast({
+        title: "Regeneration Failed",
+        description: "Failed to regenerate email. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   const shortenEmail = async () => {
-    if (!generatedEmail) return
-    
     setIsProcessing(true)
     try {
       const response = await fetch('/api/shorten-email', {
@@ -176,28 +236,28 @@ export default function ColdEmailGenerator() {
         },
         body: JSON.stringify({
           email: generatedEmail,
-          tone: currentTone
+          subject: subjectLine
         }),
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to shorten email')
-      }
+      if (!response.ok) throw new Error('Failed to shorten email')
 
       const data = await response.json()
-      
-      if (data.email) {
-        setGeneratedEmail(data.email)
-        toast({
-          title: "Email Shortened",
-          description: "Your email has been condensed while maintaining its impact.",
-        })
-      }
+      setGeneratedEmail(data.email)
+      setSubjectLine(data.subject || subjectLine)
+
+      // Save the shortened email
+      await saveEmailToDatabase(data.email, data.subject || subjectLine)
+
+      toast({
+        title: "Email Shortened!",
+        description: "Your email has been shortened while keeping the key points.",
+      })
     } catch (error) {
       console.error('Error shortening email:', error)
       toast({
         title: "Shortening Failed",
-        description: "An error occurred while shortening your email.",
+        description: "Failed to shorten email. Please try again.",
         variant: "destructive"
       })
     } finally {
@@ -206,11 +266,7 @@ export default function ColdEmailGenerator() {
   }
 
   const adjustTone = async (newTone: ToneType) => {
-    if (!generatedEmail) return
-    
-    setCurrentTone(newTone)
     setIsProcessing(true)
-    
     try {
       const response = await fetch('/api/adjust-tone', {
         method: 'POST',
@@ -219,28 +275,30 @@ export default function ColdEmailGenerator() {
         },
         body: JSON.stringify({
           email: generatedEmail,
+          subject: subjectLine,
           tone: newTone
         }),
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to adjust tone')
-      }
+      if (!response.ok) throw new Error('Failed to adjust tone')
 
       const data = await response.json()
-      
-      if (data.email) {
-        setGeneratedEmail(data.email)
-        toast({
-          title: "Tone Adjusted",
-          description: `Your email has been updated to a ${newTone} tone.`,
-        })
-      }
+      setGeneratedEmail(data.email)
+      setSubjectLine(data.subject || subjectLine)
+      setCurrentTone(newTone)
+
+      // Save the tone-adjusted email
+      await saveEmailToDatabase(data.email, data.subject || subjectLine)
+
+      toast({
+        title: "Tone Adjusted!",
+        description: `Your email has been adjusted to a ${newTone} tone.`,
+      })
     } catch (error) {
       console.error('Error adjusting tone:', error)
       toast({
         title: "Tone Adjustment Failed",
-        description: "An error occurred while adjusting the tone.",
+        description: "Failed to adjust tone. Please try again.",
         variant: "destructive"
       })
     } finally {

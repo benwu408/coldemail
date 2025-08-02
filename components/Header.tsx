@@ -60,6 +60,25 @@ export default function Header({
           {/* Center: Navigation Links */}
           {showNavigation && (
             <div className="hidden md:flex items-center gap-8 text-sm">
+              {user && (
+                <Link href="/generate">
+                  <Button
+                    className="bg-[#111827] hover:bg-gray-800 text-white rounded-full px-6 py-2 text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                  >
+                    Generate Email
+                  </Button>
+                </Link>
+              )}
+              {user && (
+                <Link href="/past-emails">
+                  <Button
+                    variant="ghost"
+                    className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium"
+                  >
+                    Past Emails
+                  </Button>
+                </Link>
+              )}
               <a href="#how-it-works" className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium">
                 How it works
               </a>
@@ -69,15 +88,6 @@ export default function Header({
               <a href="/faq" className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium">
                 FAQ
               </a>
-              {user && (
-                <Link href="/generate">
-                  <Button 
-                    className="bg-[#111827] hover:bg-gray-800 text-white rounded-full px-6 py-2 text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-                  >
-                    Generate Email
-                  </Button>
-                </Link>
-              )}
             </div>
           )}
 
