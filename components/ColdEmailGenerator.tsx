@@ -469,6 +469,33 @@ export default function ColdEmailGenerator() {
                     </>
                   )}
                 </Button>
+
+                {/* Profile Enhancement Button */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <User className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-blue-900 mb-1">
+                        Get More Personalized Emails
+                      </h4>
+                      <p className="text-xs text-blue-700 mb-3">
+                        Fill out your profile to help AI find connections and create more authentic emails.
+                      </p>
+                      <Link href="/profile">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="border-blue-300 text-blue-700 hover:bg-blue-100 hover:border-blue-400"
+                        >
+                          <Edit3 className="h-3 w-3 mr-1" />
+                          Complete Profile
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
