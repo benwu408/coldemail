@@ -162,17 +162,48 @@ function ProfilePageContent() {
         console.log('School value type:', typeof data.education?.school)
         console.log('School value length:', data.education?.school?.length)
         
+        // Ensure education object exists and has proper structure
+        const education = data.education || {}
+        const parsedEducation = {
+          school: education.school || '',
+          degree: education.degree || '',
+          major: education.major || '',
+          graduation_year: education.graduation_year || ''
+        }
+        
+        console.log('Parsed education data:', parsedEducation)
+        
         setProfile({
           ...data,
+          full_name: data.full_name || '',
+          job_title: data.job_title || '',
+          company: data.company || '',
+          education: parsedEducation,
+          location: data.location || '',
+          industry: data.industry || '',
+          experience_years: data.experience_years || '',
           skills: data.skills || [],
-          interests: data.interests || []
+          interests: data.interests || [],
+          background: data.background || '',
+          linkedin_url: data.linkedin_url || '',
+          website: data.website || ''
         })
         
         // Log the profile state after setting it
         console.log('Profile state after setting:', {
           ...data,
+          full_name: data.full_name || '',
+          job_title: data.job_title || '',
+          company: data.company || '',
+          education: parsedEducation,
+          location: data.location || '',
+          industry: data.industry || '',
+          experience_years: data.experience_years || '',
           skills: data.skills || [],
-          interests: data.interests || []
+          interests: data.interests || [],
+          background: data.background || '',
+          linkedin_url: data.linkedin_url || '',
+          website: data.website || ''
         })
       } else {
         console.log('No profile data found, using empty profile')
@@ -290,6 +321,9 @@ function ProfilePageContent() {
         .single()
 
       console.log('Verification after save:', { verifyData, verifyError })
+      console.log('Education data in verification:', verifyData?.education)
+      console.log('School value in verification:', verifyData?.education?.school)
+      console.log('School value type in verification:', typeof verifyData?.education?.school)
 
       if (verifyData) {
         console.log('Profile saved successfully:', verifyData)
