@@ -386,7 +386,7 @@ Founder & CEO, DataSync`,
               </div>
               
               {/* Email Body */}
-              <div className="p-6">
+              <div className="p-6 h-96 overflow-y-auto">
                 <div 
                   className="font-mono text-sm leading-relaxed text-gray-800 whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{
@@ -795,7 +795,7 @@ Founder & CEO, DataSync`,
                 </div>
                 
                 {/* Email Body */}
-                <div className="p-6">
+                <div className="p-6 h-96 overflow-y-auto">
                   <div 
                     className="font-mono text-sm leading-relaxed text-gray-800 whitespace-pre-wrap"
                     dangerouslySetInnerHTML={{
