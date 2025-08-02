@@ -5,8 +5,13 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { AuthProvider } from '@/contexts/AuthContext'
+import ProtectedRoute from '@/components/ProtectedRoute'
 
-export default function TestProfilePage() {
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic'
+
+function TestProfilePageContent() {
   const { user } = useAuth()
   const [testResult, setTestResult] = useState<string>('')
   const [loading, setLoading] = useState(false)
@@ -126,5 +131,15 @@ export default function TestProfilePage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function TestProfilePage() {
+  return (
+    <AuthProvider>
+      <ProtectedRoute>
+        <TestProfilePageContent />
+      </ProtectedRoute>
+    </AuthProvider>
   )
 } 
