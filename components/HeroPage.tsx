@@ -384,6 +384,153 @@ Founder & CEO, DataSync`,
         </div>
       </section>
 
+      {/* Profile & Connections Section - Moved up */}
+      <section className="py-24 bg-[#FAFAFA]">
+        <div className="container mx-auto px-6 max-w-7xl">
+          <div className="grid lg:grid-cols-2 gap-20 items-center">
+            {/* Left: Profile Info */}
+            <div className="space-y-10">
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 text-[#6366F1] text-sm font-medium rounded-full border border-purple-100">
+                  <Users className="h-3 w-3" />
+                  Smart connections
+                </div>
+                <h2 className="text-4xl font-bold text-[#111827] tracking-tight">
+                  Your profile powers personalized connections
+                </h2>
+                <p className="text-lg text-gray-600 leading-relaxed">
+                  Set up your professional background once, and our AI uses it to find genuine 
+                  commonalities with every prospect you reach out to.
+                </p>
+              </div>
+
+              <div className="space-y-8">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
+                    <Target className="h-5 w-5 text-[#6366F1]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-[#111827] mb-2">Education & Background</h3>
+                    <p className="text-gray-600 leading-relaxed">
+                      Your school, major, and graduation year help find alumni connections. 
+                      "We both went to UIUC" creates instant rapport.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
+                    <Briefcase className="h-5 w-5 text-[#0F766E]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-[#111827] mb-2">Work Experience</h3>
+                    <p className="text-gray-600 leading-relaxed">
+                      Your current role, company, and industry help identify professional 
+                      connections and shared career paths.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
+                    <MapPin className="h-5 w-5 text-[#6366F1]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-[#111827] mb-2">Location & Network</h3>
+                    <p className="text-gray-600 leading-relaxed">
+                      Your location helps find local connections. "I'm also in San Francisco" 
+                      can be the start of a great conversation.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
+                    <Heart className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-[#111827] mb-2">Interests & Skills</h3>
+                    <p className="text-gray-600 leading-relaxed">
+                      Your hobbies, skills, and interests help find personal connections 
+                      that go beyond just professional networking.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <Link href="/profile">
+                  <Button 
+                    className="bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                  >
+                    Set up your profile
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Right: Connection Examples */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8 hover:shadow-lg transition-shadow duration-200">
+                <h3 className="text-xl font-bold text-[#111827] mb-6 flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-[#6366F1]" />
+                  AI-Discovered Connections
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-[#6366F1] rounded-full"></div>
+                      <span className="text-sm font-bold text-[#6366F1]">Education Match</span>
+                    </div>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      "As a fellow UIUC Computer Science grad, I was excited to see another Illini..."
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-teal-50 rounded-xl border border-teal-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-[#0F766E] rounded-full"></div>
+                      <span className="text-sm font-bold text-[#0F766E]">Industry Connection</span>
+                    </div>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      "Given your experience in fintech and my background in SaaS..."
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-[#6366F1] rounded-full"></div>
+                      <span className="text-sm font-bold text-[#6366F1]">Location Match</span>
+                    </div>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      "I'm also based in San Francisco and would love to grab coffee..."
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-orange-50 rounded-xl border border-orange-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
+                      <span className="text-sm font-bold text-orange-600">Interest Overlap</span>
+                    </div>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      "I noticed you're also passionate about sustainable tech..."
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <p className="text-sm text-gray-600 text-center leading-relaxed">
+                    💡 These connections make your emails feel personal and genuine, 
+                    not like generic templates
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Scroll-to-Play Demo Section - Moved right after hero */}
       <section id="demo-section" className="py-24 bg-white">
         <div className="container mx-auto px-6 max-w-7xl">
@@ -712,153 +859,6 @@ Software Engineer & Co-founder`.slice(0, Math.floor(emailContentVisible * 4.5))}
                 Receive a personalized, professional cold email ready to send. 
                 Edit, copy, or export directly to your email client.
               </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Profile & Connections Section */}
-      <section className="py-24 bg-[#FAFAFA]">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
-            {/* Left: Profile Info */}
-            <div className="space-y-10">
-              <div className="space-y-6">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 text-[#6366F1] text-sm font-medium rounded-full border border-purple-100">
-                  <Users className="h-3 w-3" />
-                  Smart connections
-                </div>
-                <h2 className="text-4xl font-bold text-[#111827] tracking-tight">
-                  Your profile powers personalized connections
-                </h2>
-                <p className="text-lg text-gray-600 leading-relaxed">
-                  Set up your professional background once, and our AI uses it to find genuine 
-                  commonalities with every prospect you reach out to.
-                </p>
-              </div>
-
-              <div className="space-y-8">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
-                    <Target className="h-5 w-5 text-[#6366F1]" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-[#111827] mb-2">Education & Background</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      Your school, major, and graduation year help find alumni connections. 
-                      "We both went to UIUC" creates instant rapport.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
-                    <Briefcase className="h-5 w-5 text-[#0F766E]" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-[#111827] mb-2">Work Experience</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      Your current role, company, and industry help identify professional 
-                      connections and shared career paths.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
-                    <MapPin className="h-5 w-5 text-[#6366F1]" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-[#111827] mb-2">Location & Network</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      Your location helps find local connections. "I'm also in San Francisco" 
-                      can be the start of a great conversation.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-1">
-                    <Heart className="h-5 w-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-[#111827] mb-2">Interests & Skills</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      Your hobbies, skills, and interests help find personal connections 
-                      that go beyond just professional networking.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <Link href="/profile">
-                  <Button 
-                    className="bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-                  >
-                    Set up your profile
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Right: Connection Examples */}
-            <div className="space-y-6">
-              <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8 hover:shadow-lg transition-shadow duration-200">
-                <h3 className="text-xl font-bold text-[#111827] mb-6 flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-[#6366F1]" />
-                  AI-Discovered Connections
-                </h3>
-                
-                <div className="space-y-4">
-                  <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-[#6366F1] rounded-full"></div>
-                      <span className="text-sm font-bold text-[#6366F1]">Education Match</span>
-                    </div>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      "As a fellow UIUC Computer Science grad, I was excited to see another Illini..."
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-teal-50 rounded-xl border border-teal-100">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-[#0F766E] rounded-full"></div>
-                      <span className="text-sm font-bold text-[#0F766E]">Industry Connection</span>
-                    </div>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      "Given your experience in fintech and my background in SaaS..."
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-[#6366F1] rounded-full"></div>
-                      <span className="text-sm font-bold text-[#6366F1]">Location Match</span>
-                    </div>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      "I'm also based in San Francisco and would love to grab coffee..."
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-orange-50 rounded-xl border border-orange-100">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
-                      <span className="text-sm font-bold text-orange-600">Interest Overlap</span>
-                    </div>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      "I noticed you're also passionate about sustainable tech..."
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="text-sm text-gray-600 text-center leading-relaxed">
-                    💡 These connections make your emails feel personal and genuine, 
-                    not like generic templates
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
