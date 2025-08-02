@@ -111,17 +111,21 @@ export default function Header({
               </>
             ) : (
               <>
-                <Button 
-                  variant="ghost" 
-                  className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium"
-                >
-                  Sign in
-                </Button>
-                <Button 
-                  className="bg-[#111827] hover:bg-gray-800 text-white rounded-full px-6 py-2 text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-                >
-                  Get Started
-                </Button>
+                <Link href="/login">
+                  <Button 
+                    variant="ghost" 
+                    className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium"
+                  >
+                    Sign in
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button 
+                    className="bg-[#111827] hover:bg-gray-800 text-white rounded-full px-6 py-2 text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                  >
+                    Get Started
+                  </Button>
+                </Link>
               </>
             )}
           </div>
