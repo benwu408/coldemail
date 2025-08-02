@@ -295,6 +295,28 @@ function DebugProfilePage() {
         details: `Data verification: ${JSON.stringify(verification)}`
       })
 
+      // Additional education data logging
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Load Profile Test - Education Values',
+        success: true,
+        data: {
+          expected: {
+            school: testData.school,
+            major: testData.major,
+            degree: testData.degree,
+            graduationYear: testData.graduationYear
+          },
+          actual: {
+            school: data.education?.school,
+            major: data.education?.major,
+            degree: data.education?.degree,
+            graduationYear: data.education?.graduation_year
+          }
+        },
+        details: 'Comparing expected vs actual education values'
+      })
+
     } catch (error) {
       addDebugResult({
         timestamp: new Date().toLocaleTimeString(),

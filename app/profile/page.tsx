@@ -172,6 +172,12 @@ function ProfilePageContent() {
         }
         
         console.log('Parsed education data:', parsedEducation)
+        console.log('Education data comparison:', {
+          savedSchool: education.school,
+          savedMajor: education.major,
+          savedDegree: education.degree,
+          savedYear: education.graduation_year
+        })
         
         setProfile({
           ...data,
