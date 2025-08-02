@@ -85,13 +85,10 @@ function ProfilePageContent() {
   // Auto-save when component unmounts or page is about to unload
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // Only save if there are unsaved changes
-      if (profile.full_name || profile.job_title || profile.company || profile.location || 
-          profile.industry || profile.experience_years || profile.background || 
-          profile.linkedin_url || profile.website || profile.skills.length > 0 || 
-          profile.interests.length > 0 || profile.education.school || profile.education.degree || 
-          profile.education.major || profile.education.graduation_year) {
-        // Save profile before leaving
+      // Save profile before leaving - always try to save if user is logged in
+      if (user?.id) {
+        // Use synchronous storage as fallback since async operations might not complete
+        localStorage.setItem('profile_autosave_pending', 'true')
         saveProfileSilently()
       }
     }
@@ -99,35 +96,36 @@ function ProfilePageContent() {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         // Save when user switches tabs or minimizes window
-        if (profile.full_name || profile.job_title || profile.company || profile.location || 
-            profile.industry || profile.experience_years || profile.background || 
-            profile.linkedin_url || profile.website || profile.skills.length > 0 || 
-            profile.interests.length > 0 || profile.education.school || profile.education.degree || 
-            profile.education.major || profile.education.graduation_year) {
+        if (user?.id) {
           saveProfileSilently()
         }
       }
     }
 
+    const handlePageHide = () => {
+      // Save when page is being hidden (navigation, tab close, etc.)
+      if (user?.id) {
+        saveProfileSilently()
+      }
+    }
+
     // Add event listeners
     window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('pagehide', handlePageHide)
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     // Cleanup function - save when component unmounts
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('pagehide', handlePageHide)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       
       // Save when leaving the page
-      if (profile.full_name || profile.job_title || profile.company || profile.location || 
-          profile.industry || profile.experience_years || profile.background || 
-          profile.linkedin_url || profile.website || profile.skills.length > 0 || 
-          profile.interests.length > 0 || profile.education.school || profile.education.degree || 
-          profile.education.major || profile.education.graduation_year) {
+      if (user?.id) {
         saveProfileSilently()
       }
     }
-  }, [profile, user?.id])
+  }, [user?.id]) // Only depend on user ID, not profile to avoid infinite loops
 
   const loadProfile = async () => {
     if (!user?.id) {
@@ -291,20 +289,24 @@ function ProfilePageContent() {
 
   const saveProfileSilently = async () => {
     if (!user?.id) {
+      console.log('No user ID available for silent save')
       return
     }
+
     try {
-      setSaving(true)
+      console.log('Silent save triggered for user:', user.id)
+      
+      // Clean the profile data - convert empty strings to null for database
       const cleanedProfile = {
         user_id: user.id,
         full_name: profile.full_name || null,
         job_title: profile.job_title || null,
         company: profile.company || null,
         education: {
-          school: profile.education.school || '',
-          degree: profile.education.degree || '',
-          major: profile.education.major || '',
-          graduation_year: profile.education.graduation_year || ''
+          school: profile.education.school || null,
+          degree: profile.education.degree || null,
+          major: profile.education.major || null,
+          graduation_year: profile.education.graduation_year || null
         },
         location: profile.location || null,
         industry: profile.industry || null,
@@ -316,15 +318,20 @@ function ProfilePageContent() {
         website: profile.website || null,
         updated_at: new Date().toISOString()
       }
+
+      console.log('Saving cleaned profile:', cleanedProfile)
+
       const { error } = await supabase
         .from('user_profiles')
         .upsert(cleanedProfile, {
           onConflict: 'user_id',
           ignoreDuplicates: false
         })
+
       if (error) {
         console.error('Supabase error during silent save:', error)
       } else {
+        console.log('Silent save successful')
         setLastSaved(new Date().toLocaleTimeString())
       }
     } catch (error) {
@@ -379,13 +386,9 @@ function ProfilePageContent() {
       clearTimeout(autoSaveTimeout)
     }
 
-    // Set new timeout for auto-save
+    // Set new timeout for auto-save - always save after 2 seconds of inactivity
     const timeout = setTimeout(() => {
-      if (profile.full_name || profile.job_title || profile.company || profile.location || 
-          profile.industry || profile.experience_years || profile.background || 
-          profile.linkedin_url || profile.website || profile.skills.length > 0 || 
-          profile.interests.length > 0 || profile.education.school || profile.education.degree || 
-          profile.education.major || profile.education.graduation_year) {
+      if (user?.id) {
         saveProfileSilently()
       }
     }, 2000) // 2 seconds delay
