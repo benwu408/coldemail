@@ -2,437 +2,642 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/lib/supabase'
+import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { 
+  Bug, 
+  Database, 
+  Save, 
+  Download, 
+  Upload, 
+  RefreshCw, 
+  CheckCircle, 
+  XCircle, 
+  AlertTriangle,
+  Copy,
+  Trash2
+} from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import { AuthProvider } from '@/contexts/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import Header from '@/components/Header'
 
-// Force dynamic rendering to prevent static generation issues
+// Force dynamic rendering
 export const dynamic = 'force-dynamic'
 
-function DebugProfilePageContent() {
+interface DebugResult {
+  timestamp: string
+  operation: string
+  success: boolean
+  data?: any
+  error?: any
+  details?: string
+}
+
+interface TestCase {
+  id: string
+  name: string
+  description: string
+  testFunction: () => Promise<void>
+}
+
+function DebugProfilePage() {
   const { user } = useAuth()
-  const [debugLog, setDebugLog] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
-  const [testResults, setTestResults] = useState<Record<string, any>>({})
-  
-  // Test profile data
-  const [testProfile, setTestProfile] = useState({
-    full_name: 'Debug Test User',
-    job_title: 'Debug Engineer',
-    company: 'Debug Corp',
-    education: {
-      school: 'Debug University',
-      degree: 'BS',
-      major: 'Debug Science',
-      graduation_year: '2020'
-    },
-    location: 'Debug City',
-    industry: 'Debug Industry',
-    experience_years: '5-10',
-    skills: ['Debugging', 'Testing', 'Problem Solving'],
-    interests: ['Debugging', 'Testing'],
-    background: 'Professional debug tester with extensive experience in finding and fixing issues.',
-    linkedin_url: 'https://linkedin.com/in/debuguser',
-    website: 'https://debuguser.com'
+  const { toast } = useToast()
+  const [debugResults, setDebugResults] = useState<DebugResult[]>([])
+  const [isRunning, setIsRunning] = useState(false)
+  const [testData, setTestData] = useState({
+    fullName: 'Debug Test User',
+    school: 'UIUC',
+    major: 'Computer Science',
+    degree: "Bachelor's",
+    graduationYear: '2024'
   })
 
-  const addLog = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString()
-    setDebugLog(prev => [...prev, `[${timestamp}] ${message}`])
-    console.log(`[${timestamp}] ${message}`)
+  const addDebugResult = (result: DebugResult) => {
+    setDebugResults(prev => [result, ...prev.slice(0, 49)]) // Keep last 50 results
   }
 
-  const clearLog = () => {
-    setDebugLog([])
-    setTestResults({})
+  const clearDebugResults = () => {
+    setDebugResults([])
   }
 
-  const runComprehensiveTest = async () => {
-    setLoading(true)
-    clearLog()
+  const copyDebugResults = () => {
+    const resultsText = debugResults.map(r => 
+      `[${r.timestamp}] ${r.operation}: ${r.success ? 'SUCCESS' : 'FAILED'}\n${r.details || ''}\n${r.error ? `Error: ${JSON.stringify(r.error, null, 2)}` : ''}\n`
+    ).join('\n')
     
-    addLog('🚀 Starting comprehensive profile debug test...')
-    
+    navigator.clipboard.writeText(resultsText)
+    toast({
+      title: "Debug Results Copied",
+      description: "Debug results have been copied to clipboard",
+    })
+  }
+
+  // Test 1: Database Connection
+  const testDatabaseConnection = async (): Promise<void> => {
     try {
-      // Test 1: Environment Variables
-      addLog('📋 Test 1: Checking environment variables...')
-      const envVars = {
-        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT SET',
-        supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'
-      }
-      addLog(`   Supabase URL: ${envVars.supabaseUrl}`)
-      addLog(`   Supabase Key: ${envVars.supabaseKey}`)
-      setTestResults(prev => ({ ...prev, envVars }))
-
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        addLog('❌ Environment variables missing - test cannot continue')
-        return
-      }
-
-      // Test 2: User Authentication
-      addLog('👤 Test 2: Checking user authentication...')
-      if (!user?.id) {
-        addLog('❌ No authenticated user found')
-        setTestResults(prev => ({ ...prev, userAuth: 'FAILED - No user' }))
-        return
-      }
-      addLog(`✅ User authenticated: ${user.id}`)
-      addLog(`   User email: ${user.email}`)
-      setTestResults(prev => ({ ...prev, userAuth: 'SUCCESS' }))
-
-      // Test 3: Supabase Connection
-      addLog('🔌 Test 3: Testing Supabase connection...')
-      const { data: connectionTest, error: connectionError } = await supabase
+      const { data, error } = await supabase
         .from('user_profiles')
         .select('count')
         .limit(1)
       
-      if (connectionError) {
-        addLog(`❌ Supabase connection failed: ${connectionError.message}`)
-        addLog(`   Error code: ${connectionError.code}`)
-        addLog(`   Error details: ${connectionError.details}`)
-        setTestResults(prev => ({ ...prev, connection: 'FAILED' }))
-        return
-      }
-      addLog('✅ Supabase connection successful')
-      setTestResults(prev => ({ ...prev, connection: 'SUCCESS' }))
-
-      // Test 4: Table Structure
-      addLog('📊 Test 4: Checking table structure...')
-      const { data: tableInfo, error: tableError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .limit(1)
+      if (error) throw error
       
-      if (tableError) {
-        addLog(`❌ Table structure check failed: ${tableError.message}`)
-        setTestResults(prev => ({ ...prev, tableStructure: 'FAILED' }))
-        return
-      }
-      addLog('✅ Table structure check passed')
-      setTestResults(prev => ({ ...prev, tableStructure: 'SUCCESS' }))
-
-      // Test 5: Check for existing profile
-      addLog('🔍 Test 5: Checking for existing profile...')
-      const { data: existingProfile, error: existingError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-      
-      if (existingError && existingError.code !== 'PGRST116') {
-        addLog(`❌ Error checking existing profile: ${existingError.message}`)
-        setTestResults(prev => ({ ...prev, existingCheck: 'FAILED' }))
-        return
-      }
-      
-      if (existingProfile) {
-        addLog(`✅ Existing profile found: ${existingProfile.id}`)
-        addLog(`   Created: ${existingProfile.created_at}`)
-        addLog(`   Updated: ${existingProfile.updated_at}`)
-        setTestResults(prev => ({ ...prev, existingCheck: 'FOUND', existingProfile }))
-      } else {
-        addLog('ℹ️ No existing profile found - will create new one')
-        setTestResults(prev => ({ ...prev, existingCheck: 'NOT_FOUND' }))
-      }
-
-      // Test 6: Profile Insert Test
-      addLog('➕ Test 6: Testing profile insert...')
-      const insertData = {
-        user_id: user.id,
-        ...testProfile,
-        updated_at: new Date().toISOString()
-      }
-      
-      addLog(`   Inserting data: ${JSON.stringify(insertData, null, 2)}`)
-      
-      const { data: insertResult, error: insertError } = await supabase
-        .from('user_profiles')
-        .upsert(insertData, {
-          onConflict: 'user_id',
-          ignoreDuplicates: false
-        })
-        .select()
-      
-      if (insertError) {
-        addLog(`❌ Profile insert failed: ${insertError.message}`)
-        addLog(`   Error code: ${insertError.code}`)
-        addLog(`   Error details: ${insertError.details}`)
-        addLog(`   Error hint: ${insertError.hint}`)
-        setTestResults(prev => ({ ...prev, insert: 'FAILED', insertError }))
-        return
-      }
-      
-      addLog('✅ Profile insert successful')
-      addLog(`   Inserted/Updated: ${insertResult?.length || 0} records`)
-      setTestResults(prev => ({ ...prev, insert: 'SUCCESS', insertResult }))
-
-      // Test 7: Profile Read Test
-      addLog('📖 Test 7: Testing profile read...')
-      const { data: readResult, error: readError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-      
-      if (readError) {
-        addLog(`❌ Profile read failed: ${readError.message}`)
-        setTestResults(prev => ({ ...prev, read: 'FAILED' }))
-        return
-      }
-      
-      addLog('✅ Profile read successful')
-      addLog(`   Read profile: ${JSON.stringify(readResult, null, 2)}`)
-      setTestResults(prev => ({ ...prev, read: 'SUCCESS', readResult }))
-
-      // Test 8: Data Validation
-      addLog('✅ Test 8: Validating saved data...')
-      const validationChecks = {
-        full_name: readResult.full_name === testProfile.full_name,
-        job_title: readResult.job_title === testProfile.job_title,
-        company: readResult.company === testProfile.company,
-        education: JSON.stringify(readResult.education) === JSON.stringify(testProfile.education),
-        skills: JSON.stringify(readResult.skills) === JSON.stringify(testProfile.skills),
-        interests: JSON.stringify(readResult.interests) === JSON.stringify(testProfile.interests)
-      }
-      
-      Object.entries(validationChecks).forEach(([field, isValid]) => {
-        if (isValid) {
-          addLog(`   ✅ ${field}: Valid`)
-        } else {
-          addLog(`   ❌ ${field}: Invalid`)
-          addLog(`      Expected: ${JSON.stringify(testProfile[field as keyof typeof testProfile])}`)
-          addLog(`      Got: ${JSON.stringify(readResult[field])}`)
-        }
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Database Connection Test',
+        success: true,
+        data: data,
+        details: 'Successfully connected to user_profiles table'
       })
-      
-      const allValid = Object.values(validationChecks).every(Boolean)
-      if (allValid) {
-        addLog('✅ All data validation checks passed')
-      } else {
-        addLog('❌ Some data validation checks failed')
-      }
-      setTestResults(prev => ({ ...prev, validation: validationChecks, allValid }))
-
-      // Test 9: RLS Policy Test
-      addLog('🔒 Test 9: Testing RLS policies...')
-      const { data: rlsTest, error: rlsError } = await supabase
-        .from('user_profiles')
-        .select('user_id')
-        .eq('user_id', user.id)
-      
-      if (rlsError) {
-        addLog(`❌ RLS policy test failed: ${rlsError.message}`)
-        setTestResults(prev => ({ ...prev, rls: 'FAILED' }))
-        return
-      }
-      
-      addLog('✅ RLS policies working correctly')
-      setTestResults(prev => ({ ...prev, rls: 'SUCCESS' }))
-
-      addLog('🎉 Comprehensive test completed!')
-
     } catch (error) {
-      addLog(`💥 Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`)
-      addLog(`   Error stack: ${error instanceof Error ? error.stack : 'No stack trace'}`)
-    } finally {
-      setLoading(false)
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Database Connection Test',
+        success: false,
+        error: error,
+        details: 'Failed to connect to database'
+      })
     }
   }
 
-  const testSpecificField = async (fieldName: string, value: any) => {
-    setLoading(true)
-    addLog(`🧪 Testing specific field: ${fieldName}`)
-    
+  // Test 2: Check if user profile exists
+  const testProfileExists = async (): Promise<void> => {
+    if (!user?.id) {
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Profile Existence Check',
+        success: false,
+        error: 'No user ID available',
+        details: 'User not authenticated'
+      })
+      return
+    }
+
     try {
-      const testData = {
-        user_id: user?.id,
-        [fieldName]: value,
-        updated_at: new Date().toISOString()
-      }
-      
-      addLog(`   Test data: ${JSON.stringify(testData, null, 2)}`)
-      
       const { data, error } = await supabase
         .from('user_profiles')
-        .upsert(testData, {
-          onConflict: 'user_id',
-          ignoreDuplicates: false
-        })
-        .select()
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
       
-      if (error) {
-        addLog(`❌ Field test failed: ${error.message}`)
-        addLog(`   Error details: ${JSON.stringify(error, null, 2)}`)
-      } else {
-        addLog(`✅ Field test successful`)
-        addLog(`   Result: ${JSON.stringify(data, null, 2)}`)
+      if (error && error.code === 'PGRST116') {
+        addDebugResult({
+          timestamp: new Date().toLocaleTimeString(),
+          operation: 'Profile Existence Check',
+          success: true,
+          data: null,
+          details: 'No profile exists for this user (this is normal for new users)'
+        })
+        return
       }
+      
+      if (error) throw error
+      
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Profile Existence Check',
+        success: true,
+        data: data,
+        details: `Profile found with ID: ${data.id}`
+      })
     } catch (error) {
-      addLog(`💥 Field test error: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    } finally {
-      setLoading(false)
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Profile Existence Check',
+        success: false,
+        error: error,
+        details: 'Error checking profile existence'
+      })
     }
   }
 
+  // Test 3: Save test profile
+  const testSaveProfile = async (): Promise<void> => {
+    if (!user?.id) {
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Save Profile Test',
+        success: false,
+        error: 'No user ID available',
+        details: 'User not authenticated'
+      })
+      return
+    }
+
+    try {
+      const testProfile = {
+        user_id: user.id,
+        full_name: testData.fullName,
+        job_title: 'Debug Tester',
+        company: 'Debug Corp',
+        education: {
+          school: testData.school,
+          degree: testData.degree,
+          major: testData.major,
+          graduation_year: testData.graduationYear
+        },
+        location: 'Debug City',
+        industry: 'Technology',
+        experience_years: '1-2',
+        skills: ['Debugging', 'Testing'],
+        interests: ['Problem Solving'],
+        background: 'Professional debug tester',
+        linkedin_url: 'https://linkedin.com/in/debug',
+        website: 'https://debug.com',
+        updated_at: new Date().toISOString()
+      }
+
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Save Profile Test - Data Prepared',
+        success: true,
+        data: testProfile,
+        details: 'Test profile data prepared for saving'
+      })
+
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .upsert(testProfile, {
+          onConflict: 'user_id',
+          ignoreDuplicates: false
+        })
+
+      if (error) throw error
+
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Save Profile Test - Database Save',
+        success: true,
+        data: data,
+        details: 'Profile saved to database successfully'
+      })
+    } catch (error) {
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Save Profile Test',
+        success: false,
+        error: error,
+        details: 'Failed to save profile to database'
+      })
+    }
+  }
+
+  // Test 4: Load profile and verify data
+  const testLoadProfile = async (): Promise<void> => {
+    if (!user?.id) {
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Load Profile Test',
+        success: false,
+        error: 'No user ID available',
+        details: 'User not authenticated'
+      })
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+
+      if (error) throw error
+
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Load Profile Test - Raw Data',
+        success: true,
+        data: data,
+        details: 'Raw profile data loaded from database'
+      })
+
+      // Check education data specifically
+      if (data.education) {
+        addDebugResult({
+          timestamp: new Date().toLocaleTimeString(),
+          operation: 'Load Profile Test - Education Data',
+          success: true,
+          data: data.education,
+          details: `Education data: school="${data.education.school}", type=${typeof data.education.school}, length=${data.education.school?.length}`
+        })
+      } else {
+        addDebugResult({
+          timestamp: new Date().toLocaleTimeString(),
+          operation: 'Load Profile Test - Education Data',
+          success: false,
+          error: 'No education data found',
+          details: 'Education field is null or undefined'
+        })
+      }
+
+      // Verify specific fields
+      const verification = {
+        fullName: data.full_name === testData.fullName,
+        school: data.education?.school === testData.school,
+        major: data.education?.major === testData.major,
+        degree: data.education?.degree === testData.degree,
+        graduationYear: data.education?.graduation_year === testData.graduationYear
+      }
+
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Load Profile Test - Data Verification',
+        success: Object.values(verification).every(v => v),
+        data: verification,
+        details: `Data verification: ${JSON.stringify(verification)}`
+      })
+
+    } catch (error) {
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Load Profile Test',
+        success: false,
+        error: error,
+        details: 'Failed to load profile from database'
+      })
+    }
+  }
+
+  // Test 5: Delete test profile
+  const testDeleteProfile = async (): Promise<void> => {
+    if (!user?.id) {
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Delete Profile Test',
+        success: false,
+        error: 'No user ID available',
+        details: 'User not authenticated'
+      })
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('user_id', user.id)
+
+      if (error) throw error
+
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Delete Profile Test',
+        success: true,
+        details: 'Test profile deleted successfully'
+      })
+    } catch (error) {
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Delete Profile Test',
+        success: false,
+        error: error,
+        details: 'Failed to delete test profile'
+      })
+    }
+  }
+
+  // Test 6: Run full cycle test
+  const testFullCycle = async (): Promise<void> => {
+    setIsRunning(true)
+    
+    try {
+      // Step 1: Check database connection
+      await testDatabaseConnection()
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      // Step 2: Check if profile exists
+      await testProfileExists()
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      // Step 3: Save test profile
+      await testSaveProfile()
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      // Step 4: Load and verify profile
+      await testLoadProfile()
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      // Step 5: Clean up - delete test profile
+      await testDeleteProfile()
+
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Full Cycle Test',
+        success: true,
+        details: 'Complete test cycle finished successfully'
+      })
+
+    } catch (error) {
+      addDebugResult({
+        timestamp: new Date().toLocaleTimeString(),
+        operation: 'Full Cycle Test',
+        success: false,
+        error: error,
+        details: 'Full cycle test failed'
+      })
+    } finally {
+      setIsRunning(false)
+    }
+  }
+
+  const testCases: TestCase[] = [
+    {
+      id: 'connection',
+      name: 'Database Connection',
+      description: 'Test if we can connect to the database',
+      testFunction: testDatabaseConnection
+    },
+    {
+      id: 'exists',
+      name: 'Profile Existence',
+      description: 'Check if a profile exists for the current user',
+      testFunction: testProfileExists
+    },
+    {
+      id: 'save',
+      name: 'Save Profile',
+      description: 'Save a test profile with sample data',
+      testFunction: testSaveProfile
+    },
+    {
+      id: 'load',
+      name: 'Load Profile',
+      description: 'Load the profile and verify the data integrity',
+      testFunction: testLoadProfile
+    },
+    {
+      id: 'delete',
+      name: 'Delete Profile',
+      description: 'Delete the test profile to clean up',
+      testFunction: testDeleteProfile
+    },
+    {
+      id: 'full-cycle',
+      name: 'Full Cycle Test',
+      description: 'Run all tests in sequence to identify issues',
+      testFunction: testFullCycle
+    }
+  ]
+
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">🔧 Profile Save Debug Tester</CardTitle>
-            <p className="text-gray-600">
-              Comprehensive debug tool to test every aspect of profile saving functionality
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* User Info */}
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h3 className="font-bold text-blue-900 mb-2">Current User Info:</h3>
-              <div className="text-sm text-blue-800">
-                <p><strong>User ID:</strong> {user?.id || 'Not authenticated'}</p>
-                <p><strong>Email:</strong> {user?.email || 'Not available'}</p>
-                <p><strong>Auth Status:</strong> {user ? 'Authenticated' : 'Not authenticated'}</p>
-              </div>
-            </div>
+    <div className="min-h-screen bg-[#FAFAFA] text-[#111]">
+      <Header
+        showBackButton
+        showNavigation={false}
+        title="Profile Debug Tester"
+        subtitle="Comprehensive testing and debugging tools for profile functionality"
+      />
 
-            {/* Test Controls */}
-            <div className="space-y-4">
-              <div className="flex gap-4">
-                <Button
-                  onClick={runComprehensiveTest}
-                  disabled={loading || !user}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {loading ? 'Running Tests...' : '🚀 Run Comprehensive Test'}
-                </Button>
-                <Button
-                  onClick={clearLog}
-                  variant="outline"
-                >
-                  Clear Log
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <Button
-                  onClick={() => testSpecificField('full_name', 'Test Name')}
-                  disabled={loading || !user}
-                  size="sm"
-                  variant="outline"
-                >
-                  Test Name
-                </Button>
-                <Button
-                  onClick={() => testSpecificField('job_title', 'Test Job')}
-                  disabled={loading || !user}
-                  size="sm"
-                  variant="outline"
-                >
-                  Test Job
-                </Button>
-                <Button
-                  onClick={() => testSpecificField('skills', ['Test Skill'])}
-                  disabled={loading || !user}
-                  size="sm"
-                  variant="outline"
-                >
-                  Test Skills
-                </Button>
-                <Button
-                  onClick={() => testSpecificField('education', { school: 'Test School' })}
-                  disabled={loading || !user}
-                  size="sm"
-                  variant="outline"
-                >
-                  Test Education
-                </Button>
-              </div>
-            </div>
-
-            {/* Test Results Summary */}
-            {Object.keys(testResults).length > 0 && (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-bold text-gray-900 mb-2">Test Results Summary:</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
-                  {Object.entries(testResults).map(([test, result]) => (
-                    <div key={test} className="flex items-center gap-2">
-                      <span className="font-medium">{test}:</span>
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        result === 'SUCCESS' || result === 'FOUND' ? 'bg-green-100 text-green-800' :
-                        result === 'FAILED' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {typeof result === 'object' ? 'OBJECT' : result}
-                      </span>
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* Test Controls */}
+          <div className="space-y-6">
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Bug className="h-5 w-5 text-red-600" />
+                  Test Controls
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                
+                {/* Test Data Input */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Test Data</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Full Name</Label>
+                      <Input
+                        value={testData.fullName}
+                        onChange={(e) => setTestData(prev => ({ ...prev, fullName: e.target.value }))}
+                        placeholder="Test Name"
+                      />
                     </div>
-                  ))}
+                    <div>
+                      <Label className="text-xs">School</Label>
+                      <Input
+                        value={testData.school}
+                        onChange={(e) => setTestData(prev => ({ ...prev, school: e.target.value }))}
+                        placeholder="UIUC"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Major</Label>
+                      <Input
+                        value={testData.major}
+                        onChange={(e) => setTestData(prev => ({ ...prev, major: e.target.value }))}
+                        placeholder="Computer Science"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Graduation Year</Label>
+                      <Input
+                        value={testData.graduationYear}
+                        onChange={(e) => setTestData(prev => ({ ...prev, graduationYear: e.target.value }))}
+                        placeholder="2024"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* Debug Log */}
-            <div className="bg-black text-green-400 p-4 rounded-lg font-mono text-sm max-h-96 overflow-y-auto">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-white font-bold">Debug Log:</span>
-                <span className="text-gray-400 text-xs">{debugLog.length} entries</span>
-              </div>
-              {debugLog.length === 0 ? (
-                <div className="text-gray-500">No debug entries yet. Run a test to see results.</div>
-              ) : (
-                <div className="space-y-1">
-                  {debugLog.map((entry, index) => (
-                    <div key={index} className="whitespace-pre-wrap">{entry}</div>
-                  ))}
+                {/* Individual Test Buttons */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Individual Tests</Label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {testCases.slice(0, -1).map((testCase) => (
+                      <Button
+                        key={testCase.id}
+                        onClick={testCase.testFunction}
+                        disabled={isRunning}
+                        variant="outline"
+                        className="justify-start"
+                      >
+                        <Database className="h-4 w-4 mr-2" />
+                        {testCase.name}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-              )}
-            </div>
 
-            {/* Copy Results */}
-            <div className="flex gap-2">
-              <Button
-                onClick={() => {
-                  const results = {
-                    timestamp: new Date().toISOString(),
-                    user: { id: user?.id, email: user?.email },
-                    testResults,
-                    debugLog
-                  }
-                  navigator.clipboard.writeText(JSON.stringify(results, null, 2))
-                }}
-                variant="outline"
-                size="sm"
-              >
-                📋 Copy Results to Clipboard
-              </Button>
-              <Button
-                onClick={() => {
-                  const logText = debugLog.join('\n')
-                  navigator.clipboard.writeText(logText)
-                }}
-                variant="outline"
-                size="sm"
-              >
-                📋 Copy Log to Clipboard
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                {/* Full Cycle Test */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Full Cycle Test</Label>
+                  <Button
+                    onClick={testFullCycle}
+                    disabled={isRunning}
+                    className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
+                  >
+                    {isRunning ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Running Tests...
+                      </>
+                    ) : (
+                      <>
+                        <Bug className="h-4 w-4 mr-2" />
+                        Run Full Cycle Test
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Debug Actions */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Debug Actions</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={clearDebugResults}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Clear Results
+                    </Button>
+                    <Button
+                      onClick={copyDebugResults}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy Results
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Debug Results */}
+          <div className="space-y-6">
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Database className="h-5 w-5 text-blue-600" />
+                  Debug Results
+                  <Badge variant="secondary" className="ml-auto">
+                    {debugResults.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {debugResults.length === 0 ? (
+                    <div className="text-center text-gray-500 py-8">
+                      <Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>No debug results yet</p>
+                      <p className="text-sm">Run a test to see results here</p>
+                    </div>
+                  ) : (
+                    debugResults.map((result, index) => (
+                      <div
+                        key={index}
+                        className={`p-3 rounded-lg border ${
+                          result.success 
+                            ? 'bg-green-50 border-green-200' 
+                            : 'bg-red-50 border-red-200'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          {result.success ? (
+                            <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-sm">{result.operation}</span>
+                              <span className="text-xs text-gray-500">{result.timestamp}</span>
+                            </div>
+                            <p className="text-sm text-gray-700 mb-2">{result.details}</p>
+                            {result.error && (
+                              <details className="text-xs">
+                                <summary className="cursor-pointer text-red-600 hover:text-red-800">
+                                  Error Details
+                                </summary>
+                                <pre className="mt-1 p-2 bg-red-100 rounded text-red-800 overflow-x-auto">
+                                  {JSON.stringify(result.error, null, 2)}
+                                </pre>
+                              </details>
+                            )}
+                            {result.data && (
+                              <details className="text-xs">
+                                <summary className="cursor-pointer text-blue-600 hover:text-blue-800">
+                                  Data
+                                </summary>
+                                <pre className="mt-1 p-2 bg-blue-100 rounded text-blue-800 overflow-x-auto">
+                                  {JSON.stringify(result.data, null, 2)}
+                                </pre>
+                              </details>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   )
 }
 
-export default function DebugProfilePage() {
+export default function DebugProfilePageWrapper() {
   return (
     <AuthProvider>
       <ProtectedRoute>
-        <DebugProfilePageContent />
+        <DebugProfilePage />
       </ProtectedRoute>
     </AuthProvider>
   )
