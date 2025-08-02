@@ -119,31 +119,47 @@ Founder & CEO, DataSync`,
       if (demoSection) {
         const rect = demoSection.getBoundingClientRect()
         const windowHeight = window.innerHeight
+        const sectionHeight = demoSection.offsetHeight
         
-        // Step 1 animations
-        if (rect.top < windowHeight * 0.8 && rect.top > -rect.height * 0.2) {
+        // Calculate scroll progress within the demo section
+        const scrollProgress = Math.max(0, Math.min(1, (windowHeight - rect.top) / (sectionHeight + windowHeight)))
+        
+        console.log('Scroll Debug:', {
+          rectTop: rect.top,
+          windowHeight,
+          sectionHeight,
+          scrollProgress,
+          step1Visible: scrollProgress > 0.1,
+          step2Visible: scrollProgress > 0.25,
+          step3Visible: scrollProgress > 0.5,
+          researchItems: Math.floor((scrollProgress - 0.25) / 0.25 * 4),
+          emailContent: Math.floor((scrollProgress - 0.5) / 0.5 * 100)
+        })
+        
+        // Step 1: Show when section comes into view (0-25% of scroll)
+        if (scrollProgress > 0.1) {
           setDemoStep1Visible(true)
         }
         
-        // Step 2 animations
-        if (rect.top < windowHeight * 0.6 && rect.top > -rect.height * 0.4) {
+        // Step 2: Show research items progressively (25-50% of scroll)
+        if (scrollProgress > 0.25) {
           setDemoStep2Visible(true)
-          // Gradually show research items
-          const progress = Math.max(0, Math.min(1, (windowHeight * 0.6 - rect.top) / 200))
-          setResearchItemsVisible(Math.floor(progress * 4))
+          const step2Progress = Math.max(0, Math.min(1, (scrollProgress - 0.25) / 0.25))
+          setResearchItemsVisible(Math.floor(step2Progress * 4))
         }
         
-        // Step 3 animations
-        if (rect.top < windowHeight * 0.4 && rect.top > -rect.height * 0.6) {
+        // Step 3: Show email content progressively (50-100% of scroll)
+        if (scrollProgress > 0.5) {
           setDemoStep3Visible(true)
-          // Gradually show email content
-          const progress = Math.max(0, Math.min(1, (windowHeight * 0.4 - rect.top) / 300))
-          setEmailContentVisible(Math.floor(progress * 100))
+          const step3Progress = Math.max(0, Math.min(1, (scrollProgress - 0.5) / 0.5))
+          setEmailContentVisible(Math.floor(step3Progress * 100))
         }
       }
     }
 
     window.addEventListener('scroll', handleScroll)
+    // Trigger on mount to set initial state
+    handleScroll()
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
@@ -518,7 +534,7 @@ Would you be open to a 15-minute chat next week? I'd be happy to work around you
 
 Best,
 Emma Rodriguez
-Software Engineer & Co-founder`.slice(0, emailContentVisible)}
+Software Engineer & Co-founder`.slice(0, Math.floor(emailContentVisible * 4.5))}
                     {emailContentVisible < 100 && (
                       <span className="inline-block w-2 h-5 bg-[#6366F1] animate-pulse ml-1"></span>
                     )}
