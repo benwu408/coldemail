@@ -811,7 +811,7 @@ Would you be open to a 15-minute chat next week? I'd be happy to work around you
 
 Best,
 Emma Rodriguez
-Software Engineer & Co-founder`.slice(0, Math.floor(emailContentVisible * 2.5))
+Software Engineer & Co-founder`.slice(0, Math.floor(emailContentVisible * 6))
                     }}
                   />
                   {emailContentVisible < 100 && (
