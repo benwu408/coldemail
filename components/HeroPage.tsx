@@ -221,23 +221,6 @@ Founder & CEO, DataSync`,
 
           {/* Right side - Live email preview */}
           <div className="relative">
-            {/* Animated typing indicator */}
-            <div className="absolute -top-32 left-0 bg-white rounded-xl shadow-md border border-gray-100 p-4 transition-all duration-500 z-20">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-[#6366F1] rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-[#111827]">Emma is writing...</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-400 text-sm">[</span>
-                  <span className="w-1 h-1 bg-gray-400 rounded-full typing-dot-1"></span>
-                  <span className="w-1 h-1 bg-gray-400 rounded-full typing-dot-2"></span>
-                  <span className="w-1 h-1 bg-gray-400 rounded-full typing-dot-3"></span>
-                  <span className="text-gray-400 text-sm">]</span>
-                </div>
-              </div>
-            </div>
-
             {/* Persona info card - positioned above email */}
             <div className="absolute -top-20 left-0 bg-white rounded-xl shadow-md border border-gray-100 p-4 transition-all duration-500 z-10">
               <div className="text-sm">
@@ -294,6 +277,25 @@ Founder & CEO, DataSync`,
                   {isTyping && (
                     <span className="inline-block w-2 h-5 bg-[#6366F1] animate-pulse ml-1"></span>
                   )}
+                </div>
+              </div>
+
+              {/* Animated typing indicator - moved to bottom */}
+              <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-[#6366F1] rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium text-[#111827]">
+                      {personas[currentPersona].fromEmail.split('@')[0].split('.').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} is writing...
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-400 text-sm">[</span>
+                    <span className="w-1 h-1 bg-gray-400 rounded-full typing-dot-1"></span>
+                    <span className="w-1 h-1 bg-gray-400 rounded-full typing-dot-2"></span>
+                    <span className="w-1 h-1 bg-gray-400 rounded-full typing-dot-3"></span>
+                    <span className="text-gray-400 text-sm">]</span>
+                  </div>
                 </div>
               </div>
             </div>
