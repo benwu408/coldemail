@@ -79,12 +79,12 @@ export default function Header({
                   </Button>
                 </Link>
               )}
-              <a href="#how-it-works" className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium">
+              <Link href="/#how-it-works" className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium">
                 How it works
-              </a>
-              <a href="#pricing" className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium">
+              </Link>
+              <Link href="/#pricing" className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium">
                 Pricing
-              </a>
+              </Link>
               <a href="/faq" className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium">
                 FAQ
               </a>
