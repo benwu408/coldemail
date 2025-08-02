@@ -209,7 +209,7 @@ Founder & CEO, DataSync`,
         // Step 3: Show email content progressively
         if (rect.top < bottomFifth - 800) {
           setDemoStep3Visible(true)
-          const step3Progress = Math.max(0, Math.min(1, (bottomFifth - 800 - rect.top) / 400))
+          const step3Progress = Math.max(0, Math.min(1, (bottomFifth - 800 - rect.top) / 600))
           const emailProgress = Math.floor(step3Progress * 100)
           setEmailContentVisible(emailProgress)
           setEmailComplete(emailProgress >= 100)
@@ -811,7 +811,7 @@ Would you be open to a 15-minute chat next week? I'd be happy to work around you
 
 Best,
 Emma Rodriguez
-Software Engineer & Co-founder`.slice(0, Math.floor(emailContentVisible * 6))
+Software Engineer & Co-founder`.substring(0, Math.floor(emailContentVisible * 8))
                     }}
                   />
                   {emailContentVisible < 100 && (
