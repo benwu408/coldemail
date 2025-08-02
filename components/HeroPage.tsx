@@ -44,6 +44,11 @@ export default function HeroPage() {
   const [demoStep3Visible, setDemoStep3Visible] = useState(false)
   const [researchItemsVisible, setResearchItemsVisible] = useState(0)
   const [emailContentVisible, setEmailContentVisible] = useState(0)
+  
+  // Basic info fields states
+  const [recipientNameVisible, setRecipientNameVisible] = useState(false)
+  const [companyRoleVisible, setCompanyRoleVisible] = useState(false)
+  const [purposeVisible, setPurposeVisible] = useState(false)
 
   // Persona data for carousel
   const personas = [
@@ -122,36 +127,48 @@ Founder & CEO, DataSync`,
         const sectionHeight = demoSection.offsetHeight
         
         // Calculate scroll progress within the demo section
-        const scrollProgress = Math.max(0, Math.min(1, (windowHeight - rect.top) / (sectionHeight + windowHeight)))
+        // Adjusted to make email complete by upper third of screen
+        const scrollProgress = Math.max(0, Math.min(1, (windowHeight - rect.top) / (sectionHeight * 0.6)))
         
         console.log('Scroll Debug:', {
           rectTop: rect.top,
           windowHeight,
           sectionHeight,
           scrollProgress,
-          step1Visible: scrollProgress > 0.1,
-          step2Visible: scrollProgress > 0.25,
-          step3Visible: scrollProgress > 0.5,
-          researchItems: Math.floor((scrollProgress - 0.25) / 0.25 * 4),
-          emailContent: Math.floor((scrollProgress - 0.5) / 0.5 * 100)
+          step1Visible: scrollProgress > 0.05,
+          step2Visible: scrollProgress > 0.15,
+          step3Visible: scrollProgress > 0.25,
+          researchItems: Math.floor((scrollProgress - 0.15) / 0.1 * 4),
+          emailContent: Math.floor((scrollProgress - 0.25) / 0.35 * 100)
         })
         
-        // Step 1: Show when section comes into view (0-25% of scroll)
-        if (scrollProgress > 0.1) {
+        // Step 1: Show when section comes into view (0-15% of scroll)
+        if (scrollProgress > 0.05) {
           setDemoStep1Visible(true)
+          
+          // Progressive filling of basic info fields
+          if (scrollProgress > 0.08) {
+            setRecipientNameVisible(true)
+          }
+          if (scrollProgress > 0.1) {
+            setCompanyRoleVisible(true)
+          }
+          if (scrollProgress > 0.12) {
+            setPurposeVisible(true)
+          }
         }
         
-        // Step 2: Show research items progressively (25-50% of scroll)
-        if (scrollProgress > 0.25) {
+        // Step 2: Show research items progressively (15-25% of scroll)
+        if (scrollProgress > 0.15) {
           setDemoStep2Visible(true)
-          const step2Progress = Math.max(0, Math.min(1, (scrollProgress - 0.25) / 0.25))
+          const step2Progress = Math.max(0, Math.min(1, (scrollProgress - 0.15) / 0.1))
           setResearchItemsVisible(Math.floor(step2Progress * 4))
         }
         
-        // Step 3: Show email content progressively (50-100% of scroll)
-        if (scrollProgress > 0.5) {
+        // Step 3: Show email content progressively (25-60% of scroll)
+        if (scrollProgress > 0.25) {
           setDemoStep3Visible(true)
-          const step3Progress = Math.max(0, Math.min(1, (scrollProgress - 0.5) / 0.5))
+          const step3Progress = Math.max(0, Math.min(1, (scrollProgress - 0.25) / 0.35))
           setEmailContentVisible(Math.floor(step3Progress * 100))
         }
       }
@@ -562,19 +579,25 @@ Founder & CEO, DataSync`,
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Recipient Name</label>
-                    <div className="p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
+                    <div className={`p-4 bg-white rounded-lg border border-gray-300 shadow-sm transition-all duration-500 ${
+                      recipientNameVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
+                    }`}>
                       <span className="text-gray-900 font-medium">David Thompson</span>
                     </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Company & Role</label>
-                    <div className="p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
+                    <div className={`p-4 bg-white rounded-lg border border-gray-300 shadow-sm transition-all duration-500 delay-200 ${
+                      companyRoleVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
+                    }`}>
                       <span className="text-gray-900 font-medium">Senior Product Manager at Microsoft</span>
                     </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Purpose</label>
-                    <div className="p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
+                    <div className={`p-4 bg-white rounded-lg border border-gray-300 shadow-sm transition-all duration-500 delay-400 ${
+                      purposeVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
+                    }`}>
                       <span className="text-gray-900 font-medium">Networking</span>
                     </div>
                   </div>
