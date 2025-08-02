@@ -137,7 +137,7 @@ function processFindings(findings: string[], name: string, role?: string, compan
 
   // Remove duplicates and limit results
   Object.keys(processed).forEach(key => {
-    processed[key as keyof typeof processed] = [...new Set(processed[key as keyof typeof processed])].slice(0, 3)
+    processed[key as keyof typeof processed] = Array.from(new Set(processed[key as keyof typeof processed])).slice(0, 3)
   })
 
   return processed
