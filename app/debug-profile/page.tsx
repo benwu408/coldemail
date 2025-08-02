@@ -18,7 +18,7 @@ function DebugProfilePageContent() {
   const { user } = useAuth()
   const [debugLog, setDebugLog] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
-  const [testResults, setTestResults] = useState<any>({})
+  const [testResults, setTestResults] = useState<Record<string, any>>({})
   
   // Test profile data
   const [testProfile, setTestProfile] = useState({
