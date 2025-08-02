@@ -157,7 +157,19 @@ function ProfilePageContent() {
 
       if (data) {
         console.log('Profile loaded successfully:', data)
+        console.log('Education data from database:', data.education)
+        console.log('School value from database:', data.education?.school)
+        console.log('School value type:', typeof data.education?.school)
+        console.log('School value length:', data.education?.school?.length)
+        
         setProfile({
+          ...data,
+          skills: data.skills || [],
+          interests: data.interests || []
+        })
+        
+        // Log the profile state after setting it
+        console.log('Profile state after setting:', {
           ...data,
           skills: data.skills || [],
           interests: data.interests || []
@@ -215,6 +227,10 @@ function ProfilePageContent() {
 
       console.log('User ID:', user.id)
       console.log('Saving cleaned profile data:', cleanedProfile)
+      console.log('Education data being saved:', cleanedProfile.education)
+      console.log('School value being saved:', cleanedProfile.education.school)
+      console.log('School value type:', typeof cleanedProfile.education.school)
+      console.log('School value length:', cleanedProfile.education.school?.length)
 
       // First, let's test if we can connect to the database
       const { data: testData, error: testError } = await supabase
