@@ -190,17 +190,17 @@ function ProfilePageContent() {
     try {
       setSaving(true)
       
-      // Clean up the profile data - remove empty strings and ensure arrays exist
+      // Clean up the profile data - convert empty strings to null for database
       const cleanedProfile = {
         user_id: user.id,
         full_name: profile.full_name || null,
         job_title: profile.job_title || null,
         company: profile.company || null,
         education: {
-          school: profile.education.school || '',
-          degree: profile.education.degree || '',
-          major: profile.education.major || '',
-          graduation_year: profile.education.graduation_year || ''
+          school: profile.education.school || null,
+          degree: profile.education.degree || null,
+          major: profile.education.major || null,
+          graduation_year: profile.education.graduation_year || null
         },
         location: profile.location || null,
         industry: profile.industry || null,
@@ -216,16 +216,25 @@ function ProfilePageContent() {
       console.log('User ID:', user.id)
       console.log('Saving cleaned profile data:', cleanedProfile)
 
-      // First, let's check if a profile already exists
-      const { data: existingProfile, error: checkError } = await supabase
+      // First, let's test if we can connect to the database
+      const { data: testData, error: testError } = await supabase
         .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
+        .select('count')
+        .limit(1)
 
-      console.log('Existing profile check:', { existingProfile, checkError })
+      console.log('Database connection test:', { testData, testError })
 
-      // Try to save the profile
+      if (testError) {
+        console.error('Database connection failed:', testError)
+        toast({
+          title: "Database Connection Error",
+          description: "Unable to connect to the database. Please check your Supabase configuration.",
+          variant: "destructive"
+        })
+        return
+      }
+
+      // Try to save the profile using upsert
       const { data, error } = await supabase
         .from('user_profiles')
         .upsert(cleanedProfile, { 
@@ -237,6 +246,12 @@ function ProfilePageContent() {
 
       if (error) {
         console.error('Supabase error:', error)
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        })
         
         // If it's a table doesn't exist error, show helpful message
         if (error.message.includes('relation "user_profiles" does not exist')) {
