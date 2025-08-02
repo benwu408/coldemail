@@ -55,6 +55,9 @@ export default function HeroPage() {
   const [researchStep2Complete, setResearchStep2Complete] = useState(false)
   const [researchStep3Complete, setResearchStep3Complete] = useState(false)
   const [researchStep4Complete, setResearchStep4Complete] = useState(false)
+  
+  // Email completion state
+  const [emailComplete, setEmailComplete] = useState(false)
 
   // Persona data for carousel
   const personas = [
@@ -207,10 +210,13 @@ Founder & CEO, DataSync`,
         if (rect.top < bottomFifth - 800) {
           setDemoStep3Visible(true)
           const step3Progress = Math.max(0, Math.min(1, (bottomFifth - 800 - rect.top) / 400))
-          setEmailContentVisible(Math.floor(step3Progress * 100))
+          const emailProgress = Math.floor(step3Progress * 100)
+          setEmailContentVisible(emailProgress)
+          setEmailComplete(emailProgress >= 100)
         } else {
           setDemoStep3Visible(false)
           setEmailContentVisible(0)
+          setEmailComplete(false)
         }
       }
     }
@@ -261,25 +267,6 @@ Founder & CEO, DataSync`,
 
       {/* Hero Section */}
       <section className="container mx-auto px-6 py-24 max-w-7xl relative overflow-hidden">
-        {/* Background Animation */}
-        <div className="absolute top-0 right-0 w-96 h-96 opacity-10 pointer-events-none">
-          <div className="relative w-full h-full">
-            {/* Data pulse circles */}
-            <div className="absolute top-10 right-10 w-4 h-4 bg-[#6366F1] rounded-full animate-pulse"></div>
-            <div className="absolute top-20 right-32 w-3 h-3 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-            <div className="absolute top-40 right-20 w-2 h-2 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
-            <div className="absolute top-60 right-40 w-5 h-5 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '1.5s' }}></div>
-            <div className="absolute top-80 right-10 w-3 h-3 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
-            <div className="absolute top-32 right-60 w-4 h-4 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '2.5s' }}></div>
-            <div className="absolute top-72 right-80 w-2 h-2 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '3s' }}></div>
-            
-            {/* Connecting lines */}
-            <div className="absolute top-14 right-14 w-20 h-0.5 bg-[#6366F1] opacity-30 transform rotate-45"></div>
-            <div className="absolute top-44 right-24 w-16 h-0.5 bg-[#6366F1] opacity-30 transform -rotate-12"></div>
-            <div className="absolute top-64 right-32 w-24 h-0.5 bg-[#6366F1] opacity-30 transform rotate-30"></div>
-          </div>
-        </div>
-        
         <div className="grid lg:grid-cols-2 gap-20 items-center relative z-10">
           {/* Left side - Content */}
           <div className="space-y-10">
@@ -481,18 +468,6 @@ Founder & CEO, DataSync`,
               ))}
             </div>
             
-            {/* Flying paper plane animation */}
-            <div className="absolute -top-8 -right-8 w-12 h-12 opacity-60 pointer-events-none">
-              <div className="relative w-full h-full">
-                <div className="absolute inset-0 transform rotate-45">
-                  <div className="w-6 h-6 bg-[#6366F1] rounded-tl-full rounded-tr-full rounded-bl-full transform rotate-45"></div>
-                  <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-tl-full rounded-tr-full rounded-bl-full transform rotate-45"></div>
-                </div>
-                <div className="absolute top-2 right-2 w-2 h-8 bg-[#6366F1] transform rotate-45 origin-bottom"></div>
-              </div>
-              <div className="absolute inset-0 animate-bounce" style={{ animationDuration: '2s' }}></div>
-            </div>
-            
             <div 
               className={`absolute -top-4 -right-4 bg-white rounded-xl shadow-md border border-gray-100 p-3 transition-all duration-700 ease-out delay-300 ${
                 emailVisible 
@@ -504,8 +479,14 @@ Founder & CEO, DataSync`,
               }}
             >
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs font-medium text-gray-600">AI researching...</span>
+                {emailComplete ? (
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                ) : (
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                )}
+                <span className="text-xs font-medium text-gray-600">
+                  {emailComplete ? 'Email complete' : 'AI researching...'}
+                </span>
               </div>
             </div>
           </div>
@@ -736,24 +717,6 @@ Founder & CEO, DataSync`,
               </div>
               
               <div className="lg:order-1 bg-gray-50 rounded-2xl p-8 border border-gray-200 relative overflow-hidden">
-                {/* Search metaphor animation */}
-                <div className="absolute top-4 right-4 w-16 h-16 opacity-20 pointer-events-none">
-                  <div className="relative w-full h-full">
-                    {/* Magnifying glass */}
-                    <div className="absolute top-2 left-2 w-8 h-8 border-2 border-[#6366F1] rounded-full"></div>
-                    <div className="absolute top-6 left-6 w-3 h-3 bg-[#6366F1] transform rotate-45"></div>
-                    
-                    {/* AI brain */}
-                    <div className="absolute top-8 right-2 w-6 h-6">
-                      <div className="w-full h-full bg-[#6366F1] rounded-full animate-pulse"></div>
-                      <div className="absolute inset-1 w-4 h-4 bg-white rounded-full"></div>
-                      <div className="absolute top-1 left-1 w-1 h-1 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '0.3s' }}></div>
-                      <div className="absolute top-1 right-1 w-1 h-1 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '0.6s' }}></div>
-                      <div className="absolute bottom-1 left-1 w-1 h-1 bg-[#6366F1] rounded-full animate-pulse" style={{ animationDelay: '0.9s' }}></div>
-                    </div>
-                  </div>
-                </div>
-                
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm font-medium text-[#6366F1] mb-4">
                     <div className="w-2 h-2 bg-[#6366F1] rounded-full animate-pulse"></div>
