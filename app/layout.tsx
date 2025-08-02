@@ -6,14 +6,8 @@ import { Analytics } from '@vercel/analytics/next'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'AI Cold Email Generator',
-  description: 'Generate personalized outreach emails in seconds with AI',
-  // Add cache control to prevent caching
-  other: {
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
-  }
+  title: 'Reachful - Cold outreach that feels warm',
+  description: 'AI-powered personalized outreach that sounds human and gets responses.',
 }
 
 // Force dynamic rendering to prevent static generation and caching

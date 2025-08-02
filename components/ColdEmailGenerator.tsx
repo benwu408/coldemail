@@ -552,7 +552,7 @@ export default function ColdEmailGenerator() {
                     </div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No email generated yet</h3>
                     <p className="text-gray-600 max-w-sm">
-                      Fill out the form on the left and click "Generate Email" to create your personalized cold email.
+                      Fill out the form on the left and click "Generate Email" to create your personalized outreach email.
                     </p>
                   </div>
                 ) : (

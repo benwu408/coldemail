@@ -75,10 +75,10 @@ export default function LoginForm() {
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             {isSignUp ? 'Create Account' : 'Welcome Back'}
           </CardTitle>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-center mb-8">
             {isSignUp 
-              ? 'Sign up to start generating personalized cold emails'
-              : 'Sign in to continue with your cold email generator'
+              ? 'Sign up to start generating personalized outreach emails'
+              : 'Sign in to continue with Reachful'
             }
           </p>
         </CardHeader>

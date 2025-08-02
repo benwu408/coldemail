@@ -159,11 +159,9 @@ export default function FAQPage() {
       <div className="container mx-auto px-6 py-12 max-w-4xl">
         {/* Page Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-[#111] mb-4">
-            Frequently Asked Questions
-          </h1>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Everything you need to know about ColdEmail AI and how to create personalized cold emails that get responses.
+          <h1 className="text-4xl font-bold mb-2">Frequently Asked Questions</h1>
+          <p className="text-gray-600 mb-8">
+            Everything you need to know about Reachful and how to create personalized cold emails that get responses.
           </p>
         </div>
 

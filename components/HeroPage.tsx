@@ -276,8 +276,8 @@ Founder & CEO, DataSync`,
                 AI-powered personalization
               </div>
               <h1 className="text-5xl lg:text-6xl font-bold leading-tight tracking-tight">
-                Generate cold emails that actually get
-                <span className="text-[#6366F1]"> responses</span>
+                Cold outreach that feels
+                <span className="text-[#6366F1]"> warm</span>
               </h1>
               <p className="text-xl text-gray-600 leading-relaxed max-w-lg">
                 Stop sending generic emails. Our AI researches your prospects, finds commonalities, 
@@ -770,7 +770,7 @@ Founder & CEO, DataSync`,
                   Ready-to-send personalized email
                 </h3>
                 <p className="text-lg text-gray-600 leading-relaxed">
-                  Receive a professional, personalized cold email that incorporates 
+                  Receive a professional, personalized outreach email that incorporates 
                   the research findings and creates genuine connections.
                 </p>
               </div>
@@ -857,7 +857,7 @@ Software Engineer & Co-founder`
       <section className="py-24 bg-white">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="text-center mb-20">
-            <h2 className="text-4xl font-bold text-[#111827] mb-6 tracking-tight">Why professionals choose ColdEmail AI</h2>
+            <h2 className="text-4xl font-bold text-[#111827] mb-6 tracking-tight">Why professionals choose Reachful</h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
               Our AI-powered platform combines cutting-edge technology with human-like personalization to deliver results that generic email tools simply can't match.
             </p>
@@ -972,7 +972,7 @@ Software Engineer & Co-founder`
           <div className="text-center mb-20">
             <h2 className="text-4xl font-bold text-[#111827] mb-6 tracking-tight">How it works</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Three simple steps to create personalized cold emails that get responses
+              Three simple steps to create personalized outreach emails that get responses
             </p>
           </div>
           
@@ -1005,7 +1005,7 @@ Software Engineer & Co-founder`
               </div>
               <h3 className="text-xl font-bold text-[#111827] mb-4">3. Get your email</h3>
               <p className="text-gray-600 leading-relaxed">
-                Receive a personalized, professional cold email ready to send. 
+                Receive a personalized, professional outreach email ready to send. 
                 Edit, copy, or export directly to your email client.
               </p>
             </div>
@@ -1031,7 +1031,7 @@ Software Engineer & Co-founder`
                 ))}
               </div>
               <p className="text-gray-700 mb-8 leading-relaxed">
-                "ColdEmail AI helped me land my dream job at Google. The personalized approach 
+                "Reachful helped me land my dream job at Google. The personalized approach 
                 made all the difference - I got responses from 3 out of 5 emails I sent."
               </p>
               <div className="flex items-center gap-3">
@@ -1077,7 +1077,7 @@ Software Engineer & Co-founder`
                 ))}
               </div>
               <p className="text-gray-700 mb-8 leading-relaxed">
-                "Finally, a cold email tool that doesn't sound robotic. The personalization 
+                "Finally, an outreach tool that doesn't sound robotic. The personalization 
                 is incredible and the response rate improvement is real."
               </p>
               <div className="flex items-center gap-3">
@@ -1099,7 +1099,7 @@ Software Engineer & Co-founder`
       {/* CTA Section */}
       <section className="py-24 bg-[#111827] text-white">
         <div className="container mx-auto px-6 max-w-7xl text-center">
-          <h2 className="text-4xl font-bold mb-6 tracking-tight">Ready to transform your cold emails?</h2>
+          <h2 className="text-4xl font-bold mb-6 tracking-tight">Ready to transform your outreach?</h2>
           <p className="text-xl mb-10 opacity-90 max-w-2xl mx-auto leading-relaxed">
             Join thousands of professionals who are getting better responses with AI-powered personalization.
           </p>

@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create a comprehensive prompt for GPT-4o-mini
-    let prompt = `Generate a ${tone} cold email with the following details:
+    let prompt = `Generate a ${tone} outreach email with the following details:
     
 Recipient: ${recipientName}
 Role/Company: ${recipientRole || 'Not specified'}
@@ -187,7 +187,7 @@ Requirements:
       messages: [
         {
           role: "system",
-          content: "You are an expert at writing personalized cold emails that get responses. Your primary goal is to find genuine connections and commonalities between the sender and recipient. Always analyze both the recipient's research findings and the sender's profile to identify shared backgrounds, interests, experiences, or connections. Use these commonalities to create authentic, personalized emails that show genuine interest and shared understanding. Write emails that are specific, value-focused, and demonstrate that you've done your research. Always maintain the requested tone and make the email sound natural and human-written. When research findings are provided, incorporate them subtly and naturally to show genuine interest and preparation."
+          content: "You are an expert at writing personalized outreach emails that get responses. Your primary goal is to find genuine connections and commonalities between the sender and recipient. Always analyze both the recipient's research findings and the sender's profile to identify shared backgrounds, interests, experiences, or connections. Use these commonalities to create authentic, personalized emails that show genuine interest and shared understanding. Write emails that are specific, value-focused, and demonstrate that you've done your research. Always maintain the requested tone and make the email sound natural and human-written. When research findings are provided, incorporate them subtly and naturally to show genuine interest and preparation."
         },
         {
           role: "user",
