@@ -175,9 +175,12 @@ Requirements:
 - If context mentions UIUC, LinkedIn, or work, incorporate it naturally
 - If research findings are provided, subtly incorporate relevant details to show you've done your homework
 - If user profile is available, find and mention specific commonalities to create genuine connections
-- End with a professional signature "[Your Name]"
+- End with a professional signature "${userProfile?.full_name || '[Your Name]'}"`
 
-Generate only the email content, no explanations.`
+    // If no user profile is available, add a note about the signature
+    if (!userProfile) {
+      prompt += `\n\nNote: Since no user profile was found, use "[Your Name]" as the signature. The user should update this with their actual name.`
+    }
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
