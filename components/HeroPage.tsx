@@ -251,6 +251,14 @@ Founder & CEO, DataSync`,
       if (currentIndex <= currentPersonaData.email.length) {
         setDemoEmail(currentPersonaData.email.slice(0, currentIndex))
         currentIndex++
+        
+        // Auto-scroll to keep cursor visible
+        setTimeout(() => {
+          const emailContainer = document.getElementById('email-container')
+          if (emailContainer) {
+            emailContainer.scrollTop = emailContainer.scrollHeight
+          }
+        }, 10)
       } else {
         setIsTyping(false)
         clearInterval(typeInterval)
@@ -386,11 +394,11 @@ Founder & CEO, DataSync`,
               </div>
               
               {/* Email Body */}
-              <div className="p-6 h-96 overflow-y-auto">
+              <div className="p-6 h-96 overflow-y-auto" id="email-container">
                 <div 
                   className="font-mono text-sm leading-relaxed text-gray-800 whitespace-pre-wrap"
                   dangerouslySetInnerHTML={{
-                    __html: demoEmail
+                    __html: (demoEmail + (isTyping ? '<span class="inline-block w-2 h-5 bg-[#6366F1] animate-pulse"></span>' : ''))
                       .replace(
                         /(your recent post about building scalable product teams)/g,
                         '<span class="animate-pulse bg-yellow-100 px-1 rounded">$1</span>'
@@ -429,9 +437,6 @@ Founder & CEO, DataSync`,
                       )
                   }}
                 />
-                {isTyping && (
-                  <span className="inline-block w-2 h-5 bg-[#6366F1] animate-pulse ml-1"></span>
-                )}
               </div>
 
               {/* Animated typing indicator - moved to bottom */}
