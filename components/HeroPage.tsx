@@ -343,7 +343,7 @@ Founder & CEO, DataSync`,
           </div>
 
           {/* Right side - Live email preview */}
-          <div className="relative">
+          <div className="relative mt-8">
             {/* Persona info card - positioned above email */}
             <div className="absolute -top-20 left-0 bg-white rounded-xl shadow-md border border-gray-100 p-4 transition-all duration-500 z-10">
               <div className="text-sm">
