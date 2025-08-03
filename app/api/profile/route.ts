@@ -54,17 +54,23 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
+    console.log('Received profile data:', body)
     
     // Get the user from the request headers (same as GET method)
     const authHeader = request.headers.get('authorization')
+    console.log('Authorization header:', authHeader)
+    
     if (!authHeader) {
+      console.log('No authorization header found')
       return NextResponse.json({ error: 'No authorization header' }, { status: 401 })
     }
 
     // Extract user ID from the authorization header
     const userId = authHeader.replace('Bearer ', '')
+    console.log('Extracted user ID:', userId)
 
     if (!userId) {
+      console.log('Invalid user ID')
       return NextResponse.json({ error: 'Invalid user ID' }, { status: 401 })
     }
 
@@ -93,7 +99,7 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString()
     }
 
-    console.log('Saving profile data:', profileData)
+    console.log('Saving profile data:', JSON.stringify(profileData, null, 2))
 
     // Upsert the profile
     const { data, error } = await supabase
@@ -104,8 +110,13 @@ export async function POST(request: NextRequest) {
       })
 
     if (error) {
-      console.error('Error saving profile:', error)
-      return NextResponse.json({ error: 'Failed to save profile' }, { status: 500 })
+      console.error('Supabase error saving profile:', error)
+      console.error('Error details:', JSON.stringify(error, null, 2))
+      return NextResponse.json({ 
+        error: 'Failed to save profile',
+        details: error.message,
+        code: error.code
+      }, { status: 500 })
     }
 
     console.log('Profile saved successfully:', data)
@@ -113,6 +124,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error in profile POST API:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 } 

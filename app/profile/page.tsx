@@ -164,6 +164,8 @@ function ProfilePageContent() {
   const saveProfile = async () => {
     setIsSaving(true)
     try {
+      console.log('Sending profile data:', profile)
+      
       const response = await fetch('/api/profile', {
         method: 'POST',
         headers: {
@@ -173,19 +175,24 @@ function ProfilePageContent() {
         body: JSON.stringify(profile),
       })
 
+      console.log('Response status:', response.status)
+      const responseData = await response.json()
+      console.log('Response data:', responseData)
+
       if (response.ok) {
         toast({
           title: "Profile Saved!",
           description: "Your profile has been updated successfully.",
         })
       } else {
-        throw new Error('Failed to save profile')
+        console.error('API error response:', responseData)
+        throw new Error(responseData.error || responseData.details || 'Failed to save profile')
       }
     } catch (error) {
       console.error('Error saving profile:', error)
       toast({
         title: "Error",
-        description: "Failed to save profile. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to save profile. Please try again.",
         variant: "destructive",
       })
     } finally {
