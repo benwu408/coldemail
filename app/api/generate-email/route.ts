@@ -35,67 +35,109 @@ export async function POST(request: NextRequest) {
     let commonalities = ''
 
     if (searchMode === 'deep') {
-      // Deep search mode using enhanced GPT-4o analysis
-      console.log('Starting deep search mode...')
+      // Deep search mode using GPT-4.1 with web_search_preview
+      console.log('Starting deep search mode with GPT-4.1...')
       
       // Generate comprehensive search query
       const searchQuery = `${recipientName} ${recipientCompany} ${recipientRole} professional background education experience achievements recent news articles LinkedIn profile`
       
-      // Use GPT-4o to analyze and research the person
-      const searchResponse = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: `You are a professional research analyst with access to current information. Analyze and provide comprehensive information about the person mentioned. Focus on:
-            1. Professional background and career highlights
-            2. Education and credentials
-            3. Recent achievements or news
-            4. Professional interests and focus areas
-            5. Company role and responsibilities
-            6. Any public speaking, publications, or thought leadership
-            7. Social media presence and professional activities
-            
-            Format your response as a structured report with clear sections.`
-          },
-          {
-            role: "user",
-            content: `Please provide a comprehensive analysis and report on: ${searchQuery}`
-          }
-        ]
-      })
+      try {
+        // Try using the responses API format for web_search_preview
+        const searchResponse = await openai.responses.create({
+          model: "gpt-4.1",
+          tools: [{ type: "web_search_preview" }],
+          input: `Please search for and provide a comprehensive report on: ${searchQuery}`,
+        })
 
-      // Extract the search results and generate detailed report
-      const searchResults = searchResponse.choices[0]?.message?.content || ''
-      
-      // Now use the search results to generate a comprehensive report
-      const reportResponse = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: `You are a professional research analyst. Based on the analysis provided, create a comprehensive report about the person. Structure it clearly and include all relevant professional information.`
-          },
-          {
-            role: "user",
-            content: `Based on this analysis about ${recipientName} at ${recipientCompany}:
-            
-            ${searchResults}
-            
-            Please create a detailed professional report covering:
-            1. Professional Background
-            2. Education & Credentials  
-            3. Recent Achievements & News
-            4. Professional Interests & Focus Areas
-            5. Company Role & Responsibilities
-            6. Public Presence & Thought Leadership
-            
-            Format as a clear, structured report.`
-          }
-        ]
-      })
+        const searchResults = searchResponse.output_text || ''
+        
+        // Now use the search results to generate a comprehensive report
+        const reportResponse = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are a professional research analyst. Based on the search results provided, create a comprehensive report about the person. Structure it clearly and include all relevant professional information.`
+            },
+            {
+              role: "user",
+              content: `Based on these search results about ${recipientName} at ${recipientCompany}:
+              
+              ${searchResults}
+              
+              Please create a detailed professional report covering:
+              1. Professional Background
+              2. Education & Credentials  
+              3. Recent Achievements & News
+              4. Professional Interests & Focus Areas
+              5. Company Role & Responsibilities
+              6. Public Presence & Thought Leadership
+              
+              Format as a clear, structured report.`
+            }
+          ]
+        })
 
-      researchFindings = reportResponse.choices[0]?.message?.content || ''
+        researchFindings = reportResponse.choices[0]?.message?.content || ''
+
+      } catch (error) {
+        console.log('Web search preview not available, falling back to enhanced analysis...')
+        
+        // Fallback to enhanced GPT-4o analysis
+        const searchResponse = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are a professional research analyst with access to current information. Analyze and provide comprehensive information about the person mentioned. Focus on:
+              1. Professional background and career highlights
+              2. Education and credentials
+              3. Recent achievements or news
+              4. Professional interests and focus areas
+              5. Company role and responsibilities
+              6. Any public speaking, publications, or thought leadership
+              7. Social media presence and professional activities
+              
+              Format your response as a structured report with clear sections.`
+            },
+            {
+              role: "user",
+              content: `Please provide a comprehensive analysis and report on: ${searchQuery}`
+            }
+          ]
+        })
+
+        const searchResults = searchResponse.choices[0]?.message?.content || ''
+        
+        // Generate detailed report from analysis
+        const reportResponse = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are a professional research analyst. Based on the analysis provided, create a comprehensive report about the person. Structure it clearly and include all relevant professional information.`
+            },
+            {
+              role: "user",
+              content: `Based on this analysis about ${recipientName} at ${recipientCompany}:
+              
+              ${searchResults}
+              
+              Please create a detailed professional report covering:
+              1. Professional Background
+              2. Education & Credentials  
+              3. Recent Achievements & News
+              4. Professional Interests & Focus Areas
+              5. Company Role & Responsibilities
+              6. Public Presence & Thought Leadership
+              
+              Format as a clear, structured report.`
+            }
+          ]
+        })
+
+        researchFindings = reportResponse.choices[0]?.message?.content || ''
+      }
 
       // Find commonalities between user profile and recipient
       if (userProfile) {
