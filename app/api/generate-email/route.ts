@@ -67,59 +67,16 @@ export async function POST(request: NextRequest) {
     let commonalities = ''
 
     if (searchMode === 'deep') {
-      // Deep search mode using GPT-4.1 with web_search_preview
-      console.log('Starting deep search mode with GPT-4.1...')
+      // Deep search mode using enhanced GPT-4o analysis
+      console.log('Starting deep search mode with enhanced GPT-4o analysis...')
       
       // Generate comprehensive search query
       const searchQuery = `${recipientName} ${recipientCompany} ${recipientRole} professional background education experience achievements recent news articles LinkedIn profile`
       
       try {
-        // Try using the responses API format for web_search_preview
-        console.log('Attempting web_search_preview with GPT-4.1...')
-        const searchResponse = await openai.responses.create({
-          model: "gpt-4.1",
-          tools: [{ type: "web_search_preview" }],
-          input: `Please search for and provide a comprehensive report on: ${searchQuery}`,
-        })
-
-        console.log('Web search preview response received:', searchResponse)
-        const searchResults = searchResponse.output_text || ''
+        console.log('Using enhanced GPT-4o analysis for comprehensive research...')
         
-        // Now use the search results to generate a comprehensive report
-        const reportResponse = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: `You are a professional research analyst. Based on the search results provided, create a comprehensive report about the person. Structure it clearly and include all relevant professional information.`
-            },
-            {
-              role: "user",
-              content: `Based on these search results about ${recipientName} at ${recipientCompany}:
-              
-              ${searchResults}
-              
-              Please create a detailed professional report covering:
-              1. Professional Background
-              2. Education & Credentials  
-              3. Recent Achievements & News
-              4. Professional Interests & Focus Areas
-              5. Company Role & Responsibilities
-              6. Public Presence & Thought Leadership
-              
-              Format as a clear, structured report.`
-            }
-          ]
-        })
-
-        researchFindings = reportResponse.choices[0]?.message?.content || ''
-
-      } catch (error) {
-        console.log('Web search preview error:', error)
-        console.log('Error details:', JSON.stringify(error, null, 2))
-        console.log('Falling back to enhanced analysis...')
-        
-        // Fallback to enhanced GPT-4o analysis
+        // Enhanced GPT-4o analysis
         const searchResponse = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
@@ -173,6 +130,15 @@ export async function POST(request: NextRequest) {
         })
 
         researchFindings = reportResponse.choices[0]?.message?.content || ''
+        console.log('Pro search completed successfully with enhanced analysis')
+
+      } catch (error) {
+        console.log('Enhanced analysis error:', error)
+        console.log('Error details:', JSON.stringify(error, null, 2))
+        
+        // Final fallback to basic info
+        researchFindings = `Comprehensive analysis for ${recipientName} at ${recipientCompany} as ${recipientRole}`
+        console.log('Pro search using fallback basic info')
       }
 
       // Find commonalities between user profile and recipient
