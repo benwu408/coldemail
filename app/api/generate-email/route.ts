@@ -7,14 +7,28 @@ const openai = new OpenAI({
 })
 
 export async function POST(request: NextRequest) {
-  // Initialize Supabase client inside the function
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-
+  console.log('=== Email Generation API Started ===')
+  
   try {
+    // Check environment variables
+    console.log('Checking environment variables...')
+    console.log('NEXT_PUBLIC_SUPABASE_URL exists:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+    console.log('OPENAI_API_KEY exists:', !!process.env.OPENAI_API_KEY)
+    console.log('SEARCHAPI_KEY exists:', !!process.env.SEARCHAPI_KEY)
+    
+    // Initialize Supabase client inside the function
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+    console.log('Supabase client initialized successfully')
+
+    console.log('Parsing request body...')
     const body = await request.json()
+    console.log('Request body parsed successfully')
+    console.log('Request body keys:', Object.keys(body))
+    
     const {
       recipientName,
       recipientCompany,
@@ -25,12 +39,17 @@ export async function POST(request: NextRequest) {
       searchMode = 'basic' // 'basic' or 'deep'
     } = body
 
+    console.log('Extracted fields:', { recipientName, recipientCompany, recipientRole, purpose, tone, searchMode })
+
     if (!recipientName || !recipientCompany || !recipientRole || !purpose) {
+      console.log('Missing required fields')
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       )
     }
+
+    console.log('All required fields present, proceeding with email generation...')
 
     let researchFindings = ''
     let commonalities = ''
