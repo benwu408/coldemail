@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,10 +19,6 @@ import {
   Briefcase, 
   Code, 
   Heart, 
-  FileText, 
-  Upload, 
-  File,
-  X,
   Loader2
 } from 'lucide-react'
 import Header from '@/components/Header'
@@ -45,8 +41,6 @@ interface ProfileData {
   background: string
   linkedin_url: string
   website: string
-  resume_text?: string
-  resume_filename?: string
 }
 
 function ProfilePageContent() {
@@ -54,7 +48,6 @@ function ProfilePageContent() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
   const [profile, setProfile] = useState<ProfileData>({
     full_name: '',
     job_title: '',
@@ -72,10 +65,9 @@ function ProfilePageContent() {
     interests: [],
     background: '',
     linkedin_url: '',
-    website: '',
-    resume_text: '',
-    resume_filename: ''
+    website: ''
   })
+  const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -125,9 +117,7 @@ function ProfilePageContent() {
           interests: data.interests || [],
           background: data.background || '',
           linkedin_url: data.linkedin_url || '',
-          website: data.website || '',
-          resume_text: data.resume_text || '',
-          resume_filename: data.resume_filename || ''
+          website: data.website || ''
         })
 
         // Log the profile state after setting it
@@ -200,135 +190,111 @@ function ProfilePageContent() {
     }
   }
 
-  const saveProfileSilently = async () => {
+  const saveProfileSilently = useCallback(async (profileData: ProfileData) => {
     try {
+      console.log('Auto-saving profile with data:', profileData)
+      console.log('School value being saved:', profileData.education?.school)
+      console.log('School value length:', profileData.education?.school?.length)
+      
       const response = await fetch('/api/profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user?.id}`,
         },
-        body: JSON.stringify(profile),
+        body: JSON.stringify(profileData),
       })
 
       if (!response.ok) {
         console.error('Failed to save profile silently')
+        const errorData = await response.json()
+        console.error('Error details:', errorData)
+      } else {
+        console.log('Auto-save successful')
       }
     } catch (error) {
       console.error('Error saving profile silently:', error)
     }
-  }
+  }, [user?.id])
 
-  const triggerAutoSave = () => {
-    // Debounce auto-save
-    setTimeout(() => {
-      saveProfileSilently()
+  const triggerAutoSave = useCallback(() => {
+    // Clear any existing timeout to prevent multiple saves
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout)
+    }
+    
+    // Set new timeout for debounced auto-save
+    const timeout = setTimeout(() => {
+      // Use the current profile state at the time of save
+      saveProfileSilently(profile)
+      setAutoSaveTimeout(null)
     }, 1000)
-  }
+    
+    setAutoSaveTimeout(timeout)
+  }, [autoSaveTimeout, saveProfileSilently, profile])
 
   const handleInputChange = (field: string, value: any) => {
-    setProfile(prev => ({
-      ...prev,
+    const newProfile = {
+      ...profile,
       [field]: value
-    }))
-    triggerAutoSave()
+    }
+    setProfile(newProfile)
+    
+    // Trigger auto-save with the new profile data
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout)
+    }
+    
+    const timeout = setTimeout(() => {
+      saveProfileSilently(newProfile)
+      setAutoSaveTimeout(null)
+    }, 1000)
+    
+    setAutoSaveTimeout(timeout)
   }
 
   const handleEducationChange = (field: string, value: string) => {
-    setProfile(prev => ({
-      ...prev,
+    const newProfile = {
+      ...profile,
       education: {
-        ...prev.education,
+        ...profile.education,
         [field]: value
       }
-    }))
-    triggerAutoSave()
+    }
+    setProfile(newProfile)
+    
+    // Trigger auto-save with the new profile data
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout)
+    }
+    
+    const timeout = setTimeout(() => {
+      saveProfileSilently(newProfile)
+      setAutoSaveTimeout(null)
+    }, 1000)
+    
+    setAutoSaveTimeout(timeout)
   }
 
   const handleArrayChange = (field: 'skills' | 'interests', value: string) => {
     const items = value.split(',').map(item => item.trim()).filter(item => item)
-    setProfile(prev => ({
-      ...prev,
+    const newProfile = {
+      ...profile,
       [field]: items
-    }))
-    triggerAutoSave()
-  }
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    // Validate file type
-    if (file.type !== 'application/pdf') {
-      toast({
-        title: "Invalid File Type",
-        description: "Please upload a PDF file.",
-        variant: "destructive",
-      })
-      return
     }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File Too Large",
-        description: "Please upload a file smaller than 5MB.",
-        variant: "destructive",
-      })
-      return
+    setProfile(newProfile)
+    
+    // Trigger auto-save with the new profile data
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout)
     }
-
-    setIsUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append('resume', file)
-
-      const response = await fetch('/api/upload-resume', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setProfile(prev => ({
-          ...prev,
-          resume_text: data.resume_text,
-          resume_filename: file.name
-        }))
-        
-        toast({
-          title: "Resume Uploaded!",
-          description: "Your resume has been processed and added to your profile.",
-        })
-        
-        // Auto-save the profile with the new resume data
-        triggerAutoSave()
-      } else {
-        throw new Error('Failed to upload resume')
-      }
-    } catch (error) {
-      console.error('Error uploading resume:', error)
-      toast({
-        title: "Upload Failed",
-        description: "Failed to upload resume. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsUploading(false)
-    }
-  }
-
-  const removeResume = () => {
-    setProfile(prev => ({
-      ...prev,
-      resume_text: '',
-      resume_filename: ''
-    }))
-    triggerAutoSave()
-    toast({
-      title: "Resume Removed",
-      description: "Your resume has been removed from your profile.",
-    })
+    
+    const timeout = setTimeout(() => {
+      saveProfileSilently(newProfile)
+      setAutoSaveTimeout(null)
+    }, 1000)
+    
+    setAutoSaveTimeout(timeout)
   }
 
   if (isLoading) {
@@ -404,77 +370,6 @@ function ProfilePageContent() {
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Resume Upload */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Resume Upload
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="resume">Upload Resume (PDF)</Label>
-                <div className="mt-2">
-                  <input
-                    type="file"
-                    id="resume"
-                    accept=".pdf"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    disabled={isUploading}
-                  />
-                  <label
-                    htmlFor="resume"
-                    className={`inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 ${
-                      isUploading ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    {isUploading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Upload className="h-4 w-4" />
-                    )}
-                    {isUploading ? 'Processing...' : 'Choose PDF File'}
-                  </label>
-                </div>
-                <p className="text-sm text-gray-600 mt-2">
-                  Upload your resume to help AI understand your background and find better connections.
-                </p>
-              </div>
-
-              {profile.resume_filename && (
-                <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <File className="h-4 w-4 text-green-600" />
-                    <span className="text-sm font-medium text-green-900">
-                      {profile.resume_filename}
-                    </span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={removeResume}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-
-              {profile.resume_text && (
-                <div className="mt-4">
-                  <Label>Resume Content Preview</Label>
-                  <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg max-h-32 overflow-y-auto">
-                    <p className="text-sm text-gray-700">
-                      {profile.resume_text.substring(0, 200)}...
-                    </p>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
 

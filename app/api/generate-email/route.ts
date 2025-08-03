@@ -385,14 +385,15 @@ Format as a clear list of specific commonalities.`
 
       // Save the generated email to the database (optional - only if user is authenticated)
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const authHeader = request.headers.get('authorization')
+        const userId = authHeader ? authHeader.replace('Bearer ', '') : null
         
-        if (user) {
-          console.log('Saving email to database for user:', user.id)
+        if (userId) {
+          console.log('Saving email to database for user:', userId)
           await supabase
             .from('generated_emails')
             .insert({
-              user_id: user.id,
+              user_id: userId,
               recipient_name: recipientName,
               recipient_company: recipientCompany,
               recipient_role: recipientRole,
@@ -408,6 +409,7 @@ Format as a clear list of specific commonalities.`
         }
       } catch (dbError) {
         console.log('Database save failed (continuing anyway):', dbError)
+        console.error('Database error details:', dbError)
         // Continue even if database save fails
       }
 

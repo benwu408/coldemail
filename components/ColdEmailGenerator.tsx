@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, Copy, Download, Mail, Sparkles, Search, User, Edit3 } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import Header from '@/components/Header'
@@ -86,6 +87,7 @@ export default function ColdEmailGenerator() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.id}`,
         },
         body: JSON.stringify({
           ...formData,
@@ -103,7 +105,7 @@ export default function ColdEmailGenerator() {
         
         toast({
           title: "Email Generated!",
-          description: "Your personalized email has been created successfully.",
+          description: "Your personalized email has been created and saved successfully.",
         })
       } else {
         throw new Error(data.error || 'Failed to generate email')
@@ -426,8 +428,8 @@ export default function ColdEmailGenerator() {
                             <Search className="h-4 w-4" />
                             Research Findings
                           </h4>
-                          <div className="bg-blue-50 rounded-lg p-3 text-sm whitespace-pre-wrap">
-                            {researchFindings}
+                          <div className="bg-blue-50 rounded-lg p-3 text-sm">
+                            <ReactMarkdown>{researchFindings}</ReactMarkdown>
                           </div>
                         </div>
                       )}
@@ -438,8 +440,8 @@ export default function ColdEmailGenerator() {
                             <User className="h-4 w-4" />
                             Common Connections
                           </h4>
-                          <div className="bg-green-50 rounded-lg p-3 text-sm whitespace-pre-wrap">
-                            {commonalities}
+                          <div className="bg-green-50 rounded-lg p-3 text-sm">
+                            <ReactMarkdown>{commonalities}</ReactMarkdown>
                           </div>
                         </div>
                       )}

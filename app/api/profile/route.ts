@@ -94,8 +94,6 @@ export async function POST(request: NextRequest) {
       background: body.background || null,
       linkedin_url: body.linkedin_url || null,
       website: body.website || null,
-      resume_text: body.resume_text || null,
-      resume_filename: body.resume_filename || null,
       updated_at: new Date().toISOString()
     }
 
