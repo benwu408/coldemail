@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Loader2, Copy, Download, Mail, Sparkles, Search, User, Edit3 } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import Header from '@/components/Header'
 
 export default function ColdEmailGenerator() {
   const { user } = useAuth()
@@ -21,6 +22,7 @@ export default function ColdEmailGenerator() {
   const [commonalities, setCommonalities] = useState('')
   const [searchMode, setSearchMode] = useState<'basic' | 'deep'>('basic')
   const [userProfile, setUserProfile] = useState<any>(null)
+  const [activeTab, setActiveTab] = useState<'email' | 'findings'>('email')
 
   // Form state
   const [formData, setFormData] = useState({
@@ -150,8 +152,10 @@ export default function ColdEmailGenerator() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-[#FAFAFA]">
+      <Header />
+      
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Generate Personalized Email
@@ -346,71 +350,101 @@ export default function ColdEmailGenerator() {
             </Button>
           </div>
 
-          {/* Results */}
+          {/* Results with Tabs */}
           <div className="space-y-6">
-            {generatedEmail && (
+            {(generatedEmail || researchFindings || commonalities) && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span>Generated Email</span>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={copyToClipboard}
-                        className="text-xs"
+                    <span>Results</span>
+                    {generatedEmail && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={copyToClipboard}
+                          className="text-xs"
+                        >
+                          <Copy className="h-3 w-3 mr-1" />
+                          Copy
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={downloadEmail}
+                          className="text-xs"
+                        >
+                          <Download className="h-3 w-3 mr-1" />
+                          Download
+                        </Button>
+                      </div>
+                    )}
+                  </CardTitle>
+                  
+                  {/* Tabs */}
+                  <div className="flex border-b">
+                    {generatedEmail && (
+                      <button
+                        onClick={() => setActiveTab('email')}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                          activeTab === 'email'
+                            ? 'border-[#6366F1] text-[#6366F1]'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
                       >
-                        <Copy className="h-3 w-3 mr-1" />
-                        Copy
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={downloadEmail}
-                        className="text-xs"
+                        Generated Email
+                      </button>
+                    )}
+                    {(researchFindings || commonalities) && (
+                      <button
+                        onClick={() => setActiveTab('findings')}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                          activeTab === 'findings'
+                            ? 'border-[#6366F1] text-[#6366F1]'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
                       >
-                        <Download className="h-3 w-3 mr-1" />
-                        Download
-                      </Button>
+                        AI Findings
+                      </button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {/* Email Tab */}
+                  {activeTab === 'email' && generatedEmail && (
+                    <div className="bg-gray-50 rounded-lg p-4 font-mono text-sm whitespace-pre-wrap max-h-96 overflow-y-auto">
+                      {generatedEmail}
                     </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-gray-50 rounded-lg p-4 font-mono text-sm whitespace-pre-wrap">
-                    {generatedEmail}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                  )}
 
-            {researchFindings && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Search className="h-5 w-5" />
-                    Research Findings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-blue-50 rounded-lg p-4 text-sm whitespace-pre-wrap">
-                    {researchFindings}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                  {/* Findings Tab */}
+                  {activeTab === 'findings' && (
+                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                      {researchFindings && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center gap-2">
+                            <Search className="h-4 w-4" />
+                            Research Findings
+                          </h4>
+                          <div className="bg-blue-50 rounded-lg p-3 text-sm whitespace-pre-wrap">
+                            {researchFindings}
+                          </div>
+                        </div>
+                      )}
 
-            {commonalities && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Common Connections
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-green-50 rounded-lg p-4 text-sm whitespace-pre-wrap">
-                    {commonalities}
-                  </div>
+                      {commonalities && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-900 mb-2 flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            Common Connections
+                          </h4>
+                          <div className="bg-green-50 rounded-lg p-3 text-sm whitespace-pre-wrap">
+                            {commonalities}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
