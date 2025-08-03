@@ -134,38 +134,66 @@ export default function TestDebugPage() {
 
   const testProSearch = async () => {
     setIsLoading(true)
-    setError('')
-    setResult(null)
-    addLog('Testing pro search mode with GPT-4.1...')
-
+    setLogs(prev => [...prev, 'Testing Pro Search (GPT-4.1)...'])
+    
     try {
-      const testDataPro = { ...testData, searchMode: 'deep' }
-      addLog(`Test data: ${JSON.stringify(testDataPro, null, 2)}`)
-
       const response = await fetch('/api/generate-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(testDataPro),
+        body: JSON.stringify({
+          recipientName: 'John Smith',
+          recipientCompany: 'Google',
+          recipientRole: 'Senior Product Manager',
+          purpose: 'Networking and informational interview',
+          tone: 'casual',
+          searchMode: 'deep'
+        }),
       })
 
-      addLog(`Response status: ${response.status}`)
-      const responseText = await response.text()
-      addLog(`Raw response: ${responseText}`)
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${responseText}`)
+      const data = await response.json()
+      
+      if (response.ok) {
+        setLogs(prev => [...prev, '✅ Pro Search successful!'])
+        setLogs(prev => [...prev, `Email: ${data.email}`])
+        setLogs(prev => [...prev, `Research: ${data.researchFindings}`])
+        setLogs(prev => [...prev, `Commonalities: ${data.commonalities}`])
+      } else {
+        setLogs(prev => [...prev, `❌ Pro Search failed: ${data.error}`])
       }
+    } catch (error) {
+      setLogs(prev => [...prev, `❌ Pro Search error: ${error}`])
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-      const data = JSON.parse(responseText)
-      setResult(data)
-      addLog('Pro search test completed successfully!')
+  const testGPT41WebSearch = async () => {
+    setIsLoading(true)
+    setLogs(prev => [...prev, 'Testing GPT-4.1 Web Search Preview...'])
+    
+    try {
+      const response = await fetch('/api/test-gpt41-websearch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: 'John Smith Google Senior Product Manager'
+        }),
+      })
 
-    } catch (err: any) {
-      const errorMessage = err.message || 'Unknown error occurred'
-      addLog(`ERROR: ${errorMessage}`)
-      setError(errorMessage)
+      const data = await response.json()
+      
+      if (response.ok) {
+        setLogs(prev => [...prev, '✅ GPT-4.1 Web Search successful!'])
+        setLogs(prev => [...prev, `Response: ${JSON.stringify(data, null, 2)}`])
+      } else {
+        setLogs(prev => [...prev, `❌ GPT-4.1 Web Search failed: ${data.error}`])
+      }
+    } catch (error) {
+      setLogs(prev => [...prev, `❌ GPT-4.1 Web Search error: ${error}`])
     } finally {
       setIsLoading(false)
     }
@@ -313,6 +341,15 @@ export default function TestDebugPage() {
                 className="w-full"
               >
                 Test Pro Search (GPT-4.1)
+              </Button>
+
+              <Button 
+                onClick={testGPT41WebSearch} 
+                disabled={isLoading}
+                variant="outline"
+                className="w-full"
+              >
+                Test GPT-4.1 Web Search Preview
               </Button>
 
               <Button 
