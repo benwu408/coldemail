@@ -17,10 +17,22 @@ export async function POST(request: NextRequest) {
     console.log('OPENAI_API_KEY exists:', !!process.env.OPENAI_API_KEY)
     console.log('SEARCHAPI_KEY exists:', !!process.env.SEARCHAPI_KEY)
     
+    // Validate required environment variables
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      throw new Error('NEXT_PUBLIC_SUPABASE_URL is not configured')
+    }
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured')
+    }
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY is not configured')
+    }
+    
     // Initialize Supabase client inside the function
+    console.log('Initializing Supabase client...')
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
     )
     console.log('Supabase client initialized successfully')
 
@@ -360,8 +372,37 @@ Requirements:
 
   } catch (error) {
     console.error('Error generating email:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error')
+    
+    // Return more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('NEXT_PUBLIC_SUPABASE_URL')) {
+        return NextResponse.json(
+          { error: 'Database configuration error: Supabase URL not configured' },
+          { status: 500 }
+        )
+      }
+      if (error.message.includes('SUPABASE_SERVICE_ROLE_KEY')) {
+        return NextResponse.json(
+          { error: 'Database configuration error: Supabase service key not configured' },
+          { status: 500 }
+        )
+      }
+      if (error.message.includes('OPENAI_API_KEY')) {
+        return NextResponse.json(
+          { error: 'AI configuration error: OpenAI API key not configured' },
+          { status: 500 }
+        )
+      }
+      return NextResponse.json(
+        { error: `Configuration error: ${error.message}` },
+        { status: 500 }
+      )
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to generate email' },
+      { error: 'Failed to generate email - unknown error occurred' },
       { status: 500 }
     )
   }
