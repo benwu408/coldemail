@@ -82,8 +82,24 @@ export async function POST(request: NextRequest) {
           input: `Please search for and provide a comprehensive report on: ${searchQuery}`,
         })
 
-        console.log('Web search preview response received:', searchResponse)
-        const searchResults = searchResponse.output_text || ''
+        console.log('Web search preview response received:', JSON.stringify(searchResponse, null, 2))
+        
+        // Handle different possible response formats
+        let searchResults = ''
+        if (searchResponse.output_text) {
+          searchResults = searchResponse.output_text
+        } else if (searchResponse.output && typeof searchResponse.output === 'string') {
+          searchResults = searchResponse.output
+        } else if (searchResponse.output && Array.isArray(searchResponse.output)) {
+          searchResults = searchResponse.output.map(item => 
+            typeof item === 'string' ? item : JSON.stringify(item)
+          ).join('\n')
+        } else {
+          console.log('Unexpected response format:', searchResponse)
+          searchResults = JSON.stringify(searchResponse)
+        }
+        
+        console.log('Parsed search results:', searchResults)
         
         // Now use the search results to generate a comprehensive report
         const reportResponse = await openai.chat.completions.create({
@@ -226,8 +242,24 @@ export async function POST(request: NextRequest) {
           input: `Please search for and provide basic information about: ${searchQuery}. Focus on their professional role, company, and any notable background information. Keep it brief and factual.`,
         })
 
-        console.log('GPT-4o-mini search response received')
-        const searchResults = searchResponse.output_text || ''
+        console.log('GPT-4o-mini search response received:', JSON.stringify(searchResponse, null, 2))
+        
+        // Handle different possible response formats
+        let searchResults = ''
+        if (searchResponse.output_text) {
+          searchResults = searchResponse.output_text
+        } else if (searchResponse.output && typeof searchResponse.output === 'string') {
+          searchResults = searchResponse.output
+        } else if (searchResponse.output && Array.isArray(searchResponse.output)) {
+          searchResults = searchResponse.output.map(item => 
+            typeof item === 'string' ? item : JSON.stringify(item)
+          ).join('\n')
+        } else {
+          console.log('Unexpected response format:', searchResponse)
+          searchResults = JSON.stringify(searchResponse)
+        }
+        
+        console.log('Parsed search results:', searchResults)
         
         if (searchResults) {
           researchFindings = `Basic research findings for ${recipientName}:\n\n${searchResults}`
