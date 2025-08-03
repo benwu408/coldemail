@@ -127,8 +127,14 @@ export async function POST(request: NextRequest) {
         }
         
         console.log('Parsed search results:', searchResults)
+        console.log('Search results length:', searchResults.length)
+        
+        if (!searchResults || searchResults.trim() === '') {
+          throw new Error('No search results extracted from response')
+        }
         
         // Now use the search results to generate a comprehensive report
+        console.log('Generating comprehensive report with GPT-4o...')
         const reportResponse = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
@@ -156,10 +162,12 @@ export async function POST(request: NextRequest) {
         })
 
         researchFindings = reportResponse.choices[0]?.message?.content || ''
+        console.log('Report generation completed, length:', researchFindings.length)
 
       } catch (error) {
         console.log('Web search preview error:', error)
         console.log('Error details:', JSON.stringify(error, null, 2))
+        console.log('Error message:', error instanceof Error ? error.message : 'Unknown error')
         console.log('Falling back to enhanced analysis...')
         
         // Fallback to enhanced GPT-4o analysis
@@ -377,6 +385,7 @@ Requirements:
     console.log('Generating email with prompt length:', prompt.length)
     
     try {
+      console.log('Making email generation request to OpenAI...')
       const emailResponse = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
@@ -393,8 +402,15 @@ Requirements:
         max_tokens: 500
       })
 
+      console.log('Email response received:', JSON.stringify(emailResponse, null, 2))
+      
       const generatedEmail = emailResponse.choices[0]?.message?.content || ''
       console.log('Email generated successfully, length:', generatedEmail.length)
+      console.log('Generated email content:', generatedEmail)
+
+      if (!generatedEmail || generatedEmail.trim() === '') {
+        throw new Error('No email content generated from OpenAI response')
+      }
 
       // Save the generated email to the database (optional - only if user is authenticated)
       try {
