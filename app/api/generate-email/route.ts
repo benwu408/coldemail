@@ -351,11 +351,10 @@ Requirements:
               recipient_company: recipientCompany,
               recipient_role: recipientRole,
               purpose: purpose,
-              tone: tone,
-              email_content: generatedEmail,
+              search_mode: searchMode,
               research_findings: researchFindings,
               commonalities: commonalities,
-              search_mode: searchMode
+              generated_email: generatedEmail
             })
           console.log('Email saved to database successfully')
         } else {
