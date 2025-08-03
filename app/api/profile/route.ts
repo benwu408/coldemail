@@ -44,4 +44,59 @@ export async function GET(request: NextRequest) {
     console.error('Error in profile API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { user } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 })
+    }
+
+    // Prepare profile data for upsert
+    const profileData = {
+      user_id: user.id,
+      full_name: body.full_name || null,
+      job_title: body.job_title || null,
+      company: body.company || null,
+      education: {
+        school: body.education?.school || null,
+        degree: body.education?.degree || null,
+        major: body.education?.major || null,
+        graduation_year: body.education?.graduation_year || null
+      },
+      location: body.location || null,
+      industry: body.industry || null,
+      experience_years: body.experience_years || null,
+      skills: body.skills || [],
+      interests: body.interests || [],
+      background: body.background || null,
+      linkedin_url: body.linkedin_url || null,
+      website: body.website || null,
+      resume_text: body.resume_text || null,
+      resume_filename: body.resume_filename || null,
+      updated_at: new Date().toISOString()
+    }
+
+    // Upsert the profile
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .upsert(profileData, {
+        onConflict: 'user_id',
+        ignoreDuplicates: false
+      })
+
+    if (error) {
+      console.error('Error saving profile:', error)
+      return NextResponse.json({ error: 'Failed to save profile' }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, data })
+
+  } catch (error) {
+    console.error('Error in profile POST API:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 } 

@@ -122,6 +122,7 @@ export async function POST(request: NextRequest) {
               4. Geographic connections
               5. Shared skills or expertise areas
               6. Similar career paths or goals
+              7. Resume-based connections (if resume is available)
               
               Format as a clear list of specific commonalities.`
             },
@@ -206,6 +207,8 @@ Recipient Information:
 ${researchFindings ? `Research Findings:\n${researchFindings}\n` : ''}
 ${commonalities ? `Commonalities Found:\n${commonalities}\n` : ''}
 
+${userProfile?.resume_text ? `User Resume Context:\n${userProfile.resume_text}\n` : ''}
+
 Requirements:
 - Make it personalized and authentic
 - Use the ${tone} tone appropriately
@@ -215,6 +218,7 @@ Requirements:
 - If context mentions UIUC, LinkedIn, or work, incorporate it naturally
 - If research findings are provided, subtly incorporate relevant details to show you've done your homework
 - If user profile is available, find and mention specific commonalities to create genuine connections
+- If resume text is available, use it to find additional connections and make the email more specific to the user's background
 - End with a professional signature "${userProfile?.full_name || '[Your Name]'}"`
 
     // If no user profile is available, add a note about the signature

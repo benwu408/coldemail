@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   background TEXT,
   linkedin_url TEXT,
   website TEXT,
+  resume_text TEXT,
+  resume_filename TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id)

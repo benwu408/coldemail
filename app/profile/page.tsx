@@ -1,28 +1,30 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
-import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { X, Plus, Save, User, GraduationCap, Briefcase, Heart, MapPin, Globe, ArrowLeft, Mail, LogOut } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-import { AuthProvider } from '@/contexts/AuthContext'
-import ProtectedRoute from '@/components/ProtectedRoute'
-import Link from 'next/link'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useToast } from '@/hooks/use-toast'
+import { useAuth } from '@/contexts/AuthContext'
+import { 
+  User, 
+  Building, 
+  GraduationCap, 
+  MapPin, 
+  Briefcase, 
+  Skills, 
+  Heart, 
+  FileText, 
+  Upload, 
+  File,
+  X,
+  Loader2
+} from 'lucide-react'
 import Header from '@/components/Header'
 
-// Force dynamic rendering to prevent static generation issues
-export const dynamic = 'force-dynamic'
-
-interface UserProfile {
-  id?: string
-  user_id: string
+interface ProfileData {
   full_name: string
   job_title: string
   company: string
@@ -40,18 +42,17 @@ interface UserProfile {
   background: string
   linkedin_url: string
   website: string
-  created_at?: string
-  updated_at?: string
+  resume_text?: string
+  resume_filename?: string
 }
 
-function ProfilePageContent() {
-  const { user, signOut } = useAuth()
+export default function ProfilePage() {
+  const { user } = useAuth()
   const { toast } = useToast()
-  const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [lastSaved, setLastSaved] = useState<string | null>(null)
-  const [profile, setProfile] = useState<UserProfile>({
-    user_id: user?.id || '',
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [profile, setProfile] = useState<ProfileData>({
     full_name: '',
     job_title: '',
     company: '',
@@ -68,100 +69,35 @@ function ProfilePageContent() {
     interests: [],
     background: '',
     linkedin_url: '',
-    website: ''
+    website: '',
+    resume_text: '',
+    resume_filename: ''
   })
 
-  const [newSkill, setNewSkill] = useState('')
-  const [newInterest, setNewInterest] = useState('')
-  const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null)
-
-  // Load existing profile data
   useEffect(() => {
-    if (user?.id) {
+    if (user) {
       loadProfile()
     }
   }, [user])
 
-  // Auto-save when component unmounts or page is about to unload
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // Save profile before leaving - always try to save if user is logged in
-      if (user?.id) {
-        // Use synchronous storage as fallback since async operations might not complete
-        localStorage.setItem('profile_autosave_pending', 'true')
-        saveProfileSilently()
-      }
-    }
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        // Save when user switches tabs or minimizes window
-        if (user?.id) {
-          saveProfileSilently()
-        }
-      }
-    }
-
-    const handlePageHide = () => {
-      // Save when page is being hidden (navigation, tab close, etc.)
-      if (user?.id) {
-        saveProfileSilently()
-      }
-    }
-
-    // Add event listeners
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    window.addEventListener('pagehide', handlePageHide)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    // Cleanup function - save when component unmounts
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-      window.removeEventListener('pagehide', handlePageHide)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      
-      // Save when leaving the page
-      if (user?.id) {
-        saveProfileSilently()
-      }
-    }
-  }, [user?.id]) // Only depend on user ID, not profile to avoid infinite loops
-
   const loadProfile = async () => {
-    if (!user?.id) {
-      console.log('No user ID available')
-      return
-    }
-
     try {
-      setLoading(true)
-      console.log('Loading profile for user:', user.id)
+      const response = await fetch('/api/profile', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.id}`,
+        },
+      })
       
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-
-      console.log('Load profile result:', { data, error })
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          console.log('No existing profile found, starting with empty profile')
-          // This is fine - user doesn't have a profile yet
-        } else {
-          console.error('Error loading profile:', error)
-          throw error
-        }
-      }
-
-      if (data) {
+      if (response.ok) {
+        const data = await response.json()
         console.log('Profile loaded successfully:', data)
         console.log('Education data from database:', data.education)
         console.log('School value from database:', data.education?.school)
         console.log('School value type:', typeof data.education?.school)
         console.log('School value length:', data.education?.school?.length)
-        
+
         // Ensure education object exists and has proper structure
         const education = data.education || {}
         const parsedEducation = {
@@ -170,15 +106,9 @@ function ProfilePageContent() {
           major: education.major || '',
           graduation_year: education.graduation_year || ''
         }
-        
+
         console.log('Parsed education data:', parsedEducation)
-        console.log('Education data comparison:', {
-          savedSchool: education.school,
-          savedMajor: education.major,
-          savedDegree: education.degree,
-          savedYear: education.graduation_year
-        })
-        
+
         setProfile({
           ...data,
           full_name: data.full_name || '',
@@ -192,9 +122,11 @@ function ProfilePageContent() {
           interests: data.interests || [],
           background: data.background || '',
           linkedin_url: data.linkedin_url || '',
-          website: data.website || ''
+          website: data.website || '',
+          resume_text: data.resume_text || '',
+          resume_filename: data.resume_filename || ''
         })
-        
+
         // Log the profile state after setting it
         console.log('Profile state after setting:', {
           ...data,
@@ -209,355 +141,253 @@ function ProfilePageContent() {
           interests: data.interests || [],
           background: data.background || '',
           linkedin_url: data.linkedin_url || '',
-          website: data.website || ''
+          website: data.website || '',
+          resume_text: data.resume_text || '',
+          resume_filename: data.resume_filename || ''
         })
-      } else {
-        console.log('No profile data found, using empty profile')
       }
     } catch (error) {
       console.error('Error loading profile:', error)
       toast({
-        title: "Error Loading Profile",
-        description: error instanceof Error ? error.message : "Failed to load your profile data.",
-        variant: "destructive"
+        title: "Error",
+        description: "Failed to load profile data.",
+        variant: "destructive",
       })
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
   const saveProfile = async () => {
-    if (!user?.id) {
-      toast({
-        title: "Authentication Error",
-        description: "Please log in again to save your profile.",
-        variant: "destructive"
-      })
-      return
-    }
-
+    setIsSaving(true)
     try {
-      setSaving(true)
-      
-      // Clean the profile data - preserve actual user input
-      const cleanedProfile = {
-        user_id: user.id,
-        full_name: profile.full_name || null,
-        job_title: profile.job_title || null,
-        company: profile.company || null,
-        education: {
-          school: profile.education.school || null,
-          degree: profile.education.degree || null,
-          major: profile.education.major || null,
-          graduation_year: profile.education.graduation_year || null
+      const response = await fetch('/api/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        location: profile.location || null,
-        industry: profile.industry || null,
-        experience_years: profile.experience_years || null,
-        skills: profile.skills.length > 0 ? profile.skills : [],
-        interests: profile.interests.length > 0 ? profile.interests : [],
-        background: profile.background || null,
-        linkedin_url: profile.linkedin_url || null,
-        website: profile.website || null,
-        updated_at: new Date().toISOString()
-      }
+        body: JSON.stringify(profile),
+      })
 
-      console.log('User ID:', user.id)
-      console.log('Saving cleaned profile data:', cleanedProfile)
-      console.log('Education data being saved:', cleanedProfile.education)
-      console.log('School value being saved:', cleanedProfile.education.school)
-      console.log('School value type:', typeof cleanedProfile.education.school)
-      console.log('School value length:', cleanedProfile.education.school?.length)
-
-      // First, let's test if we can connect to the database
-      const { data: testData, error: testError } = await supabase
-        .from('user_profiles')
-        .select('count')
-        .limit(1)
-
-      console.log('Database connection test:', { testData, testError })
-
-      if (testError) {
-        console.error('Database connection failed:', testError)
-        toast({
-          title: "Database Connection Error",
-          description: "Unable to connect to the database. Please check your Supabase configuration.",
-          variant: "destructive"
-        })
-        return
-      }
-
-      // Try to save the profile using upsert
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .upsert(cleanedProfile, { 
-          onConflict: 'user_id',
-          ignoreDuplicates: false
-        })
-
-      console.log('Save result:', { data, error })
-
-      if (error) {
-        console.error('Supabase error:', error)
-        console.error('Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        })
-        
-        // If it's a table doesn't exist error, show helpful message
-        if (error.message.includes('relation "user_profiles" does not exist')) {
-          toast({
-            title: "Database Setup Required",
-            description: "Please run the SQL script in your Supabase dashboard to create the user_profiles table.",
-            variant: "destructive"
-          })
-          return
-        }
-        
-        throw error
-      }
-
-      // Verify the save worked by fetching the profile again
-      const { data: verifyData, error: verifyError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-
-      console.log('Verification after save:', { verifyData, verifyError })
-      console.log('Education data in verification:', verifyData?.education)
-      console.log('School value in verification:', verifyData?.education?.school)
-      console.log('School value type in verification:', typeof verifyData?.education?.school)
-
-      if (verifyData) {
-        console.log('Profile saved successfully:', verifyData)
-        setLastSaved(new Date().toLocaleTimeString())
+      if (response.ok) {
         toast({
           title: "Profile Saved!",
           description: "Your profile has been updated successfully.",
         })
       } else {
-        console.error('Profile not found after save:', verifyError)
-        toast({
-          title: "Save Verification Failed",
-          description: "Profile was saved but could not be verified. Please refresh and try again.",
-          variant: "destructive"
-        })
+        throw new Error('Failed to save profile')
       }
     } catch (error) {
       console.error('Error saving profile:', error)
       toast({
-        title: "Save Failed",
-        description: error instanceof Error ? error.message : "Failed to save your profile. Please try again.",
-        variant: "destructive"
+        title: "Error",
+        description: "Failed to save profile. Please try again.",
+        variant: "destructive",
       })
     } finally {
-      setSaving(false)
+      setIsSaving(false)
     }
   }
 
   const saveProfileSilently = async () => {
-    if (!user?.id) {
-      console.log('No user ID available for silent save')
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profile),
+      })
+
+      if (!response.ok) {
+        console.error('Failed to save profile silently')
+      }
+    } catch (error) {
+      console.error('Error saving profile silently:', error)
+    }
+  }
+
+  const triggerAutoSave = () => {
+    // Debounce auto-save
+    setTimeout(() => {
+      saveProfileSilently()
+    }, 1000)
+  }
+
+  const handleInputChange = (field: string, value: any) => {
+    setProfile(prev => ({
+      ...prev,
+      [field]: value
+    }))
+    triggerAutoSave()
+  }
+
+  const handleEducationChange = (field: string, value: string) => {
+    setProfile(prev => ({
+      ...prev,
+      education: {
+        ...prev.education,
+        [field]: value
+      }
+    }))
+    triggerAutoSave()
+  }
+
+  const handleArrayChange = (field: 'skills' | 'interests', value: string) => {
+    const items = value.split(',').map(item => item.trim()).filter(item => item)
+    setProfile(prev => ({
+      ...prev,
+      [field]: items
+    }))
+    triggerAutoSave()
+  }
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (file.type !== 'application/pdf') {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload a PDF file.",
+        variant: "destructive",
+      })
       return
     }
 
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload a file smaller than 5MB.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsUploading(true)
     try {
-      console.log('Silent save triggered for user:', user.id)
-      console.log('Current profile state:', profile)
-      
-      // Clean the profile data - preserve actual user input
-      const cleanedProfile = {
-        user_id: user.id,
-        full_name: profile.full_name || null,
-        job_title: profile.job_title || null,
-        company: profile.company || null,
-        education: {
-          school: profile.education.school || null,
-          degree: profile.education.degree || null,
-          major: profile.education.major || null,
-          graduation_year: profile.education.graduation_year || null
-        },
-        location: profile.location || null,
-        industry: profile.industry || null,
-        experience_years: profile.experience_years || null,
-        skills: profile.skills.length > 0 ? profile.skills : [],
-        interests: profile.interests.length > 0 ? profile.interests : [],
-        background: profile.background || null,
-        linkedin_url: profile.linkedin_url || null,
-        website: profile.website || null,
-        updated_at: new Date().toISOString()
-      }
+      const formData = new FormData()
+      formData.append('resume', file)
 
-      console.log('Saving cleaned profile:', cleanedProfile)
-      console.log('Education data being saved in silent save:', cleanedProfile.education)
+      const response = await fetch('/api/upload-resume', {
+        method: 'POST',
+        body: formData,
+      })
 
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .upsert(cleanedProfile, {
-          onConflict: 'user_id',
-          ignoreDuplicates: false
+      if (response.ok) {
+        const data = await response.json()
+        setProfile(prev => ({
+          ...prev,
+          resume_text: data.resume_text,
+          resume_filename: file.name
+        }))
+        
+        toast({
+          title: "Resume Uploaded!",
+          description: "Your resume has been processed and added to your profile.",
         })
-
-      console.log('Silent save result:', { data, error })
-
-      if (error) {
-        console.error('Supabase error during silent save:', error)
-        console.error('Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        })
+        
+        // Auto-save the profile with the new resume data
+        triggerAutoSave()
       } else {
-        console.log('Silent save successful')
-        setLastSaved(new Date().toLocaleTimeString())
+        throw new Error('Failed to upload resume')
       }
     } catch (error) {
-      console.error('Error during silent save:', error)
+      console.error('Error uploading resume:', error)
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload resume. Please try again.",
+        variant: "destructive",
+      })
     } finally {
-      setSaving(false)
+      setIsUploading(false)
     }
   }
 
-  const addSkill = () => {
-    if (newSkill.trim() && !profile.skills.includes(newSkill.trim())) {
-      setProfile(prev => ({
-        ...prev,
-        skills: [...prev.skills, newSkill.trim()]
-      }))
-      setNewSkill('')
-      triggerAutoSave()
-    }
-  }
-
-  const removeSkill = (skill: string) => {
+  const removeResume = () => {
     setProfile(prev => ({
       ...prev,
-      skills: prev.skills.filter(s => s !== skill)
+      resume_text: '',
+      resume_filename: ''
     }))
     triggerAutoSave()
+    toast({
+      title: "Resume Removed",
+      description: "Your resume has been removed from your profile.",
+    })
   }
 
-  const addInterest = () => {
-    if (newInterest.trim() && !profile.interests.includes(newInterest.trim())) {
-      setProfile(prev => ({
-        ...prev,
-        interests: [...prev.interests, newInterest.trim()]
-      }))
-      setNewInterest('')
-      triggerAutoSave()
-    }
-  }
-
-  const removeInterest = (interest: string) => {
-    setProfile(prev => ({
-      ...prev,
-      interests: prev.interests.filter(i => i !== interest)
-    }))
-    triggerAutoSave()
-  }
-
-  // Debounced auto-save function
-  const triggerAutoSave = () => {
-    console.log('Auto-save triggered for field change')
-    
-    // Clear existing timeout
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout)
-    }
-
-    // Set new timeout for auto-save - always save after 2 seconds of inactivity
-    const timeout = setTimeout(() => {
-      console.log('Auto-save timeout fired, calling saveProfileSilently')
-      if (user?.id) {
-        saveProfileSilently()
-      } else {
-        console.log('No user ID available for auto-save')
-      }
-    }, 2000) // 2 seconds delay
-
-    setAutoSaveTimeout(timeout)
-  }
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Loading your profile...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-[#111]">
-      {/* Header */}
+    <div className="min-h-screen bg-[#FAFAFA]">
       <Header />
-
-      {/* Main Content */}
+      
       <div className="container mx-auto px-6 py-8 max-w-4xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Profile</h1>
+          <p className="text-gray-600">
+            Complete your profile to help AI generate more personalized emails with better connections.
+          </p>
+        </div>
+
         <div className="space-y-6">
           {/* Basic Information */}
-          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <User className="h-5 w-5 text-indigo-600" />
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
                 Basic Information
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="full_name">Full Name</Label>
                   <Input
                     id="full_name"
                     value={profile.full_name}
-                    onChange={(e) => {
-                      setProfile(prev => ({ ...prev, full_name: e.target.value }))
-                      triggerAutoSave()
-                    }}
+                    onChange={(e) => handleInputChange('full_name', e.target.value)}
                     placeholder="Your full name"
                   />
                 </div>
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="job_title">Job Title</Label>
                   <Input
                     id="job_title"
                     value={profile.job_title}
-                    onChange={(e) => {
-                      setProfile(prev => ({ ...prev, job_title: e.target.value }))
-                      triggerAutoSave()
-                    }}
-                    placeholder="e.g., Software Engineer, Product Manager"
+                    onChange={(e) => handleInputChange('job_title', e.target.value)}
+                    placeholder="e.g., Software Engineer"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="company">Company</Label>
                   <Input
                     id="company"
                     value={profile.company}
-                    onChange={(e) => {
-                      setProfile(prev => ({ ...prev, company: e.target.value }))
-                      triggerAutoSave()
-                    }}
-                    placeholder="Your current company"
+                    onChange={(e) => handleInputChange('company', e.target.value)}
+                    placeholder="e.g., Google"
                   />
                 </div>
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="location">Location</Label>
                   <Input
                     id="location"
                     value={profile.location}
-                    onChange={(e) => {
-                      setProfile(prev => ({ ...prev, location: e.target.value }))
-                      triggerAutoSave()
-                    }}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
                     placeholder="e.g., San Francisco, CA"
                   />
                 </div>
@@ -565,277 +395,245 @@ function ProfilePageContent() {
             </CardContent>
           </Card>
 
-          {/* Education */}
-          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+          {/* Resume Upload */}
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <GraduationCap className="h-5 w-5 text-green-600" />
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Resume Upload
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="resume">Upload Resume (PDF)</Label>
+                <div className="mt-2">
+                  <input
+                    type="file"
+                    id="resume"
+                    accept=".pdf"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    disabled={isUploading}
+                  />
+                  <label
+                    htmlFor="resume"
+                    className={`inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 ${
+                      isUploading ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    {isUploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )}
+                    {isUploading ? 'Processing...' : 'Choose PDF File'}
+                  </label>
+                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  Upload your resume to help AI understand your background and find better connections.
+                </p>
+              </div>
+
+              {profile.resume_filename && (
+                <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <File className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-900">
+                      {profile.resume_filename}
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={removeResume}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+
+              {profile.resume_text && (
+                <div className="mt-4">
+                  <Label>Resume Content Preview</Label>
+                  <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg max-h-32 overflow-y-auto">
+                    <p className="text-sm text-gray-700">
+                      {profile.resume_text.substring(0, 200)}...
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Education */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5" />
                 Education
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="school">School/University</Label>
                   <Input
                     id="school"
                     value={profile.education.school}
-                    onChange={(e) => {
-                      setProfile(prev => ({
-                        ...prev,
-                        education: { ...prev.education, school: e.target.value }
-                      }))
-                      triggerAutoSave()
-                    }}
-                    placeholder="e.g., Stanford University"
+                    onChange={(e) => handleEducationChange('school', e.target.value)}
+                    placeholder="e.g., University of Illinois"
                   />
                 </div>
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="degree">Degree</Label>
-                  <Select
+                  <Input
+                    id="degree"
                     value={profile.education.degree}
-                    onValueChange={(value) => {
-                      setProfile(prev => ({
-                        ...prev,
-                        education: { ...prev.education, degree: value }
-                      }))
-                      triggerAutoSave()
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select degree" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="High School">High School</SelectItem>
-                      <SelectItem value="Associate's">Associate's</SelectItem>
-                      <SelectItem value="Bachelor's">Bachelor's</SelectItem>
-                      <SelectItem value="Master's">Master's</SelectItem>
-                      <SelectItem value="PhD">PhD</SelectItem>
-                      <SelectItem value="MBA">MBA</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    onChange={(e) => handleEducationChange('degree', e.target.value)}
+                    placeholder="e.g., Bachelor's"
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="major">Major/Field of Study</Label>
                   <Input
                     id="major"
                     value={profile.education.major}
-                    onChange={(e) => {
-                      setProfile(prev => ({
-                        ...prev,
-                        education: { ...prev.education, major: e.target.value }
-                      }))
-                      triggerAutoSave()
-                    }}
-                    placeholder="e.g., Computer Science, Business"
+                    onChange={(e) => handleEducationChange('major', e.target.value)}
+                    placeholder="e.g., Computer Science"
                   />
                 </div>
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="graduation_year">Graduation Year</Label>
                   <Input
                     id="graduation_year"
                     value={profile.education.graduation_year}
-                    onChange={(e) => {
-                      setProfile(prev => ({
-                        ...prev,
-                        education: { ...prev.education, graduation_year: e.target.value }
-                      }))
-                      triggerAutoSave()
-                    }}
-                    placeholder="e.g., 2020"
+                    onChange={(e) => handleEducationChange('graduation_year', e.target.value)}
+                    placeholder="e.g., 2023"
                   />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Professional Background */}
-          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+          {/* Professional Information */}
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Briefcase className="h-5 w-5 text-blue-600" />
-                Professional Background
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5" />
+                Professional Information
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="industry">Industry</Label>
                   <Input
                     id="industry"
                     value={profile.industry}
-                    onChange={(e) => {
-                      setProfile(prev => ({ ...prev, industry: e.target.value }))
-                      triggerAutoSave()
-                    }}
-                    placeholder="e.g., Technology, Finance, Healthcare"
+                    onChange={(e) => handleInputChange('industry', e.target.value)}
+                    placeholder="e.g., Technology"
                   />
                 </div>
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="experience_years">Years of Experience</Label>
-                  <Select
+                  <Input
+                    id="experience_years"
                     value={profile.experience_years}
-                    onValueChange={(value) => {
-                      setProfile(prev => ({ ...prev, experience_years: value }))
-                      triggerAutoSave()
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select experience level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0-1">0-1 years</SelectItem>
-                      <SelectItem value="2-3">2-3 years</SelectItem>
-                      <SelectItem value="4-6">4-6 years</SelectItem>
-                      <SelectItem value="7-10">7-10 years</SelectItem>
-                      <SelectItem value="10+">10+ years</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    onChange={(e) => handleInputChange('experience_years', e.target.value)}
+                    placeholder="e.g., 3-5 years"
+                  />
                 </div>
               </div>
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="background">Professional Background</Label>
                 <Textarea
                   id="background"
                   value={profile.background}
-                  onChange={(e) => {
-                    setProfile(prev => ({ ...prev, background: e.target.value }))
-                    triggerAutoSave()
-                  }}
-                  placeholder="Tell us about your professional journey, achievements, and what you're passionate about..."
-                  rows={4}
+                  onChange={(e) => handleInputChange('background', e.target.value)}
+                  placeholder="Brief description of your professional background, key achievements, and career goals..."
+                  rows={3}
                 />
               </div>
             </CardContent>
           </Card>
 
-          {/* Skills */}
-          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+          {/* Skills & Interests */}
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Globe className="h-5 w-5 text-purple-600" />
-                Skills & Expertise
+              <CardTitle className="flex items-center gap-2">
+                <Skills className="h-5 w-5" />
+                Skills & Interests
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-2">
+              <div>
+                <Label htmlFor="skills">Skills (comma-separated)</Label>
                 <Input
-                  value={newSkill}
-                  onChange={(e) => setNewSkill(e.target.value)}
-                  placeholder="Add a skill (e.g., JavaScript, Project Management)"
-                  onKeyPress={(e) => e.key === 'Enter' && addSkill()}
+                  id="skills"
+                  value={profile.skills.join(', ')}
+                  onChange={(e) => handleArrayChange('skills', e.target.value)}
+                  placeholder="e.g., JavaScript, React, Product Management, Data Analysis"
                 />
-                <Button onClick={addSkill} size="sm">
-                  <Plus className="h-4 w-4" />
-                </Button>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {profile.skills.map((skill, index) => (
-                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                    {skill}
-                    <X
-                      className="h-3 w-3 cursor-pointer hover:text-red-500"
-                      onClick={() => removeSkill(skill)}
-                    />
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Interests */}
-          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Heart className="h-5 w-5 text-red-600" />
-                Interests & Hobbies
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
+              <div>
+                <Label htmlFor="interests">Interests (comma-separated)</Label>
                 <Input
-                  value={newInterest}
-                  onChange={(e) => setNewInterest(e.target.value)}
-                  placeholder="Add an interest (e.g., AI, Travel, Photography)"
-                  onKeyPress={(e) => e.key === 'Enter' && addInterest()}
+                  id="interests"
+                  value={profile.interests.join(', ')}
+                  onChange={(e) => handleArrayChange('interests', e.target.value)}
+                  placeholder="e.g., AI, Startups, Photography, Travel"
                 />
-                <Button onClick={addInterest} size="sm">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {profile.interests.map((interest, index) => (
-                  <Badge key={index} variant="outline" className="flex items-center gap-1">
-                    {interest}
-                    <X
-                      className="h-3 w-3 cursor-pointer hover:text-red-500"
-                      onClick={() => removeInterest(interest)}
-                    />
-                  </Badge>
-                ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* Social Links */}
-          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+          {/* Links */}
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <MapPin className="h-5 w-5 text-orange-600" />
-                Social Links
+              <CardTitle className="flex items-center gap-2">
+                <Heart className="h-5 w-5" />
+                Professional Links
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="linkedin_url">LinkedIn URL</Label>
-                  <Input
-                    id="linkedin_url"
-                    value={profile.linkedin_url}
-                    onChange={(e) => {
-                      setProfile(prev => ({ ...prev, linkedin_url: e.target.value }))
-                      triggerAutoSave()
-                    }}
-                    placeholder="https://linkedin.com/in/yourprofile"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="website">Personal Website</Label>
-                  <Input
-                    id="website"
-                    value={profile.website}
-                    onChange={(e) => {
-                      setProfile(prev => ({ ...prev, website: e.target.value }))
-                      triggerAutoSave()
-                    }}
-                    placeholder="https://yourwebsite.com"
-                  />
-                </div>
+              <div>
+                <Label htmlFor="linkedin_url">LinkedIn URL</Label>
+                <Input
+                  id="linkedin_url"
+                  value={profile.linkedin_url}
+                  onChange={(e) => handleInputChange('linkedin_url', e.target.value)}
+                  placeholder="https://linkedin.com/in/yourprofile"
+                />
+              </div>
+              <div>
+                <Label htmlFor="website">Personal Website</Label>
+                <Input
+                  id="website"
+                  value={profile.website}
+                  onChange={(e) => handleInputChange('website', e.target.value)}
+                  placeholder="https://yourwebsite.com"
+                />
               </div>
             </CardContent>
           </Card>
 
           {/* Save Button */}
-          <div className="flex justify-center">
+          <div className="flex justify-end">
             <Button
               onClick={saveProfile}
-              disabled={saving}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 px-8 py-3"
-              size="lg"
+              disabled={isSaving}
+              className="bg-[#6366F1] hover:bg-[#4F46E5] text-white"
             >
-              {saving ? (
+              {isSaving ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
                 </>
               ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Profile
-                </>
+                'Save Profile'
               )}
             </Button>
           </div>
@@ -843,14 +641,6 @@ function ProfilePageContent() {
       </div>
     </div>
   )
-}
-
-export default function ProfilePage() {
-  return (
-    <AuthProvider>
-      <ProtectedRoute>
-        <ProfilePageContent />
-      </ProtectedRoute>
-    </AuthProvider>
-  )
+} 
+} 
 } 
