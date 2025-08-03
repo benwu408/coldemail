@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -12,6 +13,7 @@ import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
 export default function LoginForm() {
   const { signIn, signUp } = useAuth()
   const { toast } = useToast()
+  const router = useRouter()
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -56,6 +58,9 @@ export default function LoginForm() {
           ? "Please check your email to verify your account."
           : "You have been successfully logged in.",
       })
+      
+      // Redirect to homepage after successful login
+      router.push('/')
     } catch (error: any) {
       console.error('Auth error:', error)
       toast({
