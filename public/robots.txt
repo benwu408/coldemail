@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://reachful.io/sitemap.xml
+
+# Disallow admin and private areas
+Disallow: /api/
+Disallow: /_next/
+Disallow: /debug-*
+Disallow: /test-*
+
+# Allow important pages
+Allow: /
+Allow: /generate
+Allow: /profile
+Allow: /past-emails
+Allow: /faq
+Allow: /login
+
+# Crawl delay (optional)
+Crawl-delay: 1 
