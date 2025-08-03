@@ -68,12 +68,7 @@ export async function POST(request: NextRequest) {
             type: "web_search"
           }
         ],
-        tool_choice: {
-          type: "tool",
-          function: {
-            name: "web_search"
-          }
-        }
+        tool_choice: "auto"
       })
 
       // Extract the search results and generate detailed report
