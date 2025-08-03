@@ -97,7 +97,7 @@ export default function TestDebugPage() {
     setIsLoading(true)
     setError('')
     setResult(null)
-    addLog('Testing basic search mode...')
+    addLog('Testing basic search mode with GPT-4o-mini...')
 
     try {
       const testDataBasic = { ...testData, searchMode: 'basic' }
@@ -122,6 +122,45 @@ export default function TestDebugPage() {
       const data = JSON.parse(responseText)
       setResult(data)
       addLog('Basic search test completed successfully!')
+
+    } catch (err: any) {
+      const errorMessage = err.message || 'Unknown error occurred'
+      addLog(`ERROR: ${errorMessage}`)
+      setError(errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const testProSearch = async () => {
+    setIsLoading(true)
+    setError('')
+    setResult(null)
+    addLog('Testing pro search mode with GPT-4.1...')
+
+    try {
+      const testDataPro = { ...testData, searchMode: 'deep' }
+      addLog(`Test data: ${JSON.stringify(testDataPro, null, 2)}`)
+
+      const response = await fetch('/api/generate-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(testDataPro),
+      })
+
+      addLog(`Response status: ${response.status}`)
+      const responseText = await response.text()
+      addLog(`Raw response: ${responseText}`)
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${responseText}`)
+      }
+
+      const data = JSON.parse(responseText)
+      setResult(data)
+      addLog('Pro search test completed successfully!')
 
     } catch (err: any) {
       const errorMessage = err.message || 'Unknown error occurred'
@@ -263,9 +302,18 @@ export default function TestDebugPage() {
                   disabled={isLoading}
                   variant="outline"
                 >
-                  Test Basic Search
+                  Test Basic Search (GPT-4o-mini)
                 </Button>
               </div>
+
+              <Button 
+                onClick={testProSearch} 
+                disabled={isLoading}
+                variant="outline"
+                className="w-full"
+              >
+                Test Pro Search (GPT-4.1)
+              </Button>
 
               <Button 
                 onClick={testOpenAIAPI} 
