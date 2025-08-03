@@ -83,51 +83,27 @@ export async function POST(request: NextRequest) {
           input: `Please search for and provide a comprehensive report on: ${searchQuery}`,
         })
 
-        console.log('Web search preview response received:', JSON.stringify(searchResponse, null, 2))
+        console.log('Web search preview response received')
         
-        // Debug the response structure
-        console.log('Response type:', typeof searchResponse)
-        console.log('Response keys:', Object.keys(searchResponse))
-        console.log('Has output_text:', 'output_text' in searchResponse)
-        console.log('Has output:', 'output' in searchResponse)
-        console.log('output_text value:', (searchResponse as any).output_text)
-        console.log('output value:', (searchResponse as any).output)
-        console.log('output type:', typeof (searchResponse as any).output)
-        
-        // Handle different possible response formats
+        // Extract search results from the response
         let searchResults = ''
-        if ((searchResponse as any).output_text) {
-          searchResults = (searchResponse as any).output_text
+        if (searchResponse.output_text) {
+          searchResults = searchResponse.output_text
           console.log('Using output_text format')
-        } else if ((searchResponse as any).output && Array.isArray((searchResponse as any).output)) {
+        } else if (searchResponse.output && Array.isArray(searchResponse.output)) {
           // Handle the complex output array format from GPT-4.1
-          const outputArray = (searchResponse as any).output
+          const outputArray = searchResponse.output
           const messageItem = outputArray.find((item: any) => item.type === 'message')
-          if (messageItem && messageItem.content && Array.isArray(messageItem.content)) {
-            const textContent = messageItem.content.find((content: any) => content.type === 'output_text')
+          if (messageItem && (messageItem as any).content && Array.isArray((messageItem as any).content)) {
+            const textContent = (messageItem as any).content.find((content: any) => content.type === 'output_text')
             if (textContent && textContent.text) {
               searchResults = textContent.text
               console.log('Using output array message format')
             }
           }
-        } else if ((searchResponse as any).output && typeof (searchResponse as any).output === 'string') {
-          searchResults = (searchResponse as any).output
-          console.log('Using output string format')
-        } else if ((searchResponse as any).choices && Array.isArray((searchResponse as any).choices)) {
-          // Handle chat completion format
-          searchResults = (searchResponse as any).choices[0]?.message?.content || ''
-          console.log('Using chat completion format')
-        } else if ((searchResponse as any).content) {
-          // Handle direct content format
-          searchResults = (searchResponse as any).content
-          console.log('Using direct content format')
-        } else {
-          console.log('Unexpected response format, using full response as string')
-          searchResults = JSON.stringify(searchResponse)
         }
         
-        console.log('Parsed search results:', searchResults)
-        console.log('Search results length:', searchResults.length)
+        console.log('Search results extracted, length:', searchResults.length)
         
         if (!searchResults || searchResults.trim() === '') {
           throw new Error('No search results extracted from response')
@@ -135,28 +111,31 @@ export async function POST(request: NextRequest) {
         
         // Now use the search results to generate a comprehensive report
         console.log('Generating comprehensive report with GPT-4o...')
+        
+        const reportPrompt = `Based on these search results about ${recipientName} at ${recipientCompany}:
+
+${searchResults}
+
+Please create a detailed professional report covering:
+1. Professional Background
+2. Education & Credentials  
+3. Recent Achievements & News
+4. Professional Interests & Focus Areas
+5. Company Role & Responsibilities
+6. Public Presence & Thought Leadership
+
+Format as a clear, structured report.`
+
         const reportResponse = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {
               role: "system",
-              content: `You are a professional research analyst. Based on the search results provided, create a comprehensive report about the person. Structure it clearly and include all relevant professional information.`
+              content: "You are a professional research analyst. Based on the search results provided, create a comprehensive report about the person. Structure it clearly and include all relevant professional information."
             },
             {
               role: "user",
-              content: `Based on these search results about ${recipientName} at ${recipientCompany}:
-              
-              ${searchResults}
-              
-              Please create a detailed professional report covering:
-              1. Professional Background
-              2. Education & Credentials  
-              3. Recent Achievements & News
-              4. Professional Interests & Focus Areas
-              5. Company Role & Responsibilities
-              6. Public Presence & Thought Leadership
-              
-              Format as a clear, structured report.`
+              content: reportPrompt
             }
           ]
         })
@@ -166,98 +145,75 @@ export async function POST(request: NextRequest) {
 
       } catch (error) {
         console.log('Web search preview error:', error)
-        console.log('Error details:', JSON.stringify(error, null, 2))
-        console.log('Error message:', error instanceof Error ? error.message : 'Unknown error')
         console.log('Falling back to enhanced analysis...')
         
         // Fallback to enhanced GPT-4o analysis
+        const fallbackPrompt = `Please provide a comprehensive analysis and report on: ${recipientName} at ${recipientCompany} as ${recipientRole}. Focus on:
+1. Professional background and career highlights
+2. Education and credentials
+3. Recent achievements or news
+4. Professional interests and focus areas
+5. Company role and responsibilities
+6. Any public speaking, publications, or thought leadership
+7. Social media presence and professional activities
+
+Format your response as a structured report with clear sections.`
+
         const searchResponse = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {
               role: "system",
-              content: `You are a professional research analyst with access to current information. Analyze and provide comprehensive information about the person mentioned. Focus on:
-              1. Professional background and career highlights
-              2. Education and credentials
-              3. Recent achievements or news
-              4. Professional interests and focus areas
-              5. Company role and responsibilities
-              6. Any public speaking, publications, or thought leadership
-              7. Social media presence and professional activities
-              
-              Format your response as a structured report with clear sections.`
+              content: "You are a professional research analyst with access to current information. Analyze and provide comprehensive information about the person mentioned."
             },
             {
               role: "user",
-              content: `Please provide a comprehensive analysis and report on: ${searchQuery}`
+              content: fallbackPrompt
             }
           ]
         })
 
-        const searchResults = searchResponse.choices[0]?.message?.content || ''
-        
-        // Generate detailed report from analysis
-        const reportResponse = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: `You are a professional research analyst. Based on the analysis provided, create a comprehensive report about the person. Structure it clearly and include all relevant professional information.`
-            },
-            {
-              role: "user",
-              content: `Based on this analysis about ${recipientName} at ${recipientCompany}:
-              
-              ${searchResults}
-              
-              Please create a detailed professional report covering:
-              1. Professional Background
-              2. Education & Credentials  
-              3. Recent Achievements & News
-              4. Professional Interests & Focus Areas
-              5. Company Role & Responsibilities
-              6. Public Presence & Thought Leadership
-              
-              Format as a clear, structured report.`
-            }
-          ]
-        })
-
-        researchFindings = reportResponse.choices[0]?.message?.content || ''
+        researchFindings = searchResponse.choices[0]?.message?.content || ''
+        console.log('Fallback analysis completed, length:', researchFindings.length)
       }
 
       // Find commonalities between user profile and recipient
       if (userProfile) {
+        console.log('Generating commonalities with user profile...')
+        
+        const commonalitiesPrompt = `User Profile:
+${JSON.stringify(userProfile, null, 2)}
+
+Recipient Information:
+${researchFindings}
+
+Please identify specific commonalities between the user and recipient that could be mentioned in a networking email. Focus on:
+1. Shared educational background
+2. Similar professional interests
+3. Common industry experience
+4. Geographic connections
+5. Shared skills or expertise areas
+6. Similar career paths or goals
+7. Resume-based connections (if resume is available)
+
+Format as a clear list of specific commonalities.`
+
         const commonalitiesResponse = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {
               role: "system",
-              content: `You are a networking expert. Analyze the user's profile and the recipient's information to find meaningful commonalities that could create genuine connections. Focus on:
-              1. Shared educational background
-              2. Similar professional interests
-              3. Common industry experience
-              4. Geographic connections
-              5. Shared skills or expertise areas
-              6. Similar career paths or goals
-              7. Resume-based connections (if resume is available)
-              
-              Format as a clear list of specific commonalities.`
+              content: "You are a networking expert. Analyze the user's profile and the recipient's information to find meaningful commonalities that could create genuine connections."
             },
             {
               role: "user",
-              content: `User Profile:
-              ${JSON.stringify(userProfile, null, 2)}
-              
-              Recipient Information:
-              ${researchFindings}
-              
-              Please identify specific commonalities between the user and recipient that could be mentioned in a networking email.`
+              content: commonalitiesPrompt
             }
           ]
         })
 
         commonalities = commonalitiesResponse.choices[0]?.message?.content || ''
+        console.log('Commonalities generated successfully')
       }
 
     } else {
@@ -352,30 +308,37 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate the email using the research findings and commonalities
-    let prompt = `Generate a personalized outreach email for networking purposes.
-
-Recipient Information:
-- Name: ${recipientName}
-- Company: ${recipientCompany}
-- Role: ${recipientRole}
-- Purpose: ${purpose}
-
-${researchFindings ? `Research Findings:\n${researchFindings}\n` : ''}
-${commonalities ? `Commonalities Found:\n${commonalities}\n` : ''}
-
-${userProfile?.resume_text ? `User Resume Context:\n${userProfile.resume_text}\n` : ''}
-
-Requirements:
-- Make it personalized and authentic
-- Use the ${tone} tone appropriately
-- Keep it concise (2-3 paragraphs max)
-- Include a clear call-to-action
-- Make it sound human-written, not robotic
-- If context mentions UIUC, LinkedIn, or work, incorporate it naturally
-- If research findings are provided, subtly incorporate relevant details to show you've done your homework
-- If user profile is available, find and mention specific commonalities to create genuine connections
-- If resume text is available, use it to find additional connections and make the email more specific to the user's background
-- End with a professional signature "${userProfile?.full_name || '[Your Name]'}"`
+    console.log('Building email generation prompt...')
+    
+    let prompt = 'Generate a personalized outreach email for networking purposes.\n\n'
+    prompt += `Recipient Information:\n`
+    prompt += `- Name: ${recipientName}\n`
+    prompt += `- Company: ${recipientCompany}\n`
+    prompt += `- Role: ${recipientRole}\n`
+    prompt += `- Purpose: ${purpose}\n\n`
+    
+    if (researchFindings) {
+      prompt += `Research Findings:\n${researchFindings}\n\n`
+    }
+    
+    if (commonalities) {
+      prompt += `Commonalities Found:\n${commonalities}\n\n`
+    }
+    
+    if (userProfile?.resume_text) {
+      prompt += `User Resume Context:\n${userProfile.resume_text}\n\n`
+    }
+    
+    prompt += `Requirements:\n`
+    prompt += `- Make it personalized and authentic\n`
+    prompt += `- Use the ${tone} tone appropriately\n`
+    prompt += `- Keep it concise (2-3 paragraphs max)\n`
+    prompt += `- Include a clear call-to-action\n`
+    prompt += `- Make it sound human-written, not robotic\n`
+    prompt += `- If research findings are provided, subtly incorporate relevant details to show you've done your homework\n`
+    prompt += `- If user profile is available, find and mention specific commonalities to create genuine connections\n`
+    prompt += `- If resume text is available, use it to find additional connections and make the email more specific to the user's background\n`
+    prompt += `- End with a professional signature "${userProfile?.full_name || '[Your Name]'}"`
 
     // If no user profile is available, add a note about the signature
     if (!userProfile) {
