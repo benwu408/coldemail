@@ -76,8 +76,11 @@ export async function POST(request: NextRequest) {
       try {
         // Try using the responses API format for web_search_preview
         console.log('Attempting web_search_preview with GPT-4.1...')
+        
+        // First, let's try a simpler approach with gpt-4o-mini for web search
+        console.log('Trying gpt-4o-mini with web_search_preview first...')
         const searchResponse = await openai.responses.create({
-          model: "gpt-4.1",
+          model: "gpt-4o-mini",
           tools: [{ type: "web_search_preview" }],
           input: `Please search for and provide a comprehensive report on: ${searchQuery}`,
         })
