@@ -14,7 +14,7 @@ import {
   GraduationCap, 
   MapPin, 
   Briefcase, 
-  Skills, 
+  Code, 
   Heart, 
   FileText, 
   Upload, 
@@ -564,7 +564,7 @@ export default function ProfilePage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Skills className="h-5 w-5" />
+                <Code className="h-5 w-5" />
                 Skills & Interests
               </CardTitle>
             </CardHeader>
@@ -642,3 +642,4 @@ export default function ProfilePage() {
     </div>
   )
 } 
+

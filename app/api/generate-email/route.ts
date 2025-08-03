@@ -47,28 +47,13 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: "system",
-            content: `You are a professional research assistant. Search for comprehensive information about the person and generate a detailed report. Include:
-            1. Professional background and career highlights
-            2. Education and credentials
-            3. Recent achievements or news
-            4. Professional interests and focus areas
-            5. Company role and responsibilities
-            6. Any public speaking, publications, or thought leadership
-            7. Social media presence and professional activities
-            
-            Format your response as a structured report with clear sections.`
+            content: `You are a professional research analyst. Search for and provide comprehensive information about the person mentioned.`
           },
           {
             role: "user",
             content: `Please search for and provide a comprehensive report on: ${searchQuery}`
           }
-        ],
-        tools: [
-          {
-            type: "web_search"
-          }
-        ],
-        tool_choice: "auto"
+        ]
       })
 
       // Extract the search results and generate detailed report
