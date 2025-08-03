@@ -44,12 +44,14 @@ export async function POST(request: NextRequest) {
       
       try {
         // Try using the responses API format for web_search_preview
+        console.log('Attempting web_search_preview with GPT-4.1...')
         const searchResponse = await openai.responses.create({
           model: "gpt-4.1",
           tools: [{ type: "web_search_preview" }],
           input: `Please search for and provide a comprehensive report on: ${searchQuery}`,
         })
 
+        console.log('Web search preview response received:', searchResponse)
         const searchResults = searchResponse.output_text || ''
         
         // Now use the search results to generate a comprehensive report
@@ -82,7 +84,9 @@ export async function POST(request: NextRequest) {
         researchFindings = reportResponse.choices[0]?.message?.content || ''
 
       } catch (error) {
-        console.log('Web search preview not available, falling back to enhanced analysis...')
+        console.log('Web search preview error:', error)
+        console.log('Error details:', JSON.stringify(error, null, 2))
+        console.log('Falling back to enhanced analysis...')
         
         // Fallback to enhanced GPT-4o analysis
         const searchResponse = await openai.chat.completions.create({
@@ -258,50 +262,62 @@ Requirements:
       prompt += `\n\nNote: Since no user profile was found, use "[Your Name]" as the signature. The user should update this with their actual name.`
     }
 
-    const emailResponse = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert at writing personalized, professional networking emails that sound authentic and human-written."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 500
-    })
-
-    const generatedEmail = emailResponse.choices[0]?.message?.content || ''
-
-    // Save the generated email to the database
-    const { data: { user } } = await supabase.auth.getUser()
+    console.log('Generating email with prompt length:', prompt.length)
     
-    if (user) {
-      await supabase
-        .from('generated_emails')
-        .insert({
-          user_id: user.id,
-          recipient_name: recipientName,
-          recipient_company: recipientCompany,
-          recipient_role: recipientRole,
-          purpose: purpose,
-          tone: tone,
-          email_content: generatedEmail,
-          research_findings: researchFindings,
-          commonalities: commonalities,
-          search_mode: searchMode
-        })
-    }
+    try {
+      const emailResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert at writing personalized, professional networking emails that sound authentic and human-written."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 500
+      })
 
-    return NextResponse.json({
-      email: generatedEmail,
-      researchFindings: researchFindings,
-      commonalities: commonalities,
-      searchMode: searchMode
-    })
+      const generatedEmail = emailResponse.choices[0]?.message?.content || ''
+      console.log('Email generated successfully, length:', generatedEmail.length)
+
+      // Save the generated email to the database
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        await supabase
+          .from('generated_emails')
+          .insert({
+            user_id: user.id,
+            recipient_name: recipientName,
+            recipient_company: recipientCompany,
+            recipient_role: recipientRole,
+            purpose: purpose,
+            tone: tone,
+            email_content: generatedEmail,
+            research_findings: researchFindings,
+            commonalities: commonalities,
+            search_mode: searchMode
+          })
+      }
+
+      return NextResponse.json({
+        email: generatedEmail,
+        researchFindings,
+        commonalities
+      })
+
+    } catch (emailError) {
+      console.error('Error generating email:', emailError)
+      console.error('Error details:', JSON.stringify(emailError, null, 2))
+      return NextResponse.json(
+        { error: 'Failed to generate email. Please try again.' },
+        { status: 500 }
+      )
+    }
 
   } catch (error) {
     console.error('Error generating email:', error)
