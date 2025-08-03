@@ -84,18 +84,38 @@ export async function POST(request: NextRequest) {
 
         console.log('Web search preview response received:', JSON.stringify(searchResponse, null, 2))
         
+        // Debug the response structure
+        console.log('Response type:', typeof searchResponse)
+        console.log('Response keys:', Object.keys(searchResponse))
+        console.log('Has output_text:', 'output_text' in searchResponse)
+        console.log('Has output:', 'output' in searchResponse)
+        console.log('output_text value:', (searchResponse as any).output_text)
+        console.log('output value:', (searchResponse as any).output)
+        console.log('output type:', typeof (searchResponse as any).output)
+        
         // Handle different possible response formats
         let searchResults = ''
-        if (searchResponse.output_text) {
-          searchResults = searchResponse.output_text
-        } else if (searchResponse.output && typeof searchResponse.output === 'string') {
-          searchResults = searchResponse.output
-        } else if (searchResponse.output && Array.isArray(searchResponse.output)) {
-          searchResults = searchResponse.output.map(item => 
+        if ((searchResponse as any).output_text) {
+          searchResults = (searchResponse as any).output_text
+          console.log('Using output_text format')
+        } else if ((searchResponse as any).output && typeof (searchResponse as any).output === 'string') {
+          searchResults = (searchResponse as any).output
+          console.log('Using output string format')
+        } else if ((searchResponse as any).output && Array.isArray((searchResponse as any).output)) {
+          searchResults = (searchResponse as any).output.map((item: any) => 
             typeof item === 'string' ? item : JSON.stringify(item)
           ).join('\n')
+          console.log('Using output array format')
+        } else if ((searchResponse as any).choices && Array.isArray((searchResponse as any).choices)) {
+          // Handle chat completion format
+          searchResults = (searchResponse as any).choices[0]?.message?.content || ''
+          console.log('Using chat completion format')
+        } else if ((searchResponse as any).content) {
+          // Handle direct content format
+          searchResults = (searchResponse as any).content
+          console.log('Using direct content format')
         } else {
-          console.log('Unexpected response format:', searchResponse)
+          console.log('Unexpected response format, using full response as string')
           searchResults = JSON.stringify(searchResponse)
         }
         
