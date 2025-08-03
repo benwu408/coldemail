@@ -198,57 +198,43 @@ export async function POST(request: NextRequest) {
       }
 
     } else {
-      // Basic search mode (existing web search functionality)
-      console.log('Using basic search mode...')
+      // Basic search mode using GPT-4o-mini for basic information
+      console.log('Using basic search mode with GPT-4o-mini...')
       
       const searchQuery = `${recipientName} ${recipientCompany} ${recipientRole}`
       console.log('Search query:', searchQuery)
       
       try {
-        if (!process.env.SEARCHAPI_KEY) {
-          console.log('SEARCHAPI_KEY not found, skipping web search')
-          researchFindings = `Basic information for ${recipientName} at ${recipientCompany} as ${recipientRole}`
-        } else {
-          console.log('Making SearchAPI request...')
-          
-          const searchResponse = await fetch('https://www.searchapi.io/api/v1/search', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.SEARCHAPI_KEY}`,
+        console.log('Making GPT-4o-mini request for basic information...')
+        
+        const searchResponse = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: "You are a helpful assistant that provides basic, factual information about people based on publicly available knowledge. Keep responses concise and focused on professional background."
             },
-            body: JSON.stringify({
-              q: searchQuery,
-              num: 5,
-            }),
-          })
+            {
+              role: "user",
+              content: `Please provide basic information about: ${searchQuery}. Focus on their professional role, company, and any notable background information. Keep it brief and factual.`
+            }
+          ],
+          max_tokens: 200
+        })
 
-          console.log('SearchAPI response status:', searchResponse.status)
-
-          if (!searchResponse.ok) {
-            const errorText = await searchResponse.text()
-            console.log('SearchAPI error response:', errorText)
-            throw new Error(`Search API request failed: ${searchResponse.status} - ${errorText}`)
-          }
-
-          const searchData = await searchResponse.json()
-          console.log('SearchAPI response data keys:', Object.keys(searchData))
-          
-          if (searchData.organic_results && searchData.organic_results.length > 0) {
-            const results = searchData.organic_results
-              .slice(0, 3)
-              .map((result: any) => `${result.title}\n${result.snippet}`)
-              .join('\n\n')
-            
-            researchFindings = `Research findings for ${recipientName}:\n\n${results}`
-            console.log('Research findings generated successfully')
-          } else {
-            researchFindings = `Basic information for ${recipientName} at ${recipientCompany} as ${recipientRole}`
-            console.log('No search results found, using basic info')
-          }
+        console.log('GPT-4o-mini response received')
+        const searchResults = searchResponse.choices[0]?.message?.content || ''
+        
+        if (searchResults) {
+          researchFindings = `Basic research findings for ${recipientName}:\n\n${searchResults}`
+          console.log('Research findings generated successfully from GPT')
+        } else {
+          researchFindings = `Basic information for ${recipientName} at ${recipientCompany} as ${recipientRole}`
+          console.log('No search results found, using basic info')
         }
+        
       } catch (searchError) {
-        console.error('SearchAPI error:', searchError)
+        console.error('GPT search error:', searchError)
         researchFindings = `Basic information for ${recipientName} at ${recipientCompany} as ${recipientRole}`
         console.log('Using fallback research findings due to search error')
       }
