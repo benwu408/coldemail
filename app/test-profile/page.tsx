@@ -1,134 +1,320 @@
 'use client'
 
 import { useState } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useAuth } from '@/contexts/AuthContext'
 import { AuthProvider } from '@/contexts/AuthContext'
-import ProtectedRoute from '@/components/ProtectedRoute'
+import { Loader2, CheckCircle, XCircle, Bug } from 'lucide-react'
+import Header from '@/components/Header'
 
-// Force dynamic rendering to prevent static generation issues
-export const dynamic = 'force-dynamic'
+interface TestProfileData {
+  full_name: string
+  job_title: string
+  company: string
+  education: {
+    school: string
+    degree: string
+    major: string
+    graduation_year: string
+  }
+  location: string
+  industry: string
+  experience_years: string
+  skills: string[]
+  interests: string[]
+  background: string
+  linkedin_url: string
+  website: string
+}
 
-function TestProfilePageContent() {
+function TestProfileContent() {
   const { user } = useAuth()
-  const [testResult, setTestResult] = useState<string>('')
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [logs, setLogs] = useState<string[]>([])
+  const [testData, setTestData] = useState<TestProfileData>({
+    full_name: 'John Doe',
+    job_title: 'Software Engineer',
+    company: 'Test Company',
+    education: {
+      school: 'Test University',
+      degree: 'Bachelor\'s',
+      major: 'Computer Science',
+      graduation_year: '2020'
+    },
+    location: 'San Francisco, CA',
+    industry: 'Technology',
+    experience_years: '3-5 years',
+    skills: ['JavaScript', 'React', 'Node.js'],
+    interests: ['AI', 'Startups'],
+    background: 'Experienced software engineer with focus on web development.',
+    linkedin_url: 'https://linkedin.com/in/johndoe',
+    website: 'https://johndoe.com'
+  })
 
-  const testDatabaseConnection = async () => {
-    setLoading(true)
-    setTestResult('Testing...')
+  const addLog = (message: string) => {
+    setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`])
+  }
+
+  const clearLogs = () => {
+    setLogs([])
+  }
+
+  const testProfileLoad = async () => {
+    setIsLoading(true)
+    addLog('=== Testing Profile Load ===')
     
     try {
-      // Test 1: Basic connection
-      const { data: test1, error: error1 } = await supabase
-        .from('user_profiles')
-        .select('count')
-        .limit(1)
+      addLog(`User ID: ${user?.id}`)
+      addLog(`User email: ${user?.email}`)
       
-      setTestResult(prev => prev + '\n1. Basic connection: ' + (error1 ? 'FAILED - ' + error1.message : 'SUCCESS'))
-      
-      if (error1) {
-        console.error('Test 1 failed:', error1)
-        return
-      }
+      const response = await fetch('/api/profile', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.id}`,
+        },
+      })
 
-      // Test 2: Check if user exists
-      if (user?.id) {
-        const { data: test2, error: error2 } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single()
-        
-        setTestResult(prev => prev + '\n2. User profile check: ' + (error2 ? 'FAILED - ' + error2.message : 'SUCCESS - Found: ' + (test2 ? 'Yes' : 'No')))
-        
-        if (error2 && error2.code !== 'PGRST116') {
-          console.error('Test 2 failed:', error2)
-          return
-        }
+      addLog(`Response status: ${response.status}`)
+      const responseText = await response.text()
+      addLog(`Raw response: ${responseText}`)
 
-        // Test 3: Try to insert a simple profile
-        const testProfile = {
-          user_id: user.id,
-          full_name: 'Test User',
-          job_title: 'Test Job',
-          company: 'Test Company',
-          education: {
-            school: 'Test School',
-            degree: 'Test Degree',
-            major: 'Test Major',
-            graduation_year: '2020'
-          },
-          location: 'Test Location',
-          industry: 'Test Industry',
-          experience_years: '5-10',
-          skills: ['Test Skill'],
-          interests: ['Test Interest'],
-          background: 'Test background',
-          linkedin_url: 'https://test.com',
-          website: 'https://test.com',
-          updated_at: new Date().toISOString()
-        }
-
-        const { data: test3, error: error3 } = await supabase
-          .from('user_profiles')
-          .upsert(testProfile, {
-            onConflict: 'user_id',
-            ignoreDuplicates: false
-          })
-        
-        setTestResult(prev => prev + '\n3. Insert test: ' + (error3 ? 'FAILED - ' + error3.message : 'SUCCESS'))
-        
-        if (error3) {
-          console.error('Test 3 failed:', error3)
-          console.error('Error details:', {
-            message: error3.message,
-            details: error3.details,
-            hint: error3.hint,
-            code: error3.code
-          })
-        }
+      if (response.ok) {
+        const data = JSON.parse(responseText)
+        addLog('✅ Profile load successful')
+        addLog(`Profile data: ${JSON.stringify(data, null, 2)}`)
       } else {
-        setTestResult(prev => prev + '\n2. User profile check: SKIPPED - No user ID')
+        addLog(`❌ Profile load failed: ${response.status}`)
+        addLog(`Error response: ${responseText}`)
       }
-
     } catch (error) {
-      setTestResult(prev => prev + '\nERROR: ' + (error instanceof Error ? error.message : 'Unknown error'))
-      console.error('Test failed:', error)
+      addLog(`❌ Profile load error: ${error}`)
     } finally {
-      setLoading(false)
+      setIsLoading(false)
+    }
+  }
+
+  const testProfileSave = async () => {
+    setIsLoading(true)
+    addLog('=== Testing Profile Save ===')
+    
+    try {
+      addLog(`User ID: ${user?.id}`)
+      addLog(`Test data: ${JSON.stringify(testData, null, 2)}`)
+      
+      const response = await fetch('/api/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.id}`,
+        },
+        body: JSON.stringify(testData),
+      })
+
+      addLog(`Response status: ${response.status}`)
+      const responseText = await response.text()
+      addLog(`Raw response: ${responseText}`)
+
+      if (response.ok) {
+        const data = JSON.parse(responseText)
+        addLog('✅ Profile save successful')
+        addLog(`Response data: ${JSON.stringify(data, null, 2)}`)
+      } else {
+        addLog(`❌ Profile save failed: ${response.status}`)
+        addLog(`Error response: ${responseText}`)
+      }
+    } catch (error) {
+      addLog(`❌ Profile save error: ${error}`)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const testDatabaseConnection = async () => {
+    setIsLoading(true)
+    addLog('=== Testing Database Connection ===')
+    
+    try {
+      addLog('Testing Supabase connection...')
+      
+      // Test a simple query to see if we can connect to the database
+      const response = await fetch('/api/test-db', {
+        method: 'GET',
+      })
+
+      addLog(`Response status: ${response.status}`)
+      const responseText = await response.text()
+      addLog(`Raw response: ${responseText}`)
+
+      if (response.ok) {
+        addLog('✅ Database connection successful')
+      } else {
+        addLog(`❌ Database connection failed: ${response.status}`)
+      }
+    } catch (error) {
+      addLog(`❌ Database connection error: ${error}`)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const testEnvironmentVariables = async () => {
+    setIsLoading(true)
+    addLog('=== Testing Environment Variables ===')
+    
+    try {
+      addLog('Testing environment variable access...')
+      
+      const response = await fetch('/api/test-env', {
+        method: 'GET',
+      })
+
+      addLog(`Response status: ${response.status}`)
+      const responseText = await response.text()
+      addLog(`Raw response: ${responseText}`)
+
+      if (response.ok) {
+        addLog('✅ Environment variables accessible')
+      } else {
+        addLog(`❌ Environment variables failed: ${response.status}`)
+      }
+    } catch (error) {
+      addLog(`❌ Environment variables error: ${error}`)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-2xl mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile Save Test</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p><strong>User ID:</strong> {user?.id || 'Not logged in'}</p>
-              <p><strong>Supabase URL:</strong> {process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Not set'}</p>
-              <p><strong>Supabase Key:</strong> {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Set' : 'Not set'}</p>
-            </div>
-            
-            <Button 
-              onClick={testDatabaseConnection} 
-              disabled={loading}
-              className="w-full"
-            >
-              {loading ? 'Testing...' : 'Run Database Tests'}
-            </Button>
-            
-            <div className="bg-gray-100 p-4 rounded">
-              <pre className="text-sm whitespace-pre-wrap">{testResult}</pre>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="min-h-screen bg-[#FAFAFA]">
+      <Header />
+      
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile Save Tester</h1>
+          <p className="text-gray-600">
+            Test profile saving functionality and debug issues.
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Test Controls */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bug className="h-5 w-5" />
+                  Test Controls
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    onClick={testEnvironmentVariables} 
+                    disabled={isLoading}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                    Test Env Vars
+                  </Button>
+                  
+                  <Button 
+                    onClick={testDatabaseConnection} 
+                    disabled={isLoading}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                    Test DB Connection
+                  </Button>
+                </div>
+                
+                <Button 
+                  onClick={testProfileLoad} 
+                  disabled={isLoading}
+                  className="w-full"
+                >
+                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                  Test Profile Load
+                </Button>
+                
+                <Button 
+                  onClick={testProfileSave} 
+                  disabled={isLoading}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                  Test Profile Save
+                </Button>
+                
+                <Button 
+                  onClick={clearLogs} 
+                  variant="outline"
+                  className="w-full"
+                >
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Clear Logs
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Test Data */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Test Data</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Full Name</Label>
+                  <Input
+                    value={testData.full_name}
+                    onChange={(e) => setTestData(prev => ({ ...prev, full_name: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label>Job Title</Label>
+                  <Input
+                    value={testData.job_title}
+                    onChange={(e) => setTestData(prev => ({ ...prev, job_title: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label>Company</Label>
+                  <Input
+                    value={testData.company}
+                    onChange={(e) => setTestData(prev => ({ ...prev, company: e.target.value }))}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Logs */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Test Logs</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-gray-900 text-green-400 p-4 rounded-lg h-96 overflow-y-auto font-mono text-sm">
+                  {logs.length === 0 ? (
+                    <p className="text-gray-500">No logs yet. Run a test to see results.</p>
+                  ) : (
+                    logs.map((log, index) => (
+                      <div key={index} className="mb-1">
+                        {log}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -137,9 +323,7 @@ function TestProfilePageContent() {
 export default function TestProfilePage() {
   return (
     <AuthProvider>
-      <ProtectedRoute>
-        <TestProfilePageContent />
-      </ProtectedRoute>
+      <TestProfileContent />
     </AuthProvider>
   )
 } 
