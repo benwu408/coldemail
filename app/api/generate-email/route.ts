@@ -99,14 +99,20 @@ export async function POST(request: NextRequest) {
         if ((searchResponse as any).output_text) {
           searchResults = (searchResponse as any).output_text
           console.log('Using output_text format')
+        } else if ((searchResponse as any).output && Array.isArray((searchResponse as any).output)) {
+          // Handle the complex output array format from GPT-4.1
+          const outputArray = (searchResponse as any).output
+          const messageItem = outputArray.find((item: any) => item.type === 'message')
+          if (messageItem && messageItem.content && Array.isArray(messageItem.content)) {
+            const textContent = messageItem.content.find((content: any) => content.type === 'output_text')
+            if (textContent && textContent.text) {
+              searchResults = textContent.text
+              console.log('Using output array message format')
+            }
+          }
         } else if ((searchResponse as any).output && typeof (searchResponse as any).output === 'string') {
           searchResults = (searchResponse as any).output
           console.log('Using output string format')
-        } else if ((searchResponse as any).output && Array.isArray((searchResponse as any).output)) {
-          searchResults = (searchResponse as any).output.map((item: any) => 
-            typeof item === 'string' ? item : JSON.stringify(item)
-          ).join('\n')
-          console.log('Using output array format')
         } else if ((searchResponse as any).choices && Array.isArray((searchResponse as any).choices)) {
           // Handle chat completion format
           searchResults = (searchResponse as any).choices[0]?.message?.content || ''
