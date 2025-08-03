@@ -183,36 +183,60 @@ export async function POST(request: NextRequest) {
       console.log('Using basic search mode...')
       
       const searchQuery = `${recipientName} ${recipientCompany} ${recipientRole}`
+      console.log('Search query:', searchQuery)
       
-      const searchResponse = await fetch('https://www.searchapi.io/api/v1/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SEARCHAPI_KEY}`,
-        },
-        body: JSON.stringify({
-          q: searchQuery,
-          num: 5,
-        }),
-      })
+      try {
+        if (!process.env.SEARCHAPI_KEY) {
+          console.log('SEARCHAPI_KEY not found, skipping web search')
+          researchFindings = `Basic information for ${recipientName} at ${recipientCompany} as ${recipientRole}`
+        } else {
+          console.log('Making SearchAPI request...')
+          
+          const searchResponse = await fetch('https://www.searchapi.io/api/v1/search', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.SEARCHAPI_KEY}`,
+            },
+            body: JSON.stringify({
+              q: searchQuery,
+              num: 5,
+            }),
+          })
 
-      if (!searchResponse.ok) {
-        throw new Error('Search API request failed')
-      }
+          console.log('SearchAPI response status:', searchResponse.status)
 
-      const searchData = await searchResponse.json()
-      
-      if (searchData.organic_results && searchData.organic_results.length > 0) {
-        const results = searchData.organic_results
-          .slice(0, 3)
-          .map((result: any) => `${result.title}\n${result.snippet}`)
-          .join('\n\n')
-        
-        researchFindings = `Research findings for ${recipientName}:\n\n${results}`
+          if (!searchResponse.ok) {
+            const errorText = await searchResponse.text()
+            console.log('SearchAPI error response:', errorText)
+            throw new Error(`Search API request failed: ${searchResponse.status} - ${errorText}`)
+          }
+
+          const searchData = await searchResponse.json()
+          console.log('SearchAPI response data keys:', Object.keys(searchData))
+          
+          if (searchData.organic_results && searchData.organic_results.length > 0) {
+            const results = searchData.organic_results
+              .slice(0, 3)
+              .map((result: any) => `${result.title}\n${result.snippet}`)
+              .join('\n\n')
+            
+            researchFindings = `Research findings for ${recipientName}:\n\n${results}`
+            console.log('Research findings generated successfully')
+          } else {
+            researchFindings = `Basic information for ${recipientName} at ${recipientCompany} as ${recipientRole}`
+            console.log('No search results found, using basic info')
+          }
+        }
+      } catch (searchError) {
+        console.error('SearchAPI error:', searchError)
+        researchFindings = `Basic information for ${recipientName} at ${recipientCompany} as ${recipientRole}`
+        console.log('Using fallback research findings due to search error')
       }
 
       // Find commonalities (existing logic)
       if (userProfile) {
+        console.log('Generating commonalities with user profile...')
         const commonalitiesResponse = await openai.chat.completions.create({
           model: "gpt-4o-mini",
           messages: [
@@ -228,6 +252,7 @@ export async function POST(request: NextRequest) {
         })
 
         commonalities = commonalitiesResponse.choices[0]?.message?.content || ''
+        console.log('Commonalities generated successfully')
       }
     }
 
