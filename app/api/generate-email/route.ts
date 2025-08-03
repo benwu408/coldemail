@@ -309,24 +309,33 @@ Requirements:
       const generatedEmail = emailResponse.choices[0]?.message?.content || ''
       console.log('Email generated successfully, length:', generatedEmail.length)
 
-      // Save the generated email to the database
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (user) {
-        await supabase
-          .from('generated_emails')
-          .insert({
-            user_id: user.id,
-            recipient_name: recipientName,
-            recipient_company: recipientCompany,
-            recipient_role: recipientRole,
-            purpose: purpose,
-            tone: tone,
-            email_content: generatedEmail,
-            research_findings: researchFindings,
-            commonalities: commonalities,
-            search_mode: searchMode
-          })
+      // Save the generated email to the database (optional - only if user is authenticated)
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (user) {
+          console.log('Saving email to database for user:', user.id)
+          await supabase
+            .from('generated_emails')
+            .insert({
+              user_id: user.id,
+              recipient_name: recipientName,
+              recipient_company: recipientCompany,
+              recipient_role: recipientRole,
+              purpose: purpose,
+              tone: tone,
+              email_content: generatedEmail,
+              research_findings: researchFindings,
+              commonalities: commonalities,
+              search_mode: searchMode
+            })
+          console.log('Email saved to database successfully')
+        } else {
+          console.log('No authenticated user found, skipping database save')
+        }
+      } catch (dbError) {
+        console.log('Database save failed (continuing anyway):', dbError)
+        // Continue even if database save fails
       }
 
       return NextResponse.json({
