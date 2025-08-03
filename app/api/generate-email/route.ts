@@ -219,7 +219,30 @@ export async function POST(request: NextRequest) {
       try {
         console.log('Making GPT-4o-mini request for basic information...')
         
-        const searchResponse = await openai.chat.completions.create({
+        // Try using the responses API format for web search
+        const searchResponse = await openai.responses.create({
+          model: "gpt-4o-mini",
+          tools: [{ type: "web_search_preview" }],
+          input: `Please search for and provide basic information about: ${searchQuery}. Focus on their professional role, company, and any notable background information. Keep it brief and factual.`,
+        })
+
+        console.log('GPT-4o-mini search response received')
+        const searchResults = searchResponse.output_text || ''
+        
+        if (searchResults) {
+          researchFindings = `Basic research findings for ${recipientName}:\n\n${searchResults}`
+          console.log('Research findings generated successfully from GPT search')
+        } else {
+          researchFindings = `Basic information for ${recipientName} at ${recipientCompany} as ${recipientRole}`
+          console.log('No search results found, using basic info')
+        }
+        
+      } catch (searchError) {
+        console.error('GPT search error:', searchError)
+        console.log('Falling back to basic GPT-4o-mini without web search...')
+        
+        // Fallback to basic GPT-4o-mini without web search
+        const fallbackResponse = await openai.chat.completions.create({
           model: "gpt-4o-mini",
           messages: [
             {
@@ -234,21 +257,9 @@ export async function POST(request: NextRequest) {
           max_tokens: 200
         })
 
-        console.log('GPT-4o-mini response received')
-        const searchResults = searchResponse.choices[0]?.message?.content || ''
-        
-        if (searchResults) {
-          researchFindings = `Basic research findings for ${recipientName}:\n\n${searchResults}`
-          console.log('Research findings generated successfully from GPT')
-        } else {
-          researchFindings = `Basic information for ${recipientName} at ${recipientCompany} as ${recipientRole}`
-          console.log('No search results found, using basic info')
-        }
-        
-      } catch (searchError) {
-        console.error('GPT search error:', searchError)
-        researchFindings = `Basic information for ${recipientName} at ${recipientCompany} as ${recipientRole}`
-        console.log('Using fallback research findings due to search error')
+        const fallbackResults = fallbackResponse.choices[0]?.message?.content || ''
+        researchFindings = `Basic research findings for ${recipientName}:\n\n${fallbackResults}`
+        console.log('Fallback research findings generated successfully')
       }
 
       // Find commonalities (existing logic)
