@@ -1,6 +1,7 @@
 import { AuthProvider } from '@/contexts/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import ColdEmailGenerator from '@/components/ColdEmailGenerator'
+import { Toaster } from '@/components/ui/toaster'
 
 // Force dynamic rendering to prevent static generation issues
 export const dynamic = 'force-dynamic'
@@ -11,6 +12,7 @@ export default function GeneratePage() {
       <ProtectedRoute>
         <ColdEmailGenerator />
       </ProtectedRoute>
+      <Toaster />
     </AuthProvider>
   )
 } 
