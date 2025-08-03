@@ -4,7 +4,6 @@ import { writeFile, unlink } from 'fs/promises'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { v4 as uuidv4 } from 'uuid'
-import pdf from 'pdf-parse'
 
 export async function POST(request: NextRequest) {
   const supabase = createClient(
@@ -84,9 +83,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PDF text extraction function using pdf-parse
+// PDF text extraction function using dynamic import
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
+    // Dynamic import to prevent build-time issues
+    const pdf = (await import('pdf-parse')).default
     const data = await pdf(buffer)
     return data.text
   } catch (error) {
