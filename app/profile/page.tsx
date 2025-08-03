@@ -168,6 +168,7 @@ function ProfilePageContent() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.id}`,
         },
         body: JSON.stringify(profile),
       })
@@ -198,6 +199,7 @@ function ProfilePageContent() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.id}`,
         },
         body: JSON.stringify(profile),
       })

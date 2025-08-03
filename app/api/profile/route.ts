@@ -54,15 +54,23 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { data: { user } } = await supabase.auth.getUser()
+    
+    // Get the user from the request headers (same as GET method)
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader) {
+      return NextResponse.json({ error: 'No authorization header' }, { status: 401 })
+    }
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 })
+    // Extract user ID from the authorization header
+    const userId = authHeader.replace('Bearer ', '')
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Invalid user ID' }, { status: 401 })
     }
 
     // Prepare profile data for upsert
     const profileData = {
-      user_id: user.id,
+      user_id: userId,
       full_name: body.full_name || null,
       job_title: body.job_title || null,
       company: body.company || null,
@@ -85,6 +93,8 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString()
     }
 
+    console.log('Saving profile data:', profileData)
+
     // Upsert the profile
     const { data, error } = await supabase
       .from('user_profiles')
@@ -98,6 +108,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save profile' }, { status: 500 })
     }
 
+    console.log('Profile saved successfully:', data)
     return NextResponse.json({ success: true, data })
 
   } catch (error) {
