@@ -7,11 +7,12 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: {
-    default: 'Reachful - AI-Powered Cold Email Generator | Personalized Outreach That Feels Warm',
+    default: 'Reachful - Cold outreach that feels warm | AI-Powered Email Generator',
     template: '%s | Reachful'
   },
-  description: 'Generate personalized cold emails with AI that sound human and get responses. Our AI-powered email generator creates authentic outreach emails for networking, sales, and business development.',
+  description: 'Cold outreach that feels warm. Generate personalized cold emails with AI that sound human and get responses. Our AI-powered email generator creates authentic outreach emails for networking, sales, and business development.',
   keywords: [
+    'cold outreach that feels warm',
     'AI cold email generator',
     'personalized email outreach',
     'cold email writer AI',
@@ -19,7 +20,9 @@ export const metadata: Metadata = {
     'professional email templates',
     'sales email automation',
     'networking email tool',
-    'outreach email generator'
+    'outreach email generator',
+    'Reachful',
+    'warm cold emails'
   ],
   authors: [{ name: 'Reachful' }],
   creator: 'Reachful',
@@ -37,22 +40,22 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://reachful.io',
-    title: 'Reachful - AI-Powered Cold Email Generator',
-    description: 'Generate personalized cold emails with AI that sound human and get responses. Perfect for networking, sales, and business development.',
+    title: 'Reachful - Cold outreach that feels warm',
+    description: 'Cold outreach that feels warm. Generate personalized cold emails with AI that sound human and get responses. Perfect for networking, sales, and business development.',
     siteName: 'Reachful',
     images: [
       {
         url: '/reachful_logo.png',
         width: 1200,
         height: 630,
-        alt: 'Reachful - AI Cold Email Generator',
+        alt: 'Reachful - Cold outreach that feels warm',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Reachful - AI-Powered Cold Email Generator',
-    description: 'Generate personalized cold emails with AI that sound human and get responses.',
+    title: 'Reachful - Cold outreach that feels warm',
+    description: 'Cold outreach that feels warm. Generate personalized cold emails with AI that sound human and get responses.',
     images: ['/reachful_logo.png'],
   },
   robots: {
@@ -101,24 +104,91 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "SoftwareApplication",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  "@id": "https://reachful.io/#organization",
+                  "name": "Reachful",
+                  "url": "https://reachful.io",
+                  "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://reachful.io/reachful_logo.png",
+                    "width": 512,
+                    "height": 512
+                  },
+                  "slogan": "Cold outreach that feels warm",
+                  "description": "AI-powered cold email generator that creates personalized outreach emails",
+                  "foundingDate": "2024",
+                  "sameAs": [
+                    "https://twitter.com/reachful",
+                    "https://linkedin.com/company/reachful"
+                  ]
+                },
+                {
+                  "@type": "SoftwareApplication",
+                  "@id": "https://reachful.io/#software",
+                  "name": "Reachful - AI Cold Email Generator",
+                  "description": "Generate personalized cold emails with AI that sound human and get responses. Our AI-powered email generator creates authentic outreach emails for networking, sales, and business development.",
+                  "url": "https://reachful.io",
+                  "applicationCategory": "BusinessApplication",
+                  "operatingSystem": "Web Browser",
+                  "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "USD"
+                  },
+                  "aggregateRating": {
+                    "@type": "AggregateRating",
+                    "ratingValue": "4.8",
+                    "ratingCount": "150"
+                  },
+                  "author": {
+                    "@id": "https://reachful.io/#organization"
+                  },
+                  "publisher": {
+                    "@id": "https://reachful.io/#organization"
+                  }
+                },
+                {
+                  "@type": "WebSite",
+                  "@id": "https://reachful.io/#website",
+                  "url": "https://reachful.io",
+                  "name": "Reachful",
+                  "description": "AI-powered cold email generator that creates personalized outreach emails",
+                  "publisher": {
+                    "@id": "https://reachful.io/#organization"
+                  },
+                  "potentialAction": [
+                    {
+                      "@type": "SearchAction",
+                      "target": {
+                        "@type": "EntryPoint",
+                        "urlTemplate": "https://reachful.io/search?q={search_term_string}"
+                      },
+                      "query-input": "required name=search_term_string"
+                    }
+                  ]
+                }
+              ]
+            })
+          }}
+        />
+        
+        {/* Additional Logo Schema for Google Knowledge Panel */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Brand",
               "name": "Reachful",
+              "slogan": "Cold outreach that feels warm",
               "description": "AI-powered cold email generator that creates personalized outreach emails",
               "url": "https://reachful.io",
-              "applicationCategory": "BusinessApplication",
-              "operatingSystem": "Web Browser",
-              "offers": {
-                "@type": "Offer",
-                "price": "0",
-                "priceCurrency": "USD"
-              },
-              "aggregateRating": {
-                "@type": "AggregateRating",
-                "ratingValue": "4.8",
-                "ratingCount": "150"
-              },
-              "author": {
-                "@type": "Organization",
+              "logo": "https://reachful.io/reachful_logo.png",
+              "image": "https://reachful.io/reachful_logo.png",
+              "brand": {
+                "@type": "Brand",
                 "name": "Reachful"
               }
             })
