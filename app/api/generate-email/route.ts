@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
       try {
         // Try using the responses API format for web_search_preview
         console.log('Attempting web_search_preview with GPT-4.1...')
+        console.log('Search query:', searchQuery)
         
         const searchResponse = await openai.responses.create({
           model: "gpt-4.1",
@@ -84,6 +85,8 @@ export async function POST(request: NextRequest) {
         })
 
         console.log('Web search preview response received')
+        console.log('Response model:', searchResponse.model)
+        console.log('Response tools used:', searchResponse.tools)
         
         // Extract search results from the response
         let searchResults = ''
@@ -224,7 +227,7 @@ Format as a clear list of specific commonalities.`
       console.log('Search query:', searchQuery)
       
       try {
-        console.log('Making GPT-4o-mini request for basic information...')
+        console.log('Making GPT-4o-mini web_search_preview request for basic information...')
         
         // Try using the responses API format for web search
         const searchResponse = await openai.responses.create({
@@ -233,35 +236,40 @@ Format as a clear list of specific commonalities.`
           input: `Please search for and provide basic information about: ${searchQuery}. Focus on their professional role, company, and any notable background information. Keep it brief and factual.`,
         })
 
-        console.log('GPT-4o-mini search response received:', JSON.stringify(searchResponse, null, 2))
+        console.log('GPT-4o-mini web_search_preview response received')
+        console.log('Response model:', searchResponse.model)
+        console.log('Response tools used:', searchResponse.tools)
         
         // Handle different possible response formats
         let searchResults = ''
         if (searchResponse.output_text) {
           searchResults = searchResponse.output_text
+          console.log('Using output_text format for basic search')
         } else if (searchResponse.output && typeof searchResponse.output === 'string') {
           searchResults = searchResponse.output
+          console.log('Using output string format for basic search')
         } else if (searchResponse.output && Array.isArray(searchResponse.output)) {
           searchResults = searchResponse.output.map(item => 
             typeof item === 'string' ? item : JSON.stringify(item)
           ).join('\n')
+          console.log('Using output array format for basic search')
         } else {
-          console.log('Unexpected response format:', searchResponse)
+          console.log('Unexpected response format for basic search:', searchResponse)
           searchResults = JSON.stringify(searchResponse)
         }
         
-        console.log('Parsed search results:', searchResults)
+        console.log('Basic search results extracted, length:', searchResults.length)
         
         if (searchResults) {
           researchFindings = `Basic research findings for ${recipientName}:\n\n${searchResults}`
-          console.log('Research findings generated successfully from GPT search')
+          console.log('Research findings generated successfully from GPT web_search_preview')
         } else {
           researchFindings = `Basic information for ${recipientName} at ${recipientCompany} as ${recipientRole}`
           console.log('No search results found, using basic info')
         }
         
       } catch (searchError) {
-        console.error('GPT search error:', searchError)
+        console.error('GPT web_search_preview error:', searchError)
         console.log('Falling back to basic GPT-4o-mini without web search...')
         
         // Fallback to basic GPT-4o-mini without web search
