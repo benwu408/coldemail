@@ -134,8 +134,20 @@ export default function RootLayout({
                   "foundingDate": "2024",
                   "sameAs": [
                     "https://twitter.com/reachful",
-                    "https://linkedin.com/company/reachful"
-                  ]
+                    "https://linkedin.com/company/reachful",
+                    "https://facebook.com/reachful.io",
+                    "https://instagram.com/reachful.io",
+                    "https://youtube.com/@reachful"
+                  ],
+                  "contactPoint": {
+                    "@type": "ContactPoint",
+                    "contactType": "customer service",
+                    "email": "support@reachful.io"
+                  },
+                  "address": {
+                    "@type": "PostalAddress",
+                    "addressCountry": "US"
+                  }
                 },
                 {
                   "@type": "SoftwareApplication",

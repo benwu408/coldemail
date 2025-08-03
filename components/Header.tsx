@@ -84,6 +84,9 @@ export default function Header({
               <Link href="/#how-it-works" className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium">
                 How it works
               </Link>
+              <Link href="/about" className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium">
+                About
+              </Link>
               <Link href="/#pricing" className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium">
                 Pricing
               </Link>
