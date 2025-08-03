@@ -89,6 +89,19 @@ export default function RootLayout({
         <link rel="icon" type="image/png" href="/reachful_logo.png" />
         <link rel="shortcut icon" type="image/png" href="/reachful_logo.png" />
         <link rel="apple-touch-icon" href="/reachful_logo.png" />
+
+        {/* Google tag (gtag.js) */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-T6TL688KEN"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-T6TL688KEN');
+            `
+          }}
+        />
         
         {/* Add meta tags to prevent caching */}
         <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
