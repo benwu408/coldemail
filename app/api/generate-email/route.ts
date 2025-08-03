@@ -41,19 +41,21 @@ export async function POST(request: NextRequest) {
       // Generate comprehensive search query
       const searchQuery = `${recipientName} ${recipientCompany} ${recipientRole} professional background education experience achievements recent news articles LinkedIn profile`
       
-      // Use GPT-4o search preview to get detailed information
+      // Use GPT-4o with web_search_preview tool to get detailed information
       const searchResponse = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
-            role: "system",
-            content: `You are a professional research analyst. Search for and provide comprehensive information about the person mentioned.`
-          },
-          {
             role: "user",
             content: `Please search for and provide a comprehensive report on: ${searchQuery}`
           }
-        ]
+        ],
+        tools: [
+          {
+            type: "web_search_preview"
+          }
+        ],
+        tool_choice: "auto"
       })
 
       // Extract the search results and generate detailed report
