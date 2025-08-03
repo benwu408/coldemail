@@ -1,170 +1,210 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { getJson } from 'serpapi'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-// Research function
-async function researchRecipient(name: string, role?: string, company?: string) {
-  if (!process.env.SEARCHAPI_KEY || process.env.SEARCHAPI_KEY === 'your_actual_searchapi_key_here') {
-    console.log('SearchAPI key not configured or invalid')
-    return null
-  }
-
-  try {
-    const searchQueries = [
-      `${name} ${company || ''} ${role || ''}`,
-      `${name} LinkedIn`,
-      `${name} education background`,
-      `${name} recent projects deals`,
-      `${name} awards achievements`
-    ]
-
-    let allFindings: string[] = []
-
-    // Search for each query using SearchAPI
-    for (const query of searchQueries) {
-      try {
-        console.log(`Searching for: "${query}"`)
-        
-        const response = await fetch(`https://www.searchapi.io/api/v1/search?engine=google&q=${encodeURIComponent(query)}&num=3`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${process.env.SEARCHAPI_KEY}`,
-            'Content-Type': 'application/json',
-          },
-        })
-
-        if (!response.ok) {
-          throw new Error(`SearchAPI request failed: ${response.status}`)
-        }
-
-        const results = await response.json()
-
-        if (results.organic_results && results.organic_results.length > 0) {
-          results.organic_results.forEach((result: any) => {
-            if (result.snippet) {
-              allFindings.push(result.snippet)
-            }
-          })
-        } else {
-          console.log(`No results found for query: "${query}"`)
-        }
-      } catch (error) {
-        console.error(`Error searching for query "${query}":`, error)
-        // Continue with other queries even if one fails
-      }
-    }
-
-    console.log(`Total findings collected: ${allFindings.length}`)
-    return allFindings.slice(0, 10) // Return top 10 findings
-  } catch (error) {
-    console.error('Error researching recipient:', error)
-    return null
-  }
-}
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { recipientName, recipientRole, outreachPurpose, context, additionalNotes, tone } = body
+    const {
+      recipientName,
+      recipientCompany,
+      recipientRole,
+      purpose,
+      tone,
+      userProfile,
+      searchMode = 'basic' // 'basic' or 'deep'
+    } = body
 
-    // Validate required fields
-    if (!recipientName || !outreachPurpose) {
+    if (!recipientName || !recipientCompany || !recipientRole || !purpose) {
       return NextResponse.json(
-        { error: 'Recipient name and outreach purpose are required' },
+        { error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    // Check if OpenAI API key is available
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: 'OpenAI API key not configured' },
-        { status: 500 }
-      )
-    }
+    let researchFindings = ''
+    let commonalities = ''
 
-    // Get user profile data for personalization
-    let userProfile = null
-    try {
-      // Get user profile using user ID from the request
-      const userId = body.userId // We'll pass this from the frontend
-      if (userId) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', userId)
-          .single()
-        
-        if (profile) {
-          userProfile = profile
+    if (searchMode === 'deep') {
+      // Deep search mode using GPT-4o search preview
+      console.log('Starting deep search mode...')
+      
+      // Generate comprehensive search query
+      const searchQuery = `${recipientName} ${recipientCompany} ${recipientRole} professional background education experience achievements recent news articles LinkedIn profile`
+      
+      // Use GPT-4o search preview to get detailed information
+      const searchResponse = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a professional research assistant. Search for comprehensive information about the person and generate a detailed report. Include:
+            1. Professional background and career highlights
+            2. Education and credentials
+            3. Recent achievements or news
+            4. Professional interests and focus areas
+            5. Company role and responsibilities
+            6. Any public speaking, publications, or thought leadership
+            7. Social media presence and professional activities
+            
+            Format your response as a structured report with clear sections.`
+          },
+          {
+            role: "user",
+            content: `Please search for and provide a comprehensive report on: ${searchQuery}`
+          }
+        ],
+        tools: [
+          {
+            type: "web_search"
+          }
+        ],
+        tool_choice: {
+          type: "tool",
+          function: {
+            name: "web_search"
+          }
         }
+      })
+
+      // Extract the search results and generate detailed report
+      const searchResults = searchResponse.choices[0]?.message?.content || ''
+      
+      // Now use the search results to generate a comprehensive report
+      const reportResponse = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a professional research analyst. Based on the search results provided, create a comprehensive report about the person. Structure it clearly and include all relevant professional information.`
+          },
+          {
+            role: "user",
+            content: `Based on these search results about ${recipientName} at ${recipientCompany}:
+            
+            ${searchResults}
+            
+            Please create a detailed professional report covering:
+            1. Professional Background
+            2. Education & Credentials  
+            3. Recent Achievements & News
+            4. Professional Interests & Focus Areas
+            5. Company Role & Responsibilities
+            6. Public Presence & Thought Leadership
+            
+            Format as a clear, structured report.`
+          }
+        ]
+      })
+
+      researchFindings = reportResponse.choices[0]?.message?.content || ''
+
+      // Find commonalities between user profile and recipient
+      if (userProfile) {
+        const commonalitiesResponse = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are a networking expert. Analyze the user's profile and the recipient's information to find meaningful commonalities that could create genuine connections. Focus on:
+              1. Shared educational background
+              2. Similar professional interests
+              3. Common industry experience
+              4. Geographic connections
+              5. Shared skills or expertise areas
+              6. Similar career paths or goals
+              
+              Format as a clear list of specific commonalities.`
+            },
+            {
+              role: "user",
+              content: `User Profile:
+              ${JSON.stringify(userProfile, null, 2)}
+              
+              Recipient Information:
+              ${researchFindings}
+              
+              Please identify specific commonalities between the user and recipient that could be mentioned in a networking email.`
+            }
+          ]
+        })
+
+        commonalities = commonalitiesResponse.choices[0]?.message?.content || ''
       }
-    } catch (error) {
-      console.log('Could not fetch user profile:', error)
-      // Continue without profile data
-    }
 
-    // Always research recipient
-    let researchFindings: string[] = []
-    let researchSummary = ''
-    let researchError = ''
-    
-    const findings = await researchRecipient(recipientName, recipientRole)
-    if (findings && findings.length > 0) {
-      researchFindings = findings
-      researchSummary = `Research Findings: ${findings.join(' | ')}`
     } else {
-      researchError = 'Research was attempted but no findings were found. This could be due to an invalid SearchAPI key or limited public information about the recipient.'
+      // Basic search mode (existing web search functionality)
+      console.log('Using basic search mode...')
+      
+      const searchQuery = `${recipientName} ${recipientCompany} ${recipientRole}`
+      
+      const searchResponse = await fetch('https://www.searchapi.io/api/v1/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SEARCHAPI_KEY}`,
+        },
+        body: JSON.stringify({
+          q: searchQuery,
+          num: 5,
+        }),
+      })
+
+      if (!searchResponse.ok) {
+        throw new Error('Search API request failed')
+      }
+
+      const searchData = await searchResponse.json()
+      
+      if (searchData.organic_results && searchData.organic_results.length > 0) {
+        const results = searchData.organic_results
+          .slice(0, 3)
+          .map((result: any) => `${result.title}\n${result.snippet}`)
+          .join('\n\n')
+        
+        researchFindings = `Research findings for ${recipientName}:\n\n${results}`
+      }
+
+      // Find commonalities (existing logic)
+      if (userProfile) {
+        const commonalitiesResponse = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: "You are a networking expert. Find meaningful commonalities between the user's profile and the recipient's information that could create genuine connections."
+            },
+            {
+              role: "user",
+              content: `User Profile: ${JSON.stringify(userProfile)}\n\nRecipient Info: ${recipientName} at ${recipientCompany} as ${recipientRole}\n\nResearch: ${researchFindings}\n\nFind specific commonalities that could be mentioned in a networking email.`
+            }
+          ]
+        })
+
+        commonalities = commonalitiesResponse.choices[0]?.message?.content || ''
+      }
     }
 
-    // Create a comprehensive prompt for GPT-4o-mini
-    let prompt = `Generate a ${tone} outreach email with the following details:
-    
-Recipient: ${recipientName}
-Role/Company: ${recipientRole || 'Not specified'}
-Purpose: ${outreachPurpose}
-Context/Hook: ${context || 'None provided'}
-Additional Notes: ${additionalNotes || 'None provided'}`
+    // Generate the email using the research findings and commonalities
+    let prompt = `Generate a personalized outreach email for networking purposes.
 
-    if (researchSummary) {
-      prompt += `\n\nWeb Research: ${researchSummary}`
-    }
+Recipient Information:
+- Name: ${recipientName}
+- Company: ${recipientCompany}
+- Role: ${recipientRole}
+- Purpose: ${purpose}
 
-    if (userProfile) {
-      prompt += `\n\nUser Profile Information:
-- Name: ${userProfile.full_name || 'Not specified'}
-- Job Title: ${userProfile.job_title || 'Not specified'}
-- Company: ${userProfile.company || 'Not specified'}
-- Location: ${userProfile.location || 'Not specified'}
-- Education: ${userProfile.education?.school || 'Not specified'} - ${userProfile.education?.major || 'Not specified'} (${userProfile.education?.graduation_year || 'Not specified'})
-- Industry: ${userProfile.industry || 'Not specified'}
-- Experience: ${userProfile.experience_years || 'Not specified'} years
-- Skills: ${userProfile.skills?.join(', ') || 'Not specified'}
-- Interests: ${userProfile.interests?.join(', ') || 'Not specified'}
-- Background: ${userProfile.background || 'Not specified'}`
-
-      prompt += `\n\nIMPORTANT: Analyze the research findings and user profile to identify commonalities such as:
-- Same school/university
-- Same industry or company
-- Similar skills or expertise
-- Shared interests or hobbies
-- Same location or region
-- Similar career paths or experiences
-- Any other relevant connections
-
-Use these commonalities to create a more personalized and authentic email that shows genuine interest and shared background.`
-    }
-
-    if (researchError) {
-      prompt += `\n\nNote: ${researchError} Please generate a personalized email based on the provided information without relying on web research.`
-    }
-
-    prompt += `
+${researchFindings ? `Research Findings:\n${researchFindings}\n` : ''}
+${commonalities ? `Commonalities Found:\n${commonalities}\n` : ''}
 
 Requirements:
 - Make it personalized and authentic
@@ -182,52 +222,55 @@ Requirements:
       prompt += `\n\nNote: Since no user profile was found, use "[Your Name]" as the signature. The user should update this with their actual name.`
     }
 
-    const completion = await openai.chat.completions.create({
+    const emailResponse = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: "You are an expert at writing personalized outreach emails that get responses. Your primary goal is to find genuine connections and commonalities between the sender and recipient. Always analyze both the recipient's research findings and the sender's profile to identify shared backgrounds, interests, experiences, or connections. Use these commonalities to create authentic, personalized emails that show genuine interest and shared understanding. Write emails that are specific, value-focused, and demonstrate that you've done your research. Always maintain the requested tone and make the email sound natural and human-written. When research findings are provided, incorporate them subtly and naturally to show genuine interest and preparation."
+          content: "You are an expert at writing personalized, professional networking emails that sound authentic and human-written."
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      max_tokens: 400,
       temperature: 0.7,
+      max_tokens: 500
     })
 
-    const generatedEmail = completion.choices[0].message.content
+    const generatedEmail = emailResponse.choices[0]?.message?.content || ''
 
-    if (!generatedEmail) {
-      return NextResponse.json(
-        { error: 'Failed to generate email content' },
-        { status: 500 }
-      )
+    // Save the generated email to the database
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (user) {
+      await supabase
+        .from('generated_emails')
+        .insert({
+          user_id: user.id,
+          recipient_name: recipientName,
+          recipient_company: recipientCompany,
+          recipient_role: recipientRole,
+          purpose: purpose,
+          tone: tone,
+          email_content: generatedEmail,
+          research_findings: researchFindings,
+          commonalities: commonalities,
+          search_mode: searchMode
+        })
     }
 
     return NextResponse.json({
       email: generatedEmail,
-      tone,
       researchFindings: researchFindings,
-      researchError: researchError,
-      timestamp: new Date().toISOString()
+      commonalities: commonalities,
+      searchMode: searchMode
     })
 
   } catch (error) {
     console.error('Error generating email:', error)
-    
-    // If OpenAI fails, fall back to mock generation
-    if (error instanceof Error && error.message.includes('API key')) {
-      return NextResponse.json(
-        { error: 'OpenAI API key not configured. Please add OPENAI_API_KEY to your environment variables.' },
-        { status: 500 }
-      )
-    }
-    
     return NextResponse.json(
-      { error: 'Failed to generate email. Please try again.' },
+      { error: 'Failed to generate email' },
       { status: 500 }
     )
   }

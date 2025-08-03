@@ -1,114 +1,83 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
-import { useToast } from '@/hooks/use-toast'
-import { useAuth } from '@/contexts/AuthContext'
-import { 
-  Copy, 
-  Download, 
-  Mail, 
-  RefreshCw, 
-  Scissors, 
-  Volume2, 
-  Wand2, 
-  Search, 
-  Info, 
-  LogOut, 
-  User, 
-  ArrowLeft,
-  Edit3,
-  FileText,
-  Send
-} from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useToast } from '@/components/ui/use-toast'
+import { Loader2, Copy, Download, Mail, Sparkles, Search, User, Edit3 } from 'lucide-react'
 import Link from 'next/link'
-import Header from './Header'
-import { supabase } from '@/lib/supabase'
-
-type ToneType = 'casual' | 'formal' | 'confident'
-
-interface FormData {
-  recipientName: string
-  recipientRole: string
-  outreachPurpose: string
-  context: string
-  additionalNotes: string
-}
-
-interface ResearchFindings {
-  education: string[]
-  experience: string[]
-  achievements: string[]
-  recentWork: string[]
-  personalInfo: string[]
-}
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function ColdEmailGenerator() {
+  const { user } = useAuth()
   const { toast } = useToast()
-  const { user, signOut } = useAuth()
-  const [formData, setFormData] = useState<FormData>({
-    recipientName: '',
-    recipientRole: '',
-    outreachPurpose: '',
-    context: '',
-    additionalNotes: '',
-  })
-  
-  const [generatedEmail, setGeneratedEmail] = useState('')
-  const [subjectLine, setSubjectLine] = useState('')
-  const [currentTone, setCurrentTone] = useState<ToneType>('formal')
   const [isGenerating, setIsGenerating] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [researchFindings, setResearchFindings] = useState<string[]>([])
-  const [showResearch, setShowResearch] = useState(false)
-  const [researchError, setResearchError] = useState<string>('')
-  const [isEditing, setIsEditing] = useState(false)
+  const [generatedEmail, setGeneratedEmail] = useState('')
+  const [researchFindings, setResearchFindings] = useState('')
+  const [commonalities, setCommonalities] = useState('')
+  const [searchMode, setSearchMode] = useState<'basic' | 'deep'>('basic')
+  const [userProfile, setUserProfile] = useState<any>(null)
 
-  const handleLogout = async () => {
+  // Form state
+  const [formData, setFormData] = useState({
+    recipientName: '',
+    recipientCompany: '',
+    recipientRole: '',
+    purpose: '',
+    tone: 'casual'
+  })
+
+  // Load user profile on component mount
+  useEffect(() => {
+    if (user) {
+      loadUserProfile()
+    }
+  }, [user])
+
+  const loadUserProfile = async () => {
     try {
-      await signOut()
-      toast({
-        title: "Logged Out",
-        description: "You have been successfully logged out.",
+      const response = await fetch('/api/profile', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.id}`,
+        },
       })
+      
+      if (response.ok) {
+        const profile = await response.json()
+        setUserProfile(profile)
+      }
     } catch (error) {
-      toast({
-        title: "Logout Failed",
-        description: "An error occurred while logging out.",
-        variant: "destructive"
-      })
+      console.error('Error loading profile:', error)
     }
   }
 
-  const outreachOptions = [
-    'Coffee Chat',
-    'Job Inquiry',
-    'Introduction',
-    'Networking',
-    'Startup Pitch',
-    'Partnership',
-    'Mentorship',
-    'Speaking Opportunity'
-  ]
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
 
   const generateEmail = async () => {
-    if (!formData.recipientName || !formData.outreachPurpose) {
+    if (!formData.recipientName || !formData.recipientCompany || !formData.recipientRole || !formData.purpose) {
       toast({
         title: "Missing Information",
-        description: "Please fill in the recipient name and purpose of outreach.",
-        variant: "destructive"
+        description: "Please fill in all required fields.",
+        variant: "destructive",
       })
       return
     }
 
     setIsGenerating(true)
-    setResearchError('')
+    setGeneratedEmail('')
+    setResearchFindings('')
+    setCommonalities('')
 
     try {
       const response = await fetch('/api/generate-email', {
@@ -118,538 +87,333 @@ export default function ColdEmailGenerator() {
         },
         body: JSON.stringify({
           ...formData,
-          userId: user?.id
+          userProfile,
+          searchMode
         }),
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to generate email')
-      }
-
       const data = await response.json()
-      
-      if (data.error) {
-        throw new Error(data.error)
+
+      if (response.ok) {
+        setGeneratedEmail(data.email)
+        setResearchFindings(data.researchFindings || '')
+        setCommonalities(data.commonalities || '')
+        
+        toast({
+          title: "Email Generated!",
+          description: "Your personalized email has been created successfully.",
+        })
+      } else {
+        throw new Error(data.error || 'Failed to generate email')
       }
-
-      setGeneratedEmail(data.email)
-      setSubjectLine(data.subject || '')
-      setResearchFindings(data.researchFindings || [])
-      setShowResearch(true)
-
-      // Save the generated email to the database
-      await saveEmailToDatabase(data.email, data.subject || '')
-
-      toast({
-        title: "Email Generated!",
-        description: "Your personalized email has been created successfully.",
-      })
     } catch (error) {
       console.error('Error generating email:', error)
       toast({
         title: "Generation Failed",
         description: error instanceof Error ? error.message : "Failed to generate email. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       })
     } finally {
       setIsGenerating(false)
     }
   }
 
-  const saveEmailToDatabase = async (emailContent: string, subject: string) => {
-    if (!user?.id) return
-
-    try {
-      const { error } = await supabase
-        .from('generated_emails')
-        .insert({
-          user_id: user.id,
-          recipient_name: formData.recipientName,
-          recipient_role: formData.recipientRole,
-          recipient_company: formData.recipientRole.includes(' at ') ? 
-            formData.recipientRole.split(' at ')[1] : undefined,
-          outreach_purpose: formData.outreachPurpose,
-          context: formData.context,
-          additional_notes: formData.additionalNotes,
-          generated_email: emailContent,
-          subject_line: subject,
-          tone: currentTone,
-          research_findings: researchFindings.length > 0 ? researchFindings : null
-        })
-
-      if (error) {
-        console.error('Error saving email:', error)
-        // Don't show error toast to user as this is a background operation
-      }
-    } catch (error) {
-      console.error('Error saving email to database:', error)
-      // Don't show error toast to user as this is a background operation
-    }
-  }
-
-  const regenerateEmail = async () => {
-    setIsProcessing(true)
-    try {
-      const response = await fetch('/api/generate-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          userId: user?.id
-        }),
-      })
-
-      if (!response.ok) throw new Error('Failed to regenerate email')
-
-      const data = await response.json()
-      setGeneratedEmail(data.email)
-      setSubjectLine(data.subject || '')
-
-      // Save the regenerated email
-      await saveEmailToDatabase(data.email, data.subject || '')
-
-      toast({
-        title: "Email Regenerated!",
-        description: "Your email has been regenerated successfully.",
-      })
-    } catch (error) {
-      console.error('Error regenerating email:', error)
-      toast({
-        title: "Regeneration Failed",
-        description: "Failed to regenerate email. Please try again.",
-        variant: "destructive"
-      })
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
-  const shortenEmail = async () => {
-    setIsProcessing(true)
-    try {
-      const response = await fetch('/api/shorten-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: generatedEmail,
-          subject: subjectLine
-        }),
-      })
-
-      if (!response.ok) throw new Error('Failed to shorten email')
-
-      const data = await response.json()
-      setGeneratedEmail(data.email)
-      setSubjectLine(data.subject || subjectLine)
-
-      // Save the shortened email
-      await saveEmailToDatabase(data.email, data.subject || subjectLine)
-
-      toast({
-        title: "Email Shortened!",
-        description: "Your email has been shortened while keeping the key points.",
-      })
-    } catch (error) {
-      console.error('Error shortening email:', error)
-      toast({
-        title: "Shortening Failed",
-        description: "Failed to shorten email. Please try again.",
-        variant: "destructive"
-      })
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
-  const adjustTone = async (newTone: ToneType) => {
-    setIsProcessing(true)
-    try {
-      const response = await fetch('/api/adjust-tone', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: generatedEmail,
-          subject: subjectLine,
-          tone: newTone
-        }),
-      })
-
-      if (!response.ok) throw new Error('Failed to adjust tone')
-
-      const data = await response.json()
-      setGeneratedEmail(data.email)
-      setSubjectLine(data.subject || subjectLine)
-      setCurrentTone(newTone)
-
-      // Save the tone-adjusted email
-      await saveEmailToDatabase(data.email, data.subject || subjectLine)
-
-      toast({
-        title: "Tone Adjusted!",
-        description: `Your email has been adjusted to a ${newTone} tone.`,
-      })
-    } catch (error) {
-      console.error('Error adjusting tone:', error)
-      toast({
-        title: "Tone Adjustment Failed",
-        description: "Failed to adjust tone. Please try again.",
-        variant: "destructive"
-      })
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
   const copyToClipboard = async () => {
     try {
-      const fullEmail = `Subject: ${subjectLine}\n\n${generatedEmail}`
-      await navigator.clipboard.writeText(fullEmail)
+      await navigator.clipboard.writeText(generatedEmail)
       toast({
-        title: "Copied to Clipboard",
-        description: "Your email has been copied to your clipboard.",
+        title: "Copied!",
+        description: "Email content copied to clipboard.",
       })
     } catch (error) {
       toast({
         title: "Copy Failed",
-        description: "Failed to copy to clipboard. Please try again.",
-        variant: "destructive"
+        description: "Failed to copy to clipboard. Please copy manually.",
+        variant: "destructive",
       })
     }
   }
 
   const downloadEmail = () => {
-    const fullEmail = `Subject: ${subjectLine}\n\n${generatedEmail}`
-    const blob = new Blob([fullEmail], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `cold-email-${formData.recipientName.toLowerCase().replace(/\s+/g, '-')}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    const element = document.createElement('a')
+    const file = new Blob([generatedEmail], { type: 'text/plain' })
+    element.href = URL.createObjectURL(file)
+    element.download = `email-to-${formData.recipientName.replace(/\s+/g, '-').toLowerCase()}.txt`
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
     
     toast({
-      title: "Email Downloaded",
-      description: "Your email has been downloaded as a text file.",
-    })
-  }
-
-  const openInGmail = () => {
-    const subject = encodeURIComponent(subjectLine)
-    const body = encodeURIComponent(generatedEmail)
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=&su=${subject}&body=${body}`
-    window.open(gmailUrl, '_blank')
-    
-    toast({
-      title: "Opening in Gmail",
-      description: "Email pre-filled in Gmail compose window.",
+      title: "Downloaded!",
+      description: "Email content saved to your device.",
     })
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-[#111]">
-      {/* Header */}
-      <Header />
+    <div className="min-h-screen bg-[#FAFAFA] p-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Generate Personalized Email
+          </h1>
+          <p className="text-gray-600">
+            Create authentic, research-backed outreach emails that get responses.
+          </p>
+        </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-6 py-8">
-        <div className="grid lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
-          
-          {/* Left Column - Input Form */}
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Input Form */}
           <div className="space-y-6">
-            <Card className="border-gray-100 shadow-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-xl font-semibold">
-                  <Wand2 className="h-5 w-5 text-[#3B82F6]" />
-                  Email Details
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="h-5 w-5" />
+                  Recipient Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="recipientName" className="text-sm font-medium text-gray-700">
-                      Recipient Name *
-                    </Label>
-                    <Input
-                      id="recipientName"
-                      placeholder="e.g., Sarah Kim"
-                      value={formData.recipientName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, recipientName: e.target.value }))}
-                      className="border-gray-200 rounded-xl focus:border-[#3B82F6] focus:ring-[#3B82F6]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="recipientRole" className="text-sm font-medium text-gray-700">
-                      Company & Role
-                    </Label>
-                    <Input
-                      id="recipientRole"
-                      placeholder="e.g., Product Manager at Google"
-                      value={formData.recipientRole}
-                      onChange={(e) => setFormData(prev => ({ ...prev, recipientRole: e.target.value }))}
-                      className="border-gray-200 rounded-xl focus:border-[#3B82F6] focus:ring-[#3B82F6]"
-                    />
-                  </div>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="recipientName">Recipient Name *</Label>
+                  <Input
+                    id="recipientName"
+                    placeholder="e.g., Sarah Johnson"
+                    value={formData.recipientName}
+                    onChange={(e) => handleInputChange('recipientName', e.target.value)}
+                  />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="outreachPurpose" className="text-sm font-medium text-gray-700">
-                    Purpose of Outreach *
-                  </Label>
-                  <Select value={formData.outreachPurpose} onValueChange={(value) => setFormData(prev => ({ ...prev, outreachPurpose: value }))}>
-                    <SelectTrigger className="border-gray-200 rounded-xl focus:border-[#3B82F6] focus:ring-[#3B82F6]">
-                      <SelectValue placeholder="Select your outreach purpose" />
+                <div>
+                  <Label htmlFor="recipientCompany">Company *</Label>
+                  <Input
+                    id="recipientCompany"
+                    placeholder="e.g., Google"
+                    value={formData.recipientCompany}
+                    onChange={(e) => handleInputChange('recipientCompany', e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="recipientRole">Role/Position *</Label>
+                  <Input
+                    id="recipientRole"
+                    placeholder="e.g., Senior Product Manager"
+                    value={formData.recipientRole}
+                    onChange={(e) => handleInputChange('recipientRole', e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="purpose">Purpose of Outreach *</Label>
+                  <Textarea
+                    id="purpose"
+                    placeholder="e.g., I'm interested in learning about product management opportunities at your company and would love to connect for an informational interview."
+                    value={formData.purpose}
+                    onChange={(e) => handleInputChange('purpose', e.target.value)}
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="tone">Email Tone</Label>
+                  <Select value={formData.tone} onValueChange={(value) => handleInputChange('tone', value)}>
+                    <SelectTrigger>
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {outreachOptions.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="casual">Casual & Friendly</SelectItem>
+                      <SelectItem value="formal">Formal & Professional</SelectItem>
+                      <SelectItem value="confident">Confident & Direct</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="context" className="text-sm font-medium text-gray-700">
-                    Context / Hook
-                  </Label>
-                  <Textarea
-                    id="context"
-                    placeholder="e.g., We both went to UIUC, Saw your recent LinkedIn post about AI..."
-                    value={formData.context}
-                    onChange={(e) => setFormData(prev => ({ ...prev, context: e.target.value }))}
-                    rows={3}
-                    className="border-gray-200 rounded-xl focus:border-[#3B82F6] focus:ring-[#3B82F6] resize-none"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="additionalNotes" className="text-sm font-medium text-gray-700">
-                    Additional Notes (Optional)
-                  </Label>
-                  <Textarea
-                    id="additionalNotes"
-                    placeholder="Any specific details, achievements, or personal connections to mention..."
-                    value={formData.additionalNotes}
-                    onChange={(e) => setFormData(prev => ({ ...prev, additionalNotes: e.target.value }))}
-                    rows={3}
-                    className="border-gray-200 rounded-xl focus:border-[#3B82F6] focus:ring-[#3B82F6] resize-none"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between pt-4">
-                  <div className="flex items-center gap-2">
-                    <Search className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">AI will research and personalize</span>
-                  </div>
-                </div>
-
-                <Button 
-                  onClick={generateEmail}
-                  disabled={isGenerating || !formData.recipientName || !formData.outreachPurpose}
-                  className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl py-4 text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isGenerating ? (
-                    <>
-                      <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="mr-2 h-5 w-5" />
-                      Generate Email
-                    </>
-                  )}
-                </Button>
-
-                {/* Profile Enhancement Button */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <User className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-sm font-medium text-blue-900 mb-1">
-                        Get More Personalized Emails
-                      </h4>
-                      <p className="text-xs text-blue-700 mb-3">
-                        Fill out your profile to help AI find connections and create more authentic emails.
-                      </p>
-                      <Link href="/profile">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="border-blue-300 text-blue-700 hover:bg-blue-100 hover:border-blue-400"
-                        >
-                          <Edit3 className="h-3 w-3 mr-1" />
-                          Complete Profile
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Research Findings */}
-            {showResearch && researchFindings.length > 0 && (
-              <Card className="border-gray-100 shadow-sm">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-                    <Search className="h-4 w-4 text-[#3B82F6]" />
-                    AI Research Findings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {researchFindings.slice(0, 5).map((finding, index) => (
-                      <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-                        <Info className="h-4 w-4 text-[#3B82F6] mt-0.5 flex-shrink-0" />
-                        <p className="text-sm text-gray-700">{finding}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          {/* Right Column - Email Output */}
-          <div className="space-y-6">
-            <Card className="border-gray-100 shadow-sm min-h-[600px]">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center justify-between text-lg font-semibold">
-                  <span className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-[#3B82F6]" />
-                    Generated Email
-                  </span>
-                  {generatedEmail && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsEditing(!isEditing)}
-                      className="text-gray-600 hover:text-[#111]"
-                    >
-                      <Edit3 className="h-4 w-4 mr-1" />
-                      {isEditing ? 'Preview' : 'Edit'}
-                    </Button>
-                  )}
+            {/* Search Mode Selection */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Search className="h-5 w-5" />
+                  Research Mode
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {!generatedEmail ? (
-                  <div className="flex flex-col items-center justify-center h-96 text-center">
-                    <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-                      <Mail className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No email generated yet</h3>
-                    <p className="text-gray-600 max-w-sm">
-                      Fill out the form on the left and click "Generate Email" to create your personalized outreach email.
-                    </p>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="basic-search"
+                      name="searchMode"
+                      value="basic"
+                      checked={searchMode === 'basic'}
+                      onChange={(e) => setSearchMode(e.target.value as 'basic' | 'deep')}
+                      className="text-[#6366F1] focus:ring-[#6366F1]"
+                    />
+                    <Label htmlFor="basic-search" className="flex items-center gap-2 cursor-pointer">
+                      <Search className="h-4 w-4" />
+                      Basic Search
+                    </Label>
                   </div>
-                ) : (
-                  <>
-                    {/* Subject Line */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">Subject Line</Label>
-                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="font-medium text-gray-900">{subjectLine}</p>
+                  <p className="text-sm text-gray-600 ml-6">
+                    Quick web search for basic information about the recipient.
+                  </p>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="deep-search"
+                      name="searchMode"
+                      value="deep"
+                      checked={searchMode === 'deep'}
+                      onChange={(e) => setSearchMode(e.target.value as 'basic' | 'deep')}
+                      className="text-[#6366F1] focus:ring-[#6366F1]"
+                    />
+                    <Label htmlFor="deep-search" className="flex items-center gap-2 cursor-pointer">
+                      <Sparkles className="h-4 w-4 text-[#6366F1]" />
+                      Deep Search (Premium)
+                    </Label>
+                  </div>
+                  <p className="text-sm text-gray-600 ml-6">
+                    Comprehensive AI-powered research with detailed reports and advanced commonality detection.
+                  </p>
+                </div>
+
+                {searchMode === 'deep' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-900">
+                          Deep Search Features:
+                        </p>
+                        <ul className="text-xs text-blue-700 mt-1 space-y-1">
+                          <li>• Comprehensive professional background analysis</li>
+                          <li>• Education and credentials research</li>
+                          <li>• Recent achievements and news coverage</li>
+                          <li>• Advanced commonality detection with your profile</li>
+                          <li>• Detailed professional interests and focus areas</li>
+                        </ul>
                       </div>
                     </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-                    {/* Email Body */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">Email Body</Label>
-                      {isEditing ? (
-                        <Textarea
-                          value={generatedEmail}
-                          onChange={(e) => setGeneratedEmail(e.target.value)}
-                          className="min-h-[400px] border-gray-200 rounded-lg focus:border-[#3B82F6] focus:ring-[#3B82F6] resize-none font-mono text-sm"
-                          placeholder="Your email content..."
-                        />
-                      ) : (
-                        <div className="p-4 bg-white border border-gray-200 rounded-lg min-h-[400px] font-mono text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
-                          {generatedEmail}
-                        </div>
-                      )}
-                    </div>
+            {/* Profile Enhancement Button */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <User className="h-4 w-4 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-blue-900 mb-1">
+                    Get More Personalized Emails
+                  </h4>
+                  <p className="text-xs text-blue-700 mb-3">
+                    Fill out your profile to help AI find connections and create more authentic emails.
+                  </p>
+                  <Link href="/profile">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-blue-300 text-blue-700 hover:bg-blue-100 hover:border-blue-400"
+                    >
+                      <Edit3 className="h-3 w-3 mr-1" />
+                      Complete Profile
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
 
-                    {/* Control Bar */}
-                    <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-100">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={regenerateEmail}
-                        disabled={isProcessing}
-                        className="border-gray-200 text-gray-700 hover:bg-gray-50"
-                      >
-                        <RefreshCw className={`h-4 w-4 mr-1 ${isProcessing ? 'animate-spin' : ''}`} />
-                        Regenerate
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={shortenEmail}
-                        disabled={isProcessing}
-                        className="border-gray-200 text-gray-700 hover:bg-gray-50"
-                      >
-                        <Scissors className="h-4 w-4 mr-1" />
-                        Shorten
-                      </Button>
-                      <Select value={currentTone} onValueChange={(value: ToneType) => adjustTone(value)}>
-                        <SelectTrigger className="w-auto border-gray-200 text-gray-700 hover:bg-gray-50">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="casual">Casual</SelectItem>
-                          <SelectItem value="formal">Formal</SelectItem>
-                          <SelectItem value="confident">Confident</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+            <Button
+              onClick={generateEmail}
+              disabled={isGenerating}
+              className="w-full bg-[#6366F1] hover:bg-[#4F46E5] text-white py-6 text-lg"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Generating Email...
+                </>
+              ) : (
+                <>
+                  <Mail className="mr-2 h-5 w-5" />
+                  Generate Email
+                </>
+              )}
+            </Button>
+          </div>
 
-                    {/* Export Bar */}
-                    <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-100">
+          {/* Results */}
+          <div className="space-y-6">
+            {generatedEmail && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Generated Email</span>
+                    <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={copyToClipboard}
-                        className="border-gray-200 text-gray-700 hover:bg-gray-50"
+                        className="text-xs"
                       >
-                        <Copy className="h-4 w-4 mr-1" />
+                        <Copy className="h-3 w-3 mr-1" />
                         Copy
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={downloadEmail}
-                        className="border-gray-200 text-gray-700 hover:bg-gray-50"
+                        className="text-xs"
                       >
-                        <Download className="h-4 w-4 mr-1" />
+                        <Download className="h-3 w-3 mr-1" />
                         Download
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={openInGmail}
-                        className="border-gray-200 text-gray-700 hover:bg-gray-50"
-                      >
-                        <Send className="h-4 w-4 mr-1" />
-                        Open in Gmail
-                      </Button>
                     </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-gray-50 rounded-lg p-4 font-mono text-sm whitespace-pre-wrap">
+                    {generatedEmail}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {researchFindings && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Search className="h-5 w-5" />
+                    Research Findings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-blue-50 rounded-lg p-4 text-sm whitespace-pre-wrap">
+                    {researchFindings}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {commonalities && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Common Connections
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-green-50 rounded-lg p-4 text-sm whitespace-pre-wrap">
+                    {commonalities}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
