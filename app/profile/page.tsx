@@ -8,6 +8,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/contexts/AuthContext'
+import { AuthProvider } from '@/contexts/AuthContext'
+import ProtectedRoute from '@/components/ProtectedRoute'
+import { Toaster } from '@/components/ui/toaster'
 import { 
   User, 
   Building, 
@@ -46,7 +49,7 @@ interface ProfileData {
   resume_filename?: string
 }
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const { user } = useAuth()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
@@ -639,7 +642,18 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+      <Toaster />
     </div>
+  )
+}
+
+export default function ProfilePage() {
+  return (
+    <AuthProvider>
+      <ProtectedRoute>
+        <ProfilePageContent />
+      </ProtectedRoute>
+    </AuthProvider>
   )
 } 
 
