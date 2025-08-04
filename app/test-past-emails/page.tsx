@@ -162,7 +162,7 @@ function TestPastEmailsContent() {
         addResult('Delete Test Emails', 'error', `Failed to delete test emails: ${error.message}`, error)
       } else {
         addResult('Delete Test Emails', 'success', 'Test emails deleted successfully', {
-          deletedCount: data?.length || 0
+          deletedCount: data ? 'Success' : 'No data returned'
         })
       }
     } catch (error) {
