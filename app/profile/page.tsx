@@ -22,6 +22,7 @@ import {
   Loader2
 } from 'lucide-react'
 import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 
 interface ProfileData {
   full_name: string
@@ -546,6 +547,7 @@ function ProfilePageContent() {
           </div>
         </div>
       </div>
+      <Footer />
       <Toaster />
     </div>
   )

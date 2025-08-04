@@ -390,7 +390,19 @@ Format as a clear list of specific commonalities.`
         
         if (userId) {
           console.log('Saving email to database for user:', userId)
-          await supabase
+          console.log('Data to save:', {
+            user_id: userId,
+            recipient_name: recipientName,
+            recipient_company: recipientCompany,
+            recipient_role: recipientRole,
+            purpose: purpose,
+            search_mode: searchMode,
+            research_findings: researchFindings,
+            commonalities: commonalities,
+            generated_email: generatedEmail
+          })
+          
+          const { data: savedData, error: saveError } = await supabase
             .from('generated_emails')
             .insert({
               user_id: userId,
@@ -403,7 +415,14 @@ Format as a clear list of specific commonalities.`
               commonalities: commonalities,
               generated_email: generatedEmail
             })
-          console.log('Email saved to database successfully')
+            .select()
+          
+          if (saveError) {
+            console.error('Supabase save error:', saveError)
+            throw saveError
+          }
+          
+          console.log('Email saved to database successfully:', savedData)
         } else {
           console.log('No authenticated user found, skipping database save')
         }

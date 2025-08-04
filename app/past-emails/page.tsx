@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 import Link from 'next/link'
 import { AuthProvider } from '@/contexts/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -361,6 +362,7 @@ function PastEmailsPageContent() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

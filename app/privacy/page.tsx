@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | Reachful',
@@ -162,6 +163,7 @@ export default function PrivacyPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 } 

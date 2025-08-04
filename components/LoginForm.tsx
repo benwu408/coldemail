@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
+import Footer from '@/components/Footer'
 
 export default function LoginForm() {
   const { signIn, signUp } = useAuth()
@@ -163,6 +164,7 @@ export default function LoginForm() {
             </p>
           </div>
         </CardContent>
+        <Footer />
       </Card>
     </div>
   )

@@ -1123,11 +1123,13 @@ Software Engineer & Co-founder`
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center gap-3 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-[#6366F1] rounded-xl flex items-center justify-center">
-                <Mail className="h-4 w-4 text-white" />
-              </div>
+              <img 
+                src="/reachful_logo.png" 
+                alt="Reachful" 
+                className="h-8 w-auto"
+              />
               <span className="text-lg font-bold text-[#111827]">
-                ColdEmail AI
+                Reachful
               </span>
             </div>
             <div className="flex items-center gap-6 text-sm text-gray-600">
@@ -1141,7 +1143,7 @@ Software Engineer & Co-founder`
             </div>
           </div>
           <div className="text-center text-sm text-gray-500 mt-8">
-            <p>&copy; 2024 ColdEmail AI. Built for better networking.</p>
+            <p>&copy; 2025 Reachful. Cold outreach that feels warm.</p>
           </div>
         </div>
       </footer>
