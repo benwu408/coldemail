@@ -26,7 +26,6 @@ export default function ColdEmailGenerator() {
   const [searchMode, setSearchMode] = useState<'basic' | 'deep'>('basic')
   const [userProfile, setUserProfile] = useState<any>(null)
   const [activeTab, setActiveTab] = useState<'email' | 'findings'>('email')
-  const [isTyping, setIsTyping] = useState(false)
   const [displayedEmail, setDisplayedEmail] = useState('')
   const [displayedFindings, setDisplayedFindings] = useState('')
   const [displayedCommonalities, setDisplayedCommonalities] = useState('')
@@ -133,11 +132,6 @@ export default function ColdEmailGenerator() {
           title: "Email Generated!",
           description: "Your personalized email has been created and saved successfully.",
         })
-        
-        // Start typewriter effect after a short delay
-        setTimeout(() => {
-          startTypewriterEffect()
-        }, 500)
       } else {
         throw new Error(data.error || 'Failed to generate email')
       }
@@ -182,35 +176,6 @@ export default function ColdEmailGenerator() {
       title: "Downloaded!",
       description: "Email content saved to your device.",
     })
-  }
-
-  const typewriterEffect = async (text: string, setDisplayFunction: (text: string) => void, speed: number = 30) => {
-    setDisplayFunction('')
-    for (let i = 0; i < text.length; i++) {
-      setDisplayFunction(text.slice(0, i + 1))
-      await new Promise(resolve => setTimeout(resolve, speed))
-    }
-  }
-
-  const startTypewriterEffect = async () => {
-    setIsTyping(true)
-    
-    // Type the email first
-    if (generatedEmail) {
-      await typewriterEffect(generatedEmail, setDisplayedEmail, 20)
-    }
-    
-    // Then type the findings
-    if (researchFindings) {
-      await typewriterEffect(researchFindings, setDisplayedFindings, 15)
-    }
-    
-    // Finally type the commonalities
-    if (commonalities) {
-      await typewriterEffect(commonalities, setDisplayedCommonalities, 15)
-    }
-    
-    setIsTyping(false)
   }
 
   return (
@@ -687,11 +652,6 @@ export default function ColdEmailGenerator() {
                                   <Loader2 className="h-10 w-10 animate-spin mr-4" />
                                   <span className="text-xl">Generating your email...</span>
                                 </div>
-                              ) : isTyping ? (
-                                <div className="relative">
-                                  {displayedEmail}
-                                  <span className="animate-pulse text-[#6366F1] text-lg">|</span>
-                                </div>
                               ) : displayedEmail ? (
                                 <div className="space-y-6">
                                   <div className="text-gray-500 text-sm">
@@ -737,16 +697,11 @@ export default function ColdEmailGenerator() {
                               </h4>
                             </div>
                             <div className="p-6">
-                              <div className="prose prose-sm max-w-none min-h-[200px] prose-headings:font-bold prose-headings:text-[#111827] prose-headings:text-xl prose-headings:mb-4 prose-headings:mt-6 prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4 prose-p:text-base prose-ul:my-4 prose-li:mb-3 prose-li:text-gray-700 prose-strong:text-[#111827] prose-strong:font-semibold prose-blockquote:border-l-4 prose-blockquote:border-[#6366F1] prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600">
+                              <div className="prose prose-sm max-w-none min-h-[200px] prose-headings:font-bold prose-headings:text-[#111827] prose-headings:text-xl prose-headings:mb-4 prose-headings:mt-6 prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4 prose-p:text-base prose-ul:my-4 prose-li:mb-3 prose-li:text-gray-700 prose-strong:text-[#111827] prose-strong:font-semibold prose-blockquote:border-l-4 prose-blockquote:border-[#6366F1] prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600 [&>*]:mb-4 [&>*:last-child]:mb-0 [&_h2]:mt-8 [&_h2]:mb-4 [&_h2:first-of-type]:mt-0 [&_p]:mb-4 [&_p:last-child]:mb-0">
                                 {isGenerating ? (
                                   <div className="flex items-center justify-center h-full text-gray-500">
                                     <Loader2 className="h-10 w-10 animate-spin mr-4" />
                                     <span className="text-xl">Researching...</span>
-                                  </div>
-                                ) : isTyping ? (
-                                  <div className="relative">
-                                    <ReactMarkdown>{displayedFindings}</ReactMarkdown>
-                                    <span className="animate-pulse text-[#6366F1] text-lg">|</span>
                                   </div>
                                 ) : displayedFindings ? (
                                   <ReactMarkdown>{displayedFindings}</ReactMarkdown>
@@ -771,16 +726,11 @@ export default function ColdEmailGenerator() {
                               </h4>
                             </div>
                             <div className="p-6">
-                              <div className="prose prose-sm max-w-none min-h-[150px] prose-headings:font-bold prose-headings:text-[#111827] prose-headings:text-xl prose-headings:mb-4 prose-headings:mt-6 prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4 prose-p:text-base prose-ul:my-4 prose-li:mb-3 prose-li:text-gray-700 prose-strong:text-[#111827] prose-strong:font-semibold prose-blockquote:border-l-4 prose-blockquote:border-[#6366F1] prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600">
+                              <div className="prose prose-sm max-w-none min-h-[150px] prose-headings:font-bold prose-headings:text-[#111827] prose-headings:text-xl prose-headings:mb-4 prose-headings:mt-6 prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4 prose-p:text-base prose-ul:my-4 prose-li:mb-3 prose-li:text-gray-700 prose-strong:text-[#111827] prose-strong:font-semibold prose-blockquote:border-l-4 prose-blockquote:border-[#6366F1] prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600 [&>*]:mb-4 [&>*:last-child]:mb-0 [&_h2]:mt-8 [&_h2]:mb-4 [&_h2:first-of-type]:mt-0 [&_p]:mb-4 [&_p:last-child]:mb-0">
                                 {isGenerating ? (
                                   <div className="flex items-center justify-center h-full text-gray-500">
                                     <Loader2 className="h-10 w-10 animate-spin mr-4" />
                                     <span className="text-xl">Finding connections...</span>
-                                  </div>
-                                ) : isTyping ? (
-                                  <div className="relative">
-                                    <ReactMarkdown>{displayedCommonalities}</ReactMarkdown>
-                                    <span className="animate-pulse text-[#6366F1] text-lg">|</span>
                                   </div>
                                 ) : displayedCommonalities ? (
                                   <ReactMarkdown>{displayedCommonalities}</ReactMarkdown>

@@ -335,7 +335,7 @@ function EmailDetailPageContent() {
               </CardHeader>
               <CardContent>
                 {email.research_findings ? (
-                  <div className="extra-spacing prose prose-sm max-w-none min-h-[200px] prose-headings:font-bold prose-headings:text-[#111827] prose-headings:text-xl prose-p:text-gray-700 prose-p:leading-relaxed prose-p:text-base prose-ul:my-6 prose-li:text-gray-700 prose-strong:text-[#111827] prose-strong:font-semibold prose-blockquote:border-l-4 prose-blockquote:border-[#6366F1] prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600">
+                  <div className="extra-spacing prose prose-sm max-w-none min-h-[200px] prose-headings:font-bold prose-headings:text-[#111827] prose-headings:text-xl prose-p:text-gray-700 prose-p:leading-relaxed prose-p:text-base prose-ul:my-6 prose-li:text-gray-700 prose-strong:text-[#111827] prose-strong:font-semibold prose-blockquote:border-l-4 prose-blockquote:border-[#6366F1] prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600 [&>*]:mb-4 [&>*:last-child]:mb-0 [&_h2]:mt-8 [&_h2]:mb-4 [&_h2:first-of-type]:mt-0 [&_p]:mb-4 [&_p:last-child]:mb-0">
                     <ReactMarkdown>{email.research_findings}</ReactMarkdown>
                   </div>
                 ) : (
@@ -360,7 +360,7 @@ function EmailDetailPageContent() {
               </CardHeader>
               <CardContent>
                 {email.commonalities ? (
-                  <div className="extra-spacing prose prose-sm max-w-none min-h-[200px] prose-headings:font-bold prose-headings:text-[#111827] prose-headings:text-xl prose-p:text-gray-700 prose-p:leading-relaxed prose-p:text-base prose-ul:my-6 prose-li:text-gray-700 prose-strong:text-[#111827] prose-strong:font-semibold prose-blockquote:border-l-4 prose-blockquote:border-[#6366F1] prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600">
+                  <div className="extra-spacing prose prose-sm max-w-none min-h-[200px] prose-headings:font-bold prose-headings:text-[#111827] prose-headings:text-xl prose-p:text-gray-700 prose-p:leading-relaxed prose-p:text-base prose-ul:my-6 prose-li:text-gray-700 prose-strong:text-[#111827] prose-strong:font-semibold prose-blockquote:border-l-4 prose-blockquote:border-[#6366F1] prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600 [&>*]:mb-4 [&>*:last-child]:mb-0 [&_h2]:mt-8 [&_h2]:mb-4 [&_h2:first-of-type]:mt-0 [&_p]:mb-4 [&_p:last-child]:mb-0">
                     <ReactMarkdown>{email.commonalities}</ReactMarkdown>
                   </div>
                 ) : (
