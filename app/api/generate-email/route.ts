@@ -121,20 +121,25 @@ ${searchResults}
 
 Please create a detailed professional report covering:
 1. Professional Background
+
 2. Education & Credentials  
+
 3. Recent Achievements & News
+
 4. Professional Interests & Focus Areas
+
 5. Company Role & Responsibilities
+
 6. Public Presence & Thought Leadership
 
-Format as a clear, structured report.`
+Format as a clear, structured report with proper spacing between each numbered section.`
 
         const reportResponse = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {
               role: "system",
-              content: "You are a professional research analyst. Based on the search results provided, create a comprehensive report about the person. Structure it clearly and include all relevant professional information."
+              content: "You are a professional research analyst. Based on the search results provided, create a comprehensive report about the person. Structure it clearly with proper spacing between each numbered section and include all relevant professional information."
             },
             {
               role: "user",
@@ -153,21 +158,27 @@ Format as a clear, structured report.`
         // Fallback to enhanced GPT-4o analysis
         const fallbackPrompt = `Please provide a comprehensive analysis and report on: ${recipientName} at ${recipientCompany} as ${recipientRole}. Focus on:
 1. Professional background and career highlights
+
 2. Education and credentials
+
 3. Recent achievements or news
+
 4. Professional interests and focus areas
+
 5. Company role and responsibilities
+
 6. Any public speaking, publications, or thought leadership
+
 7. Social media presence and professional activities
 
-Format your response as a structured report with clear sections.`
+Format your response as a structured report with clear sections and proper spacing between each numbered section.`
 
         const searchResponse = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {
               role: "system",
-              content: "You are a professional research analyst with access to current information. Analyze and provide comprehensive information about the person mentioned."
+              content: "You are a professional research analyst with access to current information. Analyze and provide comprehensive information about the person mentioned. Format your response with proper spacing between each numbered section."
             },
             {
               role: "user",
@@ -184,13 +195,13 @@ Format your response as a structured report with clear sections.`
       if (userProfile) {
         console.log('Generating commonalities with user profile...')
         
-        const commonalitiesPrompt = `User Profile:
+        const commonalitiesPrompt = `SENDER'S PROFILE (the person writing the email):
 ${JSON.stringify(userProfile, null, 2)}
 
-Recipient Information:
+RECIPIENT'S INFORMATION (the person being emailed):
 ${researchFindings}
 
-Please identify specific commonalities between the user and recipient that could be mentioned in a networking email. Focus on:
+Please identify specific commonalities between the SENDER and RECIPIENT that could be mentioned in a networking email. Focus on:
 1. Shared educational background
 2. Similar professional interests
 3. Common industry experience
@@ -199,14 +210,14 @@ Please identify specific commonalities between the user and recipient that could
 6. Similar career paths or goals
 7. Resume-based connections (if resume is available)
 
-Format as a clear list of specific commonalities.`
+Format as a clear list of specific commonalities between the SENDER and RECIPIENT.`
 
         const commonalitiesResponse = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
             {
               role: "system",
-              content: "You are a networking expert. Analyze the user's profile and the recipient's information to find meaningful commonalities that could create genuine connections."
+              content: "You are a networking expert. Analyze the sender's profile and the recipient's information to find meaningful commonalities that could create genuine connections for a networking email."
             },
             {
               role: "user",
@@ -301,11 +312,11 @@ Format as a clear list of specific commonalities.`
           messages: [
             {
               role: "system",
-              content: "You are a networking expert. Find meaningful commonalities between the user's profile and the recipient's information that could create genuine connections."
+              content: "You are a networking expert. Find meaningful commonalities between the sender's profile and the recipient's information that could create genuine connections for a networking email."
             },
             {
               role: "user",
-              content: `User Profile: ${JSON.stringify(userProfile)}\n\nRecipient Info: ${recipientName} at ${recipientCompany} as ${recipientRole}\n\nResearch: ${researchFindings}\n\nFind specific commonalities that could be mentioned in a networking email.`
+              content: `SENDER'S PROFILE (the person writing the email):\n${JSON.stringify(userProfile)}\n\nRECIPIENT'S INFORMATION (the person being emailed):\n- Name: ${recipientName}\n- Company: ${recipientCompany}\n- Role: ${recipientRole}\n\nRESEARCH ABOUT THE RECIPIENT:\n${researchFindings}\n\nFind specific commonalities between the SENDER and the RECIPIENT that could be mentioned in a networking email. Focus on shared experiences, education, interests, or professional connections.`
             }
           ]
         })
@@ -319,34 +330,46 @@ Format as a clear list of specific commonalities.`
     console.log('Building email generation prompt...')
     
     let prompt = 'Generate a personalized outreach email for networking purposes.\n\n'
-    prompt += `Recipient Information:\n`
+    prompt += `TARGET RECIPIENT (the person you are emailing):\n`
     prompt += `- Name: ${recipientName}\n`
     prompt += `- Company: ${recipientCompany}\n`
     prompt += `- Role: ${recipientRole}\n`
-    prompt += `- Purpose: ${purpose}\n\n`
+    prompt += `- Purpose of outreach: ${purpose}\n\n`
     
     if (researchFindings) {
-      prompt += `Research Findings:\n${researchFindings}\n\n`
+      prompt += `RESEARCH ABOUT THE RECIPIENT:\n${researchFindings}\n\n`
     }
     
     if (commonalities) {
-      prompt += `Commonalities Found:\n${commonalities}\n\n`
+      prompt += `COMMONALITIES BETWEEN YOU AND THE RECIPIENT:\n${commonalities}\n\n`
+    }
+    
+    if (userProfile) {
+      prompt += `YOUR PROFILE (the sender's background):\n`
+      prompt += `- Name: ${userProfile.full_name || '[Your Name]'}\n`
+      prompt += `- Job Title: ${userProfile.job_title || 'Not specified'}\n`
+      prompt += `- Company: ${userProfile.company || 'Not specified'}\n`
+      prompt += `- Education: ${userProfile.education?.school || 'Not specified'}\n`
+      prompt += `- Background: ${userProfile.background || 'Not specified'}\n`
+      prompt += `- Skills: ${userProfile.skills?.join(', ') || 'Not specified'}\n`
+      prompt += `- Interests: ${userProfile.interests?.join(', ') || 'Not specified'}\n\n`
     }
     
     if (userProfile?.resume_text) {
-      prompt += `User Resume Context:\n${userProfile.resume_text}\n\n`
+      prompt += `YOUR RESUME CONTEXT:\n${userProfile.resume_text}\n\n`
     }
     
-    prompt += `Requirements:\n`
-    prompt += `- Make it personalized and authentic\n`
+    prompt += `EMAIL REQUIREMENTS:\n`
+    prompt += `- Write from YOUR perspective to the RECIPIENT\n`
     prompt += `- Use the ${tone} tone appropriately\n`
     prompt += `- Keep it concise (2-3 paragraphs max)\n`
     prompt += `- Include a clear call-to-action\n`
     prompt += `- Make it sound human-written, not robotic\n`
-    prompt += `- If research findings are provided, subtly incorporate relevant details to show you've done your homework\n`
-    prompt += `- If user profile is available, find and mention specific commonalities to create genuine connections\n`
-    prompt += `- If resume text is available, use it to find additional connections and make the email more specific to the user's background\n`
-    prompt += `- End with a professional signature "${userProfile?.full_name || '[Your Name]'}"`
+    prompt += `- If research findings are provided, subtly incorporate relevant details about the RECIPIENT to show you've done your homework\n`
+    prompt += `- If commonalities are found, mention specific connections between YOU and the RECIPIENT to create genuine connections\n`
+    prompt += `- Use YOUR background and experience to relate to the RECIPIENT's background\n`
+    prompt += `- End with a professional signature using YOUR name: "${userProfile?.full_name || '[Your Name]'}"\n\n`
+    prompt += `IMPORTANT: The email should be written from YOUR perspective (the sender) to the RECIPIENT. Do not confuse the two profiles.`
 
     // If no user profile is available, add a note about the signature
     if (!userProfile) {

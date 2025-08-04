@@ -737,7 +737,7 @@ export default function ColdEmailGenerator() {
                               </h4>
                             </div>
                             <div className="p-6">
-                              <div className="prose prose-sm max-w-none min-h-[200px] prose-headings:font-bold prose-headings:text-[#111827] prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4 prose-ul:my-4 prose-li:mb-2">
+                              <div className="prose prose-sm max-w-none min-h-[200px] prose-headings:font-bold prose-headings:text-[#111827] prose-headings:text-xl prose-headings:mb-4 prose-headings:mt-6 prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4 prose-p:text-base prose-ul:my-4 prose-li:mb-3 prose-li:text-gray-700 prose-strong:text-[#111827] prose-strong:font-semibold prose-blockquote:border-l-4 prose-blockquote:border-[#6366F1] prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600">
                                 {isGenerating ? (
                                   <div className="flex items-center justify-center h-full text-gray-500">
                                     <Loader2 className="h-10 w-10 animate-spin mr-4" />
@@ -771,7 +771,7 @@ export default function ColdEmailGenerator() {
                               </h4>
                             </div>
                             <div className="p-6">
-                              <div className="prose prose-sm max-w-none min-h-[150px] prose-headings:font-bold prose-headings:text-[#111827] prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4 prose-ul:my-4 prose-li:mb-2">
+                              <div className="prose prose-sm max-w-none min-h-[150px] prose-headings:font-bold prose-headings:text-[#111827] prose-headings:text-xl prose-headings:mb-4 prose-headings:mt-6 prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4 prose-p:text-base prose-ul:my-4 prose-li:mb-3 prose-li:text-gray-700 prose-strong:text-[#111827] prose-strong:font-semibold prose-blockquote:border-l-4 prose-blockquote:border-[#6366F1] prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600">
                                 {isGenerating ? (
                                   <div className="flex items-center justify-center h-full text-gray-500">
                                     <Loader2 className="h-10 w-10 animate-spin mr-4" />

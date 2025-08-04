@@ -4,23 +4,22 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
   Search, 
   Filter, 
   Trash2, 
-  Copy, 
-  Download, 
   Mail, 
   Calendar,
   User,
   Building,
   Target,
   Clock,
-  ArrowLeft
+  ArrowLeft,
+  Eye,
+  ExternalLink
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import Header from '@/components/Header'
@@ -34,16 +33,16 @@ export const dynamic = 'force-dynamic'
 
 interface GeneratedEmail {
   id: string
+  user_id: string
   recipient_name: string
-  recipient_role?: string
   recipient_company?: string
-  outreach_purpose: string
-  context?: string
-  additional_notes?: string
+  recipient_role?: string
+  recipient_email?: string
+  purpose: string
+  search_mode?: string
+  research_findings?: string
+  commonalities?: string
   generated_email: string
-  subject_line?: string
-  tone: string
-  research_findings?: any
   created_at: string
 }
 
@@ -77,13 +76,22 @@ function PastEmailsPageContent() {
   const loadEmails = async () => {
     try {
       setLoading(true)
+      console.log('Loading emails for user:', user?.id)
+      
       const { data, error } = await supabase
         .from('generated_emails')
         .select('*')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
+      
+      console.log('Emails loaded from database:', data)
+      console.log('Number of emails found:', data?.length || 0)
+      
       setEmails(data || [])
     } catch (error) {
       console.error('Error loading emails:', error)
@@ -121,44 +129,14 @@ function PastEmailsPageContent() {
     }
   }
 
-  const copyToClipboard = async (email: GeneratedEmail) => {
-    try {
-      const emailText = `Subject: ${email.subject_line || 'No subject'}\n\n${email.generated_email}`
-      await navigator.clipboard.writeText(emailText)
-      toast({
-        title: "Copied!",
-        description: "Email copied to clipboard.",
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to copy email.",
-        variant: "destructive"
-      })
-    }
-  }
-
-  const downloadEmail = (email: GeneratedEmail) => {
-    const emailText = `Subject: ${email.subject_line || 'No subject'}\n\n${email.generated_email}`
-    const blob = new Blob([emailText], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `email-${email.recipient_name}-${new Date(email.created_at).toISOString().split('T')[0]}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-
   // Filter and sort emails
   const filteredEmails = emails
     .filter(email => {
       const matchesSearch = email.recipient_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            email.recipient_company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           email.generated_email.toLowerCase().includes(searchTerm.toLowerCase())
+                           email.purpose.toLowerCase().includes(searchTerm.toLowerCase())
       
-      const matchesPurpose = filterPurpose === 'all' || email.outreach_purpose === filterPurpose
+      const matchesPurpose = filterPurpose === 'all' || email.purpose === filterPurpose
       
       return matchesSearch && matchesPurpose
     })
@@ -183,11 +161,20 @@ function PastEmailsPageContent() {
     })
   }
 
+  // Generate subject line from email content
+  const generateSubject = (email: GeneratedEmail) => {
+    const firstLine = email.generated_email.split('\n')[0]
+    if (firstLine && firstLine.length > 50) {
+      return firstLine.substring(0, 50) + '...'
+    }
+    return firstLine || email.purpose
+  }
+
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-[#111827]">
       <Header />
       
-      <div className="container mx-auto px-6 py-8 max-w-7xl">
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
@@ -273,91 +260,67 @@ function PastEmailsPageContent() {
             )}
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-3">
             {filteredEmails.map((email) => (
-              <Card key={email.id} className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-[#111827]">
-                          {email.recipient_name}
-                        </h3>
-                        {email.recipient_role && email.recipient_company && (
-                          <span className="text-sm text-gray-600">
-                            {email.recipient_role} at {email.recipient_company}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <Target className="h-4 w-4" />
-                          {email.outreach_purpose}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {formatDate(email.created_at)}
-                        </div>
-                        {email.tone && (
-                          <div className="flex items-center gap-1">
-                            <span className="capitalize">{email.tone}</span>
+              <Link key={email.id} href={`/past-emails/${email.id}`} className="block">
+                <Card className="border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-200 cursor-pointer group">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-1">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-gray-500" />
+                            <span className="font-medium text-[#111827] truncate group-hover:text-[#6366F1] transition-colors">
+                              {email.recipient_name}
+                            </span>
                           </div>
-                        )}
+                          {email.recipient_company && (
+                            <div className="flex items-center gap-1 text-sm text-gray-600">
+                              <Building className="h-3 w-3" />
+                              <span className="truncate">{email.recipient_company}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-700 truncate mb-1">
+                          {generateSubject(email)}
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <Target className="h-3 w-3" />
+                            {email.purpose}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {formatDate(email.created_at)}
+                          </div>
+                          {email.search_mode && (
+                            <div className="flex items-center gap-1">
+                              <span className="capitalize">{email.search_mode}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <div className="text-gray-400 group-hover:text-[#6366F1] transition-colors">
+                          <Eye className="h-4 w-4" />
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            deleteEmail(email.id)
+                          }}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => copyToClipboard(email)}
-                        className="text-gray-600 hover:text-[#111827]"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => downloadEmail(email)}
-                        className="text-gray-600 hover:text-[#111827]"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteEmail(email.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {email.subject_line && (
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700">Subject</Label>
-                        <p className="text-sm text-gray-900 mt-1">{email.subject_line}</p>
-                      </div>
-                    )}
-                    <div>
-                      <Label className="text-sm font-medium text-gray-700">Email Content</Label>
-                      <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <pre className="text-sm text-gray-800 whitespace-pre-wrap font-sans">
-                          {email.generated_email}
-                        </pre>
-                      </div>
-                    </div>
-                    {email.context && (
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700">Context</Label>
-                        <p className="text-sm text-gray-600 mt-1">{email.context}</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}

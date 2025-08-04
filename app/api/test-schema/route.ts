@@ -14,27 +14,11 @@ export async function GET() {
       .select('*')
       .limit(1)
 
-    if (tableError) {
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to access user_profiles table',
-        details: tableError
-      }, { status: 500 })
-    }
-
     // Test 2: Check generated_emails table structure
     const { data: emailsTableInfo, error: emailsTableError } = await supabase
       .from('generated_emails')
       .select('*')
       .limit(1)
-
-    if (emailsTableError) {
-      return NextResponse.json({
-        success: false,
-        error: 'Failed to access generated_emails table',
-        details: emailsTableError
-      }, { status: 500 })
-    }
 
     // Test 3: Check if we can query the schema information
     // This will help us understand the column types without inserting data
@@ -61,12 +45,12 @@ export async function GET() {
       results: {
         userProfilesTable: {
           accessible: !tableError,
-          error: tableError?.message || null,
+          error: tableError ? (tableError as any).message || 'Unknown error' : null,
           hasData: tableInfo && tableInfo.length > 0
         },
         generatedEmailsTable: {
           accessible: !emailsTableError,
-          error: emailsTableError?.message || null,
+          error: emailsTableError ? (emailsTableError as any).message || 'Unknown error' : null,
           hasData: emailsTableInfo && emailsTableInfo.length > 0
         },
         schemaInfo: schemaInfo || 'RPC not available',
