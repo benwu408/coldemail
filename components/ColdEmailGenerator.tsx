@@ -29,6 +29,9 @@ export default function ColdEmailGenerator() {
   const [displayedEmail, setDisplayedEmail] = useState('')
   const [displayedFindings, setDisplayedFindings] = useState('')
   const [displayedCommonalities, setDisplayedCommonalities] = useState('')
+  const [editRequest, setEditRequest] = useState('')
+  const [isEditing, setIsEditing] = useState(false)
+  const [showEditSection, setShowEditSection] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -132,6 +135,9 @@ export default function ColdEmailGenerator() {
           title: "Email Generated!",
           description: "Your personalized email has been created and saved successfully.",
         })
+        
+        // Show edit section after email is generated
+        setShowEditSection(true)
       } else {
         throw new Error(data.error || 'Failed to generate email')
       }
@@ -176,6 +182,63 @@ export default function ColdEmailGenerator() {
       title: "Downloaded!",
       description: "Email content saved to your device.",
     })
+  }
+
+  const editEmail = async () => {
+    if (!editRequest.trim()) {
+      toast({
+        title: "Edit Request Required",
+        description: "Please describe what changes you'd like to make to the email.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsEditing(true)
+
+    try {
+      const response = await fetch('/api/edit-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.id}`,
+        },
+        body: JSON.stringify({
+          originalEmail: generatedEmail,
+          editRequest: editRequest,
+          recipientName: formData.recipientName,
+          recipientCompany: formData.recipientCompany,
+          recipientRole: formData.recipientRole,
+          purpose: formData.purpose,
+          tone: formData.tone
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setGeneratedEmail(data.email)
+        setDisplayedEmail(data.email)
+        setEditRequest('')
+        // Keep the edit section visible after updating
+        // setShowEditSection(false) - removed this line
+        toast({
+          title: "Email Updated!",
+          description: "Your email has been revised based on your request.",
+        })
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to edit email')
+      }
+    } catch (error) {
+      console.error('Error editing email:', error)
+      toast({
+        title: "Edit Failed",
+        description: error instanceof Error ? error.message : "Failed to edit email. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsEditing(false)
+    }
   }
 
   return (
@@ -676,6 +739,76 @@ export default function ColdEmailGenerator() {
                             </div>
                           </div>
                         </div>
+
+                        {/* Edit Email Section - Now positioned below the email */}
+                        {showEditSection && generatedEmail && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="bg-white border border-gray-100 rounded-2xl shadow-md mx-6 mb-6"
+                          >
+                            <div className="p-6 space-y-4">
+                              <div className="flex items-center gap-3">
+                                <Edit3 className="h-5 w-5 text-[#6366F1]" />
+                                <h4 className="text-lg font-bold text-[#111827]">Edit Email</h4>
+                                {isEditing && (
+                                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Updating email...
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <Label htmlFor="editRequest" className="text-sm font-medium text-[#111827] mb-2 block">
+                                  Describe the changes you'd like to make:
+                                </Label>
+                                <Textarea
+                                  id="editRequest"
+                                  value={editRequest}
+                                  onChange={(e) => setEditRequest(e.target.value)}
+                                  placeholder="e.g., Make it more formal, add a specific question about their recent project, change the tone to be more casual..."
+                                  className="border-gray-200 focus:border-[#6366F1] focus:ring-[#6366F1] min-h-[80px]"
+                                  rows={3}
+                                  disabled={isEditing}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Be specific about what you want to change. The AI will revise the email based on your request.
+                                </p>
+                              </div>
+                              <div className="flex gap-3">
+                                <Button
+                                  onClick={editEmail}
+                                  disabled={isEditing || !editRequest.trim()}
+                                  className="bg-[#6366F1] hover:bg-[#4F46E5] text-white"
+                                >
+                                  {isEditing ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Updating...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Edit3 className="mr-2 h-4 w-4" />
+                                      Update Email
+                                    </>
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    setShowEditSection(false)
+                                    setEditRequest('')
+                                  }}
+                                  className="border-gray-200 hover:border-gray-300"
+                                  disabled={isEditing}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
                       </motion.div>
                     )}
 
