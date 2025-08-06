@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
         try {
           const { data: connectionTest, error: connectionError } = await supabase
             .from('profiles')
-            .select('count(*)')
+            .select('id')
             .limit(1)
           
           if (connectionError) {
