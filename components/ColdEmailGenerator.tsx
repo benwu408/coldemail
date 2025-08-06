@@ -38,6 +38,7 @@ export default function ColdEmailGenerator() {
     recipientName: '',
     recipientCompany: '',
     recipientRole: '',
+    recipientLinkedIn: '',
     purpose: '',
     tone: 'casual'
   })
@@ -76,10 +77,10 @@ export default function ColdEmailGenerator() {
   }
 
   const generateEmail = async () => {
-    if (!formData.recipientName || !formData.recipientCompany || !formData.recipientRole || !formData.purpose) {
+    if (!formData.recipientName || !formData.purpose) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields.",
+        description: "Please fill in the required fields (Name and Purpose).",
         variant: "destructive",
       })
       return
@@ -196,6 +197,9 @@ export default function ColdEmailGenerator() {
 
     setIsEditing(true)
 
+    // Store the current email as the original before making changes
+    const originalEmailContent = generatedEmail
+
     try {
       const response = await fetch('/api/edit-email', {
         method: 'POST',
@@ -204,11 +208,12 @@ export default function ColdEmailGenerator() {
           'Authorization': `Bearer ${user?.id}`,
         },
         body: JSON.stringify({
-          originalEmail: generatedEmail,
+          originalEmail: originalEmailContent, // Pass the stored original content
           editRequest: editRequest,
           recipientName: formData.recipientName,
           recipientCompany: formData.recipientCompany,
           recipientRole: formData.recipientRole,
+          recipientLinkedIn: formData.recipientLinkedIn,
           purpose: formData.purpose,
           tone: formData.tone
         }),
@@ -268,7 +273,7 @@ export default function ColdEmailGenerator() {
                     About the Recipient
                   </CardTitle>
                   <p className="text-gray-600 leading-relaxed">
-                    Tell us about the person you want to reach out to. This helps our AI research and personalize your message.
+                    Provide the person's name and LinkedIn profile (optional) for personalized outreach.
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -289,34 +294,51 @@ export default function ColdEmailGenerator() {
                   </motion.div>
 
                   <motion.div 
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.7 }}
                   >
-                    <div>
-                      <Label htmlFor="recipientCompany" className="text-sm font-medium text-[#111827] mb-2 block">Company</Label>
-                      <Input
-                        id="recipientCompany"
-                        placeholder="e.g., Google"
-                        value={formData.recipientCompany}
-                        onChange={(e) => handleInputChange('recipientCompany', e.target.value)}
-                        className="border-gray-200 focus:border-[#6366F1] focus:ring-[#6366F1]"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">We'll research recent news and company culture.</p>
-                    </div>
+                    <Label htmlFor="recipientCompany" className="text-sm font-medium text-[#111827] mb-2 block">Company</Label>
+                    <Input
+                      id="recipientCompany"
+                      placeholder="e.g., Tech Corp"
+                      value={formData.recipientCompany}
+                      onChange={(e) => handleInputChange('recipientCompany', e.target.value)}
+                      className="border-gray-200 focus:border-[#6366F1] focus:ring-[#6366F1]"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">This will help personalize the email's context.</p>
+                  </motion.div>
 
-                    <div>
-                      <Label htmlFor="recipientRole" className="text-sm font-medium text-[#111827] mb-2 block">Role/Position</Label>
-                      <Input
-                        id="recipientRole"
-                        placeholder="e.g., Senior Product Manager"
-                        value={formData.recipientRole}
-                        onChange={(e) => handleInputChange('recipientRole', e.target.value)}
-                        className="border-gray-200 focus:border-[#6366F1] focus:ring-[#6366F1]"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Helps tailor the message to their expertise.</p>
-                    </div>
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.8 }}
+                  >
+                    <Label htmlFor="recipientRole" className="text-sm font-medium text-[#111827] mb-2 block">Role</Label>
+                    <Input
+                      id="recipientRole"
+                      placeholder="e.g., Product Manager"
+                      value={formData.recipientRole}
+                      onChange={(e) => handleInputChange('recipientRole', e.target.value)}
+                      className="border-gray-200 focus:border-[#6366F1] focus:ring-[#6366F1]"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">This will help tailor the email's tone and content.</p>
+                  </motion.div>
+
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.9 }}
+                  >
+                    <Label htmlFor="recipientLinkedIn" className="text-sm font-medium text-[#111827] mb-2 block">LinkedIn URL (optional)</Label>
+                    <Input
+                      id="recipientLinkedIn"
+                      placeholder="e.g., https://www.linkedin.com/in/sarah-johnson/"
+                      value={formData.recipientLinkedIn}
+                      onChange={(e) => handleInputChange('recipientLinkedIn', e.target.value)}
+                      className="border-gray-200 focus:border-[#6366F1] focus:ring-[#6366F1]"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">We'll use this to find more information about the person for better personalization.</p>
                   </motion.div>
                 </CardContent>
               </Card>
@@ -699,7 +721,7 @@ export default function ColdEmailGenerator() {
                             </div>
                             <div className="space-y-2">
                               <div className="text-sm text-gray-600">
-                                <span className="font-medium">To:</span> {formData.recipientName || 'Recipient'} &lt;{formData.recipientName?.toLowerCase().replace(/\s+/g, '.')}@{formData.recipientCompany?.toLowerCase().replace(/\s+/g, '')}.com&gt;
+                                <span className="font-medium">To:</span> {formData.recipientName || 'Recipient'} &lt;{formData.recipientName?.toLowerCase().replace(/\s+/g, '.')}@email.com&gt;
                               </div>
                               <div className="text-sm text-gray-600">
                                 <span className="font-medium">Subject:</span> {formData.purpose ? formData.purpose.slice(0, 50) + (formData.purpose.length > 50 ? '...' : '') : 'Reaching out to connect'}
