@@ -1015,6 +1015,10 @@ Software Engineer & Co-founder`
                       <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
                       <span>Export to email clients & history</span>
                     </div>
+                    <div className="flex items-center gap-2 opacity-50">
+                      <div className="h-4 w-4 border border-gray-400 rounded flex-shrink-0"></div>
+                      <span className="text-gray-400"><s>Personalized connections</s></span>
+                    </div>
                   </div>
                 </div>
                 
@@ -1038,6 +1042,10 @@ Software Engineer & Co-founder`
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
                       <span><strong>Unlimited generations</strong> - No daily limits</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
+                      <span><strong>Personalized connections</strong> - AI finds shared experiences & interests</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />

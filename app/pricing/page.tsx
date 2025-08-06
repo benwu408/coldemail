@@ -118,6 +118,10 @@ export default function PricingPage() {
                       <span><strong>Unlimited generations</strong> - No daily limits</span>
                     </div>
                     <div className="flex items-center gap-3">
+                      <Users className="h-5 w-5 text-[#6366F1] flex-shrink-0" />
+                      <span><strong>Personalized connections</strong> - AI finds shared experiences & interests</span>
+                    </div>
+                    <div className="flex items-center gap-3">
                       <MessageSquare className="h-5 w-5 text-[#6366F1] flex-shrink-0" />
                       <span><strong>Tone customization</strong> - Casual, Formal, Confident, and more</span>
                     </div>
