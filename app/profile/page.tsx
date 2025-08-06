@@ -21,7 +21,9 @@ import {
   Heart, 
   Loader2,
   Crown,
-  Lock
+  Lock,
+  Plus,
+  Trash2
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -42,6 +44,14 @@ interface ProfileData {
   location: string
   industry: string
   experience_years: string
+  job_experiences: {
+    company: string
+    title: string
+    start_date: string
+    end_date: string
+    description: string
+    is_current: boolean
+  }[]
   skills: string[]
   interests: string[]
   background: string
@@ -68,6 +78,7 @@ function ProfilePageContent() {
     location: '',
     industry: '',
     experience_years: '',
+    job_experiences: [],
     skills: [],
     interests: [],
     background: '',
@@ -121,6 +132,7 @@ function ProfilePageContent() {
           location: data.location || '',
           industry: data.industry || '',
           experience_years: data.experience_years || '',
+          job_experiences: data.job_experiences || [],
           skills: data.skills || [],
           interests: data.interests || [],
           background: data.background || '',
@@ -138,6 +150,7 @@ function ProfilePageContent() {
           location: data.location || '',
           industry: data.industry || '',
           experience_years: data.experience_years || '',
+          job_experiences: data.job_experiences || [],
           skills: data.skills || [],
           interests: data.interests || [],
           background: data.background || '',
@@ -382,6 +395,65 @@ function ProfilePageContent() {
     setAutoSaveTimeout(timeout)
   }
 
+  // Job experience management functions
+  const addJobExperience = () => {
+    const newExperience = {
+      company: '',
+      title: '',
+      start_date: '',
+      end_date: '',
+      description: '',
+      is_current: false
+    }
+    const newProfile = {
+      ...profile,
+      job_experiences: [...profile.job_experiences, newExperience]
+    }
+    setProfile(newProfile)
+  }
+
+  const removeJobExperience = (index: number) => {
+    const newProfile = {
+      ...profile,
+      job_experiences: profile.job_experiences.filter((_, i) => i !== index)
+    }
+    setProfile(newProfile)
+    
+    // Trigger auto-save
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout)
+    }
+    
+    const timeout = setTimeout(() => {
+      saveProfileSilently(newProfile)
+      setAutoSaveTimeout(null)
+    }, 1000)
+    
+    setAutoSaveTimeout(timeout)
+  }
+
+  const handleJobExperienceChange = (index: number, field: string, value: string | boolean) => {
+    const newProfile = {
+      ...profile,
+      job_experiences: profile.job_experiences.map((exp, i) => 
+        i === index ? { ...exp, [field]: value } : exp
+      )
+    }
+    setProfile(newProfile)
+    
+    // Trigger auto-save
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout)
+    }
+    
+    const timeout = setTimeout(() => {
+      saveProfileSilently(newProfile)
+      setAutoSaveTimeout(null)
+    }, 1000)
+    
+    setAutoSaveTimeout(timeout)
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
@@ -428,98 +500,90 @@ function ProfilePageContent() {
                     placeholder="Your full name"
                   />
                 </div>
-                <BasicInfoProField>
-                  <div>
-                    <Label htmlFor="job_title">Job Title</Label>
-                    <Input
-                      id="job_title"
-                      value={profile.job_title}
-                      onChange={(e) => handleInputChange('job_title', e.target.value)}
-                      placeholder="e.g., Software Engineer"
-                    />
-                  </div>
-                </BasicInfoProField>
+                <div>
+                  <Label htmlFor="job_title">Job Title</Label>
+                  <Input
+                    id="job_title"
+                    value={profile.job_title}
+                    onChange={(e) => handleInputChange('job_title', e.target.value)}
+                    placeholder="e.g., Software Engineer"
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <BasicInfoProField>
-                  <div>
-                    <Label htmlFor="company">Company</Label>
-                    <Input
-                      id="company"
-                      value={profile.company}
-                      onChange={(e) => handleInputChange('company', e.target.value)}
-                      placeholder="e.g., Google"
-                    />
-                  </div>
-                </BasicInfoProField>
-                <BasicInfoProField>
-                  <div>
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      value={profile.location}
-                      onChange={(e) => handleInputChange('location', e.target.value)}
-                      placeholder="e.g., San Francisco, CA"
-                    />
-                  </div>
-                </BasicInfoProField>
+                <div>
+                  <Label htmlFor="company">Company</Label>
+                  <Input
+                    id="company"
+                    value={profile.company}
+                    onChange={(e) => handleInputChange('company', e.target.value)}
+                    placeholder="e.g., Google"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    value={profile.location}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    placeholder="e.g., San Francisco, CA"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Education */}
-          <ProOnlyField label="Education Information">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <GraduationCap className="h-5 w-5" />
-                  Education
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="school">School/University</Label>
-                    <Input
-                      id="school"
-                      value={profile.education.school}
-                      onChange={(e) => handleEducationChange('school', e.target.value)}
-                      placeholder="e.g., University of Illinois"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="degree">Degree</Label>
-                    <Input
-                      id="degree"
-                      value={profile.education.degree}
-                      onChange={(e) => handleEducationChange('degree', e.target.value)}
-                      placeholder="e.g., Bachelor's"
-                    />
-                  </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5" />
+                Education
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="school">School/University</Label>
+                  <Input
+                    id="school"
+                    value={profile.education.school}
+                    onChange={(e) => handleEducationChange('school', e.target.value)}
+                    placeholder="e.g., University of Illinois"
+                  />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="major">Major/Field of Study</Label>
-                    <Input
-                      id="major"
-                      value={profile.education.major}
-                      onChange={(e) => handleEducationChange('major', e.target.value)}
-                      placeholder="e.g., Computer Science"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="graduation_year">Graduation Year</Label>
-                    <Input
-                      id="graduation_year"
-                      value={profile.education.graduation_year}
-                      onChange={(e) => handleEducationChange('graduation_year', e.target.value)}
-                      placeholder="e.g., 2023"
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="degree">Degree</Label>
+                  <Input
+                    id="degree"
+                    value={profile.education.degree}
+                    onChange={(e) => handleEducationChange('degree', e.target.value)}
+                    placeholder="e.g., Bachelor's"
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          </ProOnlyField>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="major">Major/Field of Study</Label>
+                  <Input
+                    id="major"
+                    value={profile.education.major}
+                    onChange={(e) => handleEducationChange('major', e.target.value)}
+                    placeholder="e.g., Computer Science"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="graduation_year">Graduation Year</Label>
+                  <Input
+                    id="graduation_year"
+                    value={profile.education.graduation_year}
+                    onChange={(e) => handleEducationChange('graduation_year', e.target.value)}
+                    placeholder="e.g., 2020"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Professional Information */}
           <ProOnlyField label="Professional Information">
@@ -530,7 +594,7 @@ function ProfilePageContent() {
                   Professional Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="industry">Industry</Label>
@@ -551,6 +615,7 @@ function ProfilePageContent() {
                     />
                   </div>
                 </div>
+                
                 <div>
                   <Label htmlFor="background">Professional Background</Label>
                   <Textarea
@@ -560,6 +625,122 @@ function ProfilePageContent() {
                     placeholder="Brief description of your professional background, key achievements, and career goals..."
                     rows={3}
                   />
+                </div>
+
+                {/* Job Experiences Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900">Work Experience</h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addJobExperience}
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Experience
+                    </Button>
+                  </div>
+                  
+                  {profile.job_experiences.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                      <Briefcase className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                      <p>No work experience added yet.</p>
+                      <p className="text-sm">Click "Add Experience" to get started.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {profile.job_experiences.map((experience, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="font-medium text-gray-900">Experience #{index + 1}</h4>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeJobExperience(index)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <Label htmlFor={`company-${index}`}>Company</Label>
+                              <Input
+                                id={`company-${index}`}
+                                value={experience.company}
+                                onChange={(e) => handleJobExperienceChange(index, 'company', e.target.value)}
+                                placeholder="e.g., Google"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`title-${index}`}>Job Title</Label>
+                              <Input
+                                id={`title-${index}`}
+                                value={experience.title}
+                                onChange={(e) => handleJobExperienceChange(index, 'title', e.target.value)}
+                                placeholder="e.g., Senior Software Engineer"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <Label htmlFor={`start-date-${index}`}>Start Date</Label>
+                              <Input
+                                id={`start-date-${index}`}
+                                type="month"
+                                value={experience.start_date}
+                                onChange={(e) => handleJobExperienceChange(index, 'start_date', e.target.value)}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`end-date-${index}`}>End Date</Label>
+                              <Input
+                                id={`end-date-${index}`}
+                                type="month"
+                                value={experience.end_date}
+                                onChange={(e) => handleJobExperienceChange(index, 'end_date', e.target.value)}
+                                disabled={experience.is_current}
+                                placeholder={experience.is_current ? "Current Position" : ""}
+                              />
+                              <div className="flex items-center mt-2">
+                                <input
+                                  type="checkbox"
+                                  id={`current-${index}`}
+                                  checked={experience.is_current}
+                                  onChange={(e) => {
+                                    handleJobExperienceChange(index, 'is_current', e.target.checked)
+                                    if (e.target.checked) {
+                                      handleJobExperienceChange(index, 'end_date', '')
+                                    }
+                                  }}
+                                  className="mr-2"
+                                />
+                                <Label htmlFor={`current-${index}`} className="text-sm">
+                                  I currently work here
+                                </Label>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor={`description-${index}`}>Job Description</Label>
+                            <Textarea
+                              id={`description-${index}`}
+                              value={experience.description}
+                              onChange={(e) => handleJobExperienceChange(index, 'description', e.target.value)}
+                              placeholder="Describe your role, responsibilities, and key achievements..."
+                              rows={3}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
