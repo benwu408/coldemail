@@ -22,16 +22,19 @@ import {
   Briefcase,
   MapPin,
   Heart,
-  Crown
+  Crown,
+  User
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import ProtectedRoute from './ProtectedRoute'
 import ColdEmailGenerator from './ColdEmailGenerator'
 import Header from './Header'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 
 export default function HeroPage() {
   const { user } = useAuth()
+  const [userSubscription, setUserSubscription] = useState<{ plan_name: string } | null>(null)
   const [demoEmail, setDemoEmail] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [emailVisible, setEmailVisible] = useState(false)
@@ -135,6 +138,33 @@ Founder & CEO, DataSync`,
     setCompanyRoleVisible(false)
     setPurposeVisible(false)
   }, [])
+
+  // Load user subscription status
+  useEffect(() => {
+    const loadUserSubscription = async () => {
+      if (user) {
+        try {
+          const { data: subscriptionData, error } = await supabase.rpc('get_user_subscription', {
+            user_uuid: user.id
+          })
+
+          if (error) {
+            console.error('Error fetching subscription:', error)
+            setUserSubscription({ plan_name: 'free' })
+          } else if (subscriptionData && subscriptionData.length > 0) {
+            setUserSubscription(subscriptionData[0])
+          } else {
+            setUserSubscription({ plan_name: 'free' })
+          }
+        } catch (error) {
+          console.error('Error in loadUserSubscription:', error)
+          setUserSubscription({ plan_name: 'free' })
+        }
+      }
+    }
+
+    loadUserSubscription()
+  }, [user])
 
   // Scroll event listener for dynamic animations
   useEffect(() => {
@@ -311,35 +341,79 @@ Founder & CEO, DataSync`,
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link 
-                href={user ? "/generate" : "/login"}
-                className="inline-flex items-center justify-center bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
-              >
-                Start free - 2 emails/day
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:animate-pulse transition-all duration-200" />
-              </Link>
-              <Link 
-                href="https://buy.stripe.com/dRm00k5GHeK0dRqfL81ck00"
-                className="inline-flex items-center justify-center bg-white border-2 border-[#6366F1] text-[#6366F1] hover:bg-[#6366F1] hover:text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
-              >
-                <Crown className="mr-2 h-5 w-5" />
-                Upgrade to Pro
-              </Link>
+              {userSubscription?.plan_name === 'pro' ? (
+                // Pro user CTAs
+                <>
+                  <Link 
+                    href="/generate"
+                    className="inline-flex items-center justify-center bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
+                  >
+                    Start generating emails
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:animate-pulse transition-all duration-200" />
+                  </Link>
+                  <Link 
+                    href="/profile"
+                    className="inline-flex items-center justify-center bg-white border-2 border-[#6366F1] text-[#6366F1] hover:bg-[#6366F1] hover:text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
+                  >
+                    <User className="mr-2 h-5 w-5" />
+                    Manage Profile
+                  </Link>
+                </>
+              ) : (
+                // Free user CTAs
+                <>
+                  <Link 
+                    href={user ? "/generate" : "/login"}
+                    className="inline-flex items-center justify-center bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
+                  >
+                    Start free - 2 emails/day
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:animate-pulse transition-all duration-200" />
+                  </Link>
+                  <Link 
+                    href="https://buy.stripe.com/dRm00k5GHeK0dRqfL81ck00"
+                    className="inline-flex items-center justify-center bg-white border-2 border-[#6366F1] text-[#6366F1] hover:bg-[#6366F1] hover:text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
+                  >
+                    <Crown className="mr-2 h-5 w-5" />
+                    Upgrade to Pro
+                  </Link>
+                </>
+              )}
             </div>
 
             <div className="flex items-center gap-8 text-sm text-gray-500">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>30s basic / 90s deep search</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>60% higher response rate</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>No credit card required</span>
-              </div>
+              {userSubscription?.plan_name === 'pro' ? (
+                // Pro user features
+                <>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Unlimited emails & deep research</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>All tone options & email editing</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Crown className="h-4 w-4 text-[#6366F1]" />
+                    <span>Pro member</span>
+                  </div>
+                </>
+              ) : (
+                // Free user features
+                <>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>30s basic / 90s deep search</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>60% higher response rate</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>No credit card required</span>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Social Proof */}
@@ -900,85 +974,114 @@ Software Engineer & Co-founder`
       </section>
 
       {/* Why professionals choose ColdEmail AI - Full Width Section */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl font-bold text-[#111827] mb-6 tracking-tight">Two tiers. Maximum flexibility.</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Start free with powerful AI research, then upgrade to Pro for advanced features, 
-              unlimited access, and comprehensive deep search capabilities.
-            </p>
-          </div>
-          
-          {/* Free vs Pro Comparison */}
-          <div className="grid lg:grid-cols-2 gap-8 mb-16">
-            {/* Free Plan Features */}
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-10 border border-gray-200 hover:shadow-lg transition-all duration-200">
-              <div className="w-16 h-16 bg-gray-100 text-gray-600 rounded-2xl flex items-center justify-center mb-6">
-                <Zap className="h-8 w-8" />
-              </div>
-              <h3 className="text-2xl font-bold text-[#111827] mb-4 flex items-center gap-2">
-                Free Plan
-                <span className="text-sm bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium">$0/mo</span>
-              </h3>
-              <div className="space-y-3 text-gray-700">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  <span><strong>Basic search</strong> - 4 targeted queries for essential insights</span>
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-6 max-w-6xl text-center">
+          <h2 className="text-4xl font-bold text-[#111827] mb-6 tracking-tight">Two tiers. Maximum flexibility.</h2>
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            Start free with powerful AI research, then upgrade to Pro for advanced features, 
+            unlimited access, and comprehensive deep search capabilities.
+          </p>
+        </div>
+        
+        {/* Only show pricing comparison for non-Pro users */}
+        {userSubscription?.plan_name !== 'pro' && (
+          <>
+            {/* Free vs Pro Comparison */}
+            <div className="container mx-auto px-6 max-w-6xl">
+              <div className="grid lg:grid-cols-2 gap-8 mb-16 mt-12">
+                {/* Free Plan Features */}
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-10 border border-gray-200 hover:shadow-lg transition-all duration-200">
+                  <div className="w-16 h-16 bg-gray-100 text-gray-600 rounded-2xl flex items-center justify-center mb-6">
+                    <Zap className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-[#111827] mb-4 flex items-center gap-2">
+                    Free Plan
+                    <span className="text-sm bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium">$0/mo</span>
+                  </h3>
+                  <div className="space-y-3 text-gray-700">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <span><strong>Basic search</strong> - 4 targeted queries for essential insights</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <span><strong>2 generations/day</strong> - Perfect for getting started</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <span>Professional tone & commonality detection</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <span>Export to email clients & history</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  <span><strong>2 generations/day</strong> - Perfect for getting started</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  <span>Professional tone & commonality detection</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  <span>Export to email clients & history</span>
+                
+                {/* Pro Plan Features */}
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-10 border border-indigo-200 hover:shadow-lg transition-all duration-200 relative">
+                  <div className="absolute top-4 right-4 bg-[#6366F1] text-white px-3 py-1 rounded-full text-xs font-semibold">
+                    RECOMMENDED
+                  </div>
+                  <div className="w-16 h-16 bg-indigo-100 text-[#6366F1] rounded-2xl flex items-center justify-center mb-6">
+                    <Crown className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-[#111827] mb-4 flex items-center gap-2">
+                    Pro Plan
+                    <span className="text-sm bg-[#6366F1] text-white px-3 py-1 rounded-full font-medium">$10/mo</span>
+                  </h3>
+                  <div className="space-y-3 text-gray-700">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
+                      <span><strong>Deep search</strong> - 12-phase progressive research with 3x more data</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
+                      <span><strong>Unlimited generations</strong> - No daily limits</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
+                      <span><strong>Multiple tones</strong> - Casual, Formal, Confident options</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
+                      <span><strong>Email editing</strong> - AI-powered refinement & revision</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
+                      <span>Priority support & advanced analytics</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            
-            {/* Pro Plan Features */}
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-10 border border-indigo-200 hover:shadow-lg transition-all duration-200 relative">
-              <div className="absolute top-4 right-4 bg-[#6366F1] text-white px-3 py-1 rounded-full text-xs font-semibold">
-                RECOMMENDED
-              </div>
-              <div className="w-16 h-16 bg-indigo-100 text-[#6366F1] rounded-2xl flex items-center justify-center mb-6">
+          </>
+        )}
+        
+        {/* Show Pro features for Pro users */}
+        {userSubscription?.plan_name === 'pro' && (
+          <div className="container mx-auto px-6 max-w-4xl mt-12">
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-10 border border-indigo-200 text-center">
+              <div className="w-16 h-16 bg-indigo-100 text-[#6366F1] rounded-2xl flex items-center justify-center mb-6 mx-auto">
                 <Crown className="h-8 w-8" />
               </div>
-              <h3 className="text-2xl font-bold text-[#111827] mb-4 flex items-center gap-2">
-                Pro Plan
-                <span className="text-sm bg-[#6366F1] text-white px-3 py-1 rounded-full font-medium">$10/mo</span>
-              </h3>
-              <div className="space-y-3 text-gray-700">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
-                  <span><strong>Deep search</strong> - 12-phase progressive research with 3x more data</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
-                  <span><strong>Unlimited generations</strong> - No daily limits</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
-                  <span><strong>Multiple tones</strong> - Casual, Formal, Confident options</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
-                  <span><strong>Email editing</strong> - AI-powered refinement & revision</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
-                  <span>Priority support & advanced analytics</span>
-                </div>
-              </div>
+              <h3 className="text-2xl font-bold text-[#111827] mb-4">You're a Pro Member!</h3>
+              <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                Enjoy unlimited email generations, deep research, custom tones, email editing, and all premium features.
+              </p>
+              <Link 
+                href="/generate"
+                className="inline-flex items-center justify-center bg-[#6366F1] hover:bg-[#4F46E5] text-white rounded-full px-8 py-3 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200"
+              >
+                Start Generating Emails
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
             </div>
           </div>
+        )}
           
-          {/* Advanced Features Grid */}
+        {/* Advanced Features Grid */}
+        <div className="container mx-auto px-6 max-w-6xl">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:translate-y-1">
               <div className="w-12 h-12 bg-purple-100 text-[#6366F1] rounded-xl flex items-center justify-center mb-4">
@@ -1005,35 +1108,8 @@ Software Engineer & Co-founder`
               <div className="w-12 h-12 bg-indigo-100 text-[#6366F1] rounded-xl flex items-center justify-center mb-4">
                 <Shield className="h-6 w-6" />
               </div>
-              <h3 className="text-lg font-bold text-[#111827] mb-2">Secure & Private</h3>
+              <h3 className="text-lg font-bold text-[#111827] mb-2">Data Security</h3>
               <p className="text-gray-600 text-sm leading-relaxed">Enterprise-grade security with user data protection</p>
-            </div>
-          </div>
-          
-          {/* Technical Features Showcase */}
-          <div className="mt-16 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-10 border border-indigo-100">
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-[#111827] mb-4">Advanced AI Research Engine</h3>
-              <p className="text-gray-600 max-w-2xl mx-auto">
-                Our sophisticated AI system conducts comprehensive research and creates authentic connections
-              </p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-[#6366F1] mb-2">4-12</div>
-                <div className="text-sm text-gray-600 font-medium">Search queries per email</div>
-                <div className="text-xs text-gray-500 mt-1">Basic vs Pro research depth</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-[#6366F1] mb-2">3x</div>
-                <div className="text-sm text-gray-600 font-medium">More data with Pro</div>
-                <div className="text-xs text-gray-500 mt-1">Comprehensive professional insights</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-[#6366F1] mb-2">60%</div>
-                <div className="text-sm text-gray-600 font-medium">Higher response rate</div>
-                <div className="text-xs text-gray-500 mt-1">Compared to generic emails</div>
-              </div>
             </div>
           </div>
         </div>
@@ -1236,38 +1312,79 @@ Software Engineer & Co-founder`
       {/* CTA Section */}
       <section className="py-24 bg-[#111827] text-white">
         <div className="container mx-auto px-6 max-w-7xl text-center">
-          <h2 className="text-4xl font-bold mb-6 tracking-tight">Ready to transform your outreach?</h2>
-          <p className="text-xl mb-10 opacity-90 max-w-2xl mx-auto leading-relaxed">
-            Start free with 2 emails per day, then upgrade to Pro for unlimited access and advanced features.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-lg mx-auto">
-            <Link 
-              href={user ? "/generate" : "/login"}
-              className="inline-flex items-center justify-center bg-white text-[#111827] hover:bg-gray-100 rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group w-full sm:w-auto"
-            >
-              Start free
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-            <Link 
-              href="https://buy.stripe.com/dRm00k5GHeK0dRqfL81ck00"
-              className="inline-flex items-center justify-center bg-transparent border-2 border-white text-white hover:bg-white hover:text-[#111827] rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group w-full sm:w-auto"
-            >
-              <Crown className="mr-2 h-5 w-5" />
-              View Pro plans
-            </Link>
-          </div>
-          
-          <div className="flex items-center justify-center gap-8 mt-8 text-sm opacity-75">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              <span>No credit card required</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              <span>Start free, upgrade anytime</span>
-            </div>
-          </div>
+          {userSubscription?.plan_name === 'pro' ? (
+            // Pro user CTA
+            <>
+              <h2 className="text-4xl font-bold mb-6 tracking-tight">Ready to create amazing emails?</h2>
+              <p className="text-xl mb-10 opacity-90 max-w-2xl mx-auto leading-relaxed">
+                You have unlimited access to all Pro features. Start generating personalized outreach emails now.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-lg mx-auto">
+                <Link 
+                  href="/generate"
+                  className="inline-flex items-center justify-center bg-white text-[#111827] hover:bg-gray-100 rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group w-full sm:w-auto"
+                >
+                  Generate Email
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+                <Link 
+                  href="/past-emails"
+                  className="inline-flex items-center justify-center bg-transparent border-2 border-white text-white hover:bg-white hover:text-[#111827] rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group w-full sm:w-auto"
+                >
+                  <Mail className="mr-2 h-5 w-5" />
+                  View Past Emails
+                </Link>
+              </div>
+              
+              <div className="flex items-center justify-center gap-8 mt-8 text-sm opacity-75">
+                <div className="flex items-center gap-2">
+                  <Crown className="h-4 w-4 text-[#6366F1]" />
+                  <span>Pro member</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>Unlimited generations</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            // Free user CTA
+            <>
+              <h2 className="text-4xl font-bold mb-6 tracking-tight">Ready to transform your outreach?</h2>
+              <p className="text-xl mb-10 opacity-90 max-w-2xl mx-auto leading-relaxed">
+                Start free with 2 emails per day, then upgrade to Pro for unlimited access and advanced features.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-lg mx-auto">
+                <Link 
+                  href={user ? "/generate" : "/login"}
+                  className="inline-flex items-center justify-center bg-white text-[#111827] hover:bg-gray-100 rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group w-full sm:w-auto"
+                >
+                  Start free
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+                <Link 
+                  href="https://buy.stripe.com/dRm00k5GHeK0dRqfL81ck00"
+                  className="inline-flex items-center justify-center bg-transparent border-2 border-white text-white hover:bg-white hover:text-[#111827] rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group w-full sm:w-auto"
+                >
+                  <Crown className="mr-2 h-5 w-5" />
+                  View Pro plans
+                </Link>
+              </div>
+              
+              <div className="flex items-center justify-center gap-8 mt-8 text-sm opacity-75">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>No credit card required</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>Start free, upgrade anytime</span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
