@@ -23,6 +23,11 @@ export default function Header({
   subtitle 
 }: HeaderProps) {
   const [userPlan, setUserPlan] = useState<string>('free')
+  const [userUsage, setUserUsage] = useState<{
+    generationsToday: number
+    dailyLimit: number | null
+    limitReached: boolean
+  } | null>(null)
   
   // Handle case where AuthProvider might not be available during static generation
   let user = null
@@ -34,33 +39,47 @@ export default function Header({
     user = null
   }
 
-  // Fetch user's subscription plan
+  // Fetch user's subscription plan and usage
   useEffect(() => {
-    const fetchUserPlan = async () => {
+    const fetchUserData = async () => {
       if (!user?.id) return
 
       try {
-        const { data, error } = await supabase.rpc('get_user_subscription', {
+        // Get user subscription
+        const { data: subscriptionData, error: subscriptionError } = await supabase.rpc('get_user_subscription', {
           user_uuid: user.id
         })
 
-        if (error) {
-          console.error('Error fetching user subscription:', error)
-          return
-        }
-
-        if (data && data.length > 0) {
-          setUserPlan(data[0].plan_name || 'free')
+        if (subscriptionError) {
+          console.error('Error fetching user subscription:', subscriptionError)
+        } else if (subscriptionData && subscriptionData.length > 0) {
+          setUserPlan(subscriptionData[0].plan_name || 'free')
         } else {
           setUserPlan('free')
         }
+
+        // Get usage data for free users
+        const { data: usageData, error: usageError } = await supabase.rpc('check_daily_usage_limit', {
+          user_uuid: user.id
+        })
+
+        if (usageError) {
+          console.error('Error fetching usage:', usageError)
+        } else if (usageData && usageData.length > 0) {
+          const usage = usageData[0]
+          setUserUsage({
+            generationsToday: usage.generations_today || 0,
+            dailyLimit: usage.daily_limit,
+            limitReached: usage.limit_reached || false
+          })
+        }
       } catch (error) {
-        console.error('Error in fetchUserPlan:', error)
+        console.error('Error in fetchUserData:', error)
         setUserPlan('free')
       }
     }
 
-    fetchUserPlan()
+    fetchUserData()
   }, [user?.id])
 
   return (
@@ -141,8 +160,12 @@ export default function Header({
                     Profile
                   </Button>
                 </Link>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-gray-600 font-medium">{user.email}</span>
+                <div className="flex items-center gap-3">
+                  <div className="text-sm">
+                    <span className="text-gray-600 font-medium">{user.email}</span>
+                  </div>
+                  
+                  {/* Plan Badge */}
                   <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                     userPlan === 'pro' 
                       ? 'bg-[#6366F1] text-white' 
@@ -151,6 +174,19 @@ export default function Header({
                     {userPlan === 'pro' && <Crown className="h-3 w-3" />}
                     {userPlan === 'pro' ? 'Pro' : 'Free'}
                   </div>
+
+                  {/* Usage Counter for Free Users */}
+                  {userPlan === 'free' && userUsage && userUsage.dailyLimit && userUsage.dailyLimit > 0 && (
+                    <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      userUsage.limitReached 
+                        ? 'bg-red-50 text-red-700 border border-red-200' 
+                        : userUsage.generationsToday >= userUsage.dailyLimit - 1
+                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                        : 'bg-blue-50 text-blue-700 border border-blue-200'
+                    }`}>
+                      {userUsage.generationsToday}/{userUsage.dailyLimit} today
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
