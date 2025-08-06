@@ -35,6 +35,12 @@ const faqData: FAQItem[] = [
     icon: <Search className="h-5 w-5" />
   },
   {
+    question: "What's the difference between Basic and Deep Search?",
+    answer: "Basic Search (Free) uses 4 standard queries and takes about 30 seconds, while Deep Search (Pro) uses 12 progressive AI-guided searches for 3x more comprehensive data and takes about 90 seconds. Deep Search finds more detailed information and connections.",
+    category: "AI & Research",
+    icon: <Search className="h-5 w-5" />
+  },
+  {
     question: "What information does the AI look for?",
     answer: "The AI searches for: education background, work experience, recent achievements, company information, location, industry, recent social media posts, and any public information that could create meaningful connections.",
     category: "AI & Research",
@@ -48,21 +54,39 @@ const faqData: FAQItem[] = [
   },
   {
     question: "Can I edit the generated emails?",
-    answer: "Absolutely! You can edit any generated email using the inline editor. You can also regenerate emails, adjust the tone (casual, formal, confident), or shorten them while maintaining the key points.",
+    answer: "Email editing is available for Pro users! You can request specific changes and our AI will revise the email accordingly. Free users can regenerate emails but cannot edit existing ones.",
     category: "Features",
     icon: <MessageSquare className="h-5 w-5" />
   },
   {
     question: "What tone options are available?",
-    answer: "We offer three tone options: Casual (friendly and approachable), Formal (professional and respectful), and Confident (assertive and self-assured). You can adjust the tone after generation to match your style.",
+    answer: "Free users get the Professional tone. Pro users ($10/month) get access to multiple tones: Casual (friendly and approachable), Formal (professional and respectful), Confident (assertive and self-assured), and Professional.",
     category: "Features",
     icon: <MessageSquare className="h-5 w-5" />
   },
   {
     question: "How long does it take to generate an email?",
-    answer: "Typically 1-2 minutes. The process includes AI research, finding commonalities, and generating a personalized email. The time may vary slightly depending on the amount of research needed.",
+    answer: "Basic Search (Free) takes about 30 seconds, while Deep Search (Pro) takes about 90 seconds. The additional time for Deep Search provides 3x more comprehensive research and better personalization.",
     category: "Features",
     icon: <Zap className="h-5 w-5" />
+  },
+  {
+    question: "What are the limits for Free vs Pro plans?",
+    answer: "Free Plan: 2 generations per day, Basic Search only, Professional tone only. Pro Plan ($10/month): Unlimited generations, Deep Search, all tone options, email editing, and priority support.",
+    category: "Pricing",
+    icon: <CreditCard className="h-5 w-5" />
+  },
+  {
+    question: "How much does Pro cost?",
+    answer: "Pro costs just $10 per month. You get unlimited email generations, Deep Search with 3x more data, multiple tone options, email editing capabilities, and priority support. Cancel anytime.",
+    category: "Pricing",
+    icon: <CreditCard className="h-5 w-5" />
+  },
+  {
+    question: "Can I upgrade to Pro anytime?",
+    answer: "Yes! You can upgrade to Pro anytime and get immediate access to all premium features including Deep Search, unlimited generations, tone customization, and email editing.",
+    category: "Pricing",
+    icon: <CreditCard className="h-5 w-5" />
   },
   {
     question: "Is my data secure and private?",
@@ -72,7 +96,7 @@ const faqData: FAQItem[] = [
   },
   {
     question: "What information do I need to provide?",
-    answer: "At minimum, you need the recipient's name and your outreach purpose. Additional helpful information includes their company/role, any context you already have, and your own background details (which you can set up in your profile).",
+    answer: "At minimum, you need the recipient's name and LinkedIn URL (optional but recommended), plus your outreach purpose. Additional helpful information includes any context you already have, and your own background details (which you can set up in your profile).",
     category: "Getting Started",
     icon: <HelpCircle className="h-5 w-5" />
   },
@@ -90,15 +114,9 @@ const faqData: FAQItem[] = [
   },
   {
     question: "What if the AI can't find information about my prospect?",
-    answer: "If limited information is available, the AI will still generate a professional email based on the information you provide. You can always add your own research findings in the 'Additional Notes' section.",
+    answer: "If limited information is available, the AI will still generate a professional email based on the information you provide. Pro users with Deep Search are more likely to find comprehensive information due to the enhanced research capabilities.",
     category: "AI & Research",
     icon: <Search className="h-5 w-5" />
-  },
-  {
-    question: "Is there a limit on how many emails I can generate?",
-    answer: "Currently, we offer generous limits for email generation. Check our pricing page for specific details on your plan's limits and features.",
-    category: "Pricing",
-    icon: <CreditCard className="h-5 w-5" />
   },
   {
     question: "Can I use this for different types of outreach?",
@@ -108,7 +126,7 @@ const faqData: FAQItem[] = [
   },
   {
     question: "How accurate is the AI research?",
-    answer: "The AI research is quite accurate, pulling from reliable sources like LinkedIn, company websites, and public profiles. However, we always recommend reviewing the generated content and adding any personal insights you may have.",
+    answer: "The AI research is quite accurate, pulling from reliable sources like LinkedIn, company websites, and public profiles. Pro users with Deep Search get even more accurate and comprehensive results. We always recommend reviewing the generated content.",
     category: "AI & Research",
     icon: <Brain className="h-5 w-5" />
   },
@@ -117,6 +135,12 @@ const faqData: FAQItem[] = [
     answer: "Unlike generic templates, our emails are truly personalized with real research findings, genuine commonalities, and specific references to the recipient's work. They sound human-written because they're based on actual information about the person.",
     category: "Features",
     icon: <MessageSquare className="h-5 w-5" />
+  },
+  {
+    question: "Do you offer a free trial?",
+    answer: "Yes! Our Free plan is essentially a permanent trial - you get 2 email generations per day with Basic Search forever. No credit card required to start.",
+    category: "Pricing",
+    icon: <CreditCard className="h-5 w-5" />
   }
 ]
 
