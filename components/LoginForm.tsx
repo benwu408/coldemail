@@ -93,10 +93,12 @@ export default function LoginForm() {
     setResetLoading(true)
 
     try {
-      // Use the auth callback route for proper handling
+      // Force the auth callback route for proper handling
       const redirectUrl = window.location.hostname === 'localhost' 
         ? `${window.location.origin}/auth/callback`
         : 'https://www.reachful.io/auth/callback'
+      
+      console.log('Sending password reset request with redirect URL:', redirectUrl)
         
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: redirectUrl,
@@ -106,6 +108,7 @@ export default function LoginForm() {
         throw error
       }
 
+      console.log('Password reset email sent successfully')
       toast({
         title: "Reset Email Sent!",
         description: "Check your email for password reset instructions.",
