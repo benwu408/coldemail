@@ -44,8 +44,25 @@ export default function SubscriptionDashboard() {
 
       if (subError) {
         console.error('Error fetching subscription:', subError)
+        // Set default subscription data on error
+        setSubscription({
+          plan_name: 'free',
+          status: 'active',
+          daily_generation_limit: 2,
+          email_editing_enabled: false,
+          priority_support: false
+        })
       } else if (subscriptionData && subscriptionData.length > 0) {
         setSubscription(subscriptionData[0])
+      } else {
+        // Set default subscription data if no data returned
+        setSubscription({
+          plan_name: 'free',
+          status: 'active',
+          daily_generation_limit: 2,
+          email_editing_enabled: false,
+          priority_support: false
+        })
       }
 
       // Get profile data with Stripe IDs (handle missing columns gracefully)
@@ -57,9 +74,17 @@ export default function SubscriptionDashboard() {
 
       if (profileError) {
         console.error('Error fetching profile:', profileError)
-        // If columns don't exist, create default profile data
-        if (profileError.message?.includes('column') || profileError.code === '42703') {
-          console.log('Stripe columns not found, using default profile data')
+        // If columns don't exist or any other error, create default profile data
+        if (profileError.message?.includes('column') || profileError.code === '42703' || profileError.code === 'PGRST116') {
+          console.log('Stripe columns not found or profile not found, using default profile data')
+          setProfile({
+            stripe_customer_id: null,
+            stripe_subscription_id: null,
+            subscription_plan: 'free',
+            subscription_status: 'active'
+          })
+        } else {
+          // For any other error, also use default data
           setProfile({
             stripe_customer_id: null,
             stripe_subscription_id: null,
@@ -72,6 +97,20 @@ export default function SubscriptionDashboard() {
       }
     } catch (error) {
       console.error('Error in fetchSubscriptionData:', error)
+      // Set default data on any error
+      setSubscription({
+        plan_name: 'free',
+        status: 'active',
+        daily_generation_limit: 2,
+        email_editing_enabled: false,
+        priority_support: false
+      })
+      setProfile({
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+        subscription_plan: 'free',
+        subscription_status: 'active'
+      })
     } finally {
       setLoading(false)
     }
@@ -120,8 +159,12 @@ export default function SubscriptionDashboard() {
         return 'Your subscription has been cancelled. You still have access until the end of your billing period.'
       case 'expired':
         return 'Your subscription has expired. Upgrade to continue using Pro features.'
+      case 'trialing':
+        return 'You are currently in a trial period. Enjoy Pro features!'
       default:
-        return 'Loading subscription information...'
+        return plan === 'pro' 
+          ? 'Your Pro subscription is active and billing normally.'
+          : 'You are on the free plan with limited features.'
     }
   }
 
