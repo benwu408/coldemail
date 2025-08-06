@@ -74,26 +74,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid user ID' }, { status: 401 })
     }
 
-    // Prepare profile data for upsert
+    // Check if user is Pro (for restricting profile fields)
+    const { data: subscriptionData, error: subError } = await supabase.rpc('get_user_subscription', {
+      user_uuid: userId
+    })
+
+    let isPro = false
+    if (!subError && subscriptionData && subscriptionData.length > 0) {
+      isPro = subscriptionData[0].plan_name === 'pro'
+    }
+
+    console.log('User is Pro:', isPro)
+
+    // Prepare profile data for upsert - restrict fields for non-Pro users
     const profileData = {
       user_id: userId,
-      full_name: body.full_name || null,
-      job_title: body.job_title || null,
-      company: body.company || null,
-      education: {
+      full_name: body.full_name || null, // Always allow name
+      // Only allow these fields for Pro users
+      job_title: isPro ? (body.job_title || null) : null,
+      company: isPro ? (body.company || null) : null,
+      education: isPro ? {
         school: body.education?.school || null,
         degree: body.education?.degree || null,
         major: body.education?.major || null,
         graduation_year: body.education?.graduation_year || null
+      } : {
+        school: null,
+        degree: null,
+        major: null,
+        graduation_year: null
       },
-      location: body.location || null,
-      industry: body.industry || null,
-      experience_years: body.experience_years || null,
-      skills: body.skills || [],
-      interests: body.interests || [],
-      background: body.background || null,
-      linkedin_url: body.linkedin_url || null,
-      website: body.website || null,
+      location: isPro ? (body.location || null) : null,
+      industry: isPro ? (body.industry || null) : null,
+      experience_years: isPro ? (body.experience_years || null) : null,
+      skills: isPro ? (body.skills || []) : [],
+      interests: isPro ? (body.interests || []) : [],
+      background: isPro ? (body.background || null) : null,
+      linkedin_url: isPro ? (body.linkedin_url || null) : null,
+      website: isPro ? (body.website || null) : null,
       updated_at: new Date().toISOString()
     }
 

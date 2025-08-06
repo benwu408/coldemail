@@ -19,11 +19,15 @@ import {
   Briefcase, 
   Code, 
   Heart, 
-  Loader2
+  Loader2,
+  Crown,
+  Lock
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import SubscriptionDashboard from '@/components/SubscriptionDashboard'
+import { supabase } from '@/lib/supabase'
+import Link from 'next/link'
 
 interface ProfileData {
   full_name: string
@@ -50,6 +54,7 @@ function ProfilePageContent() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [userSubscription, setUserSubscription] = useState<{ plan_name: string } | null>(null)
   const [profile, setProfile] = useState<ProfileData>({
     full_name: '',
     job_title: '',
@@ -74,6 +79,7 @@ function ProfilePageContent() {
   useEffect(() => {
     if (user) {
       loadProfile()
+      loadUserSubscription()
     }
   }, [user])
 
@@ -151,6 +157,60 @@ function ProfilePageContent() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const loadUserSubscription = async () => {
+    try {
+      const { data: subscriptionData, error } = await supabase.rpc('get_user_subscription', {
+        user_uuid: user?.id
+      })
+
+      if (error) {
+        console.error('Error fetching subscription:', error)
+        // Default to free plan on error
+        setUserSubscription({ plan_name: 'free' })
+      } else if (subscriptionData && subscriptionData.length > 0) {
+        setUserSubscription(subscriptionData[0])
+      } else {
+        // Default to free plan if no subscription found
+        setUserSubscription({ plan_name: 'free' })
+      }
+    } catch (error) {
+      console.error('Error in loadUserSubscription:', error)
+      setUserSubscription({ plan_name: 'free' })
+    }
+  }
+
+  const isPro = userSubscription?.plan_name === 'pro'
+
+  // Component for Pro-only fields
+  const ProOnlyField = ({ children, label }: { children: React.ReactNode, label?: string }) => {
+    if (isPro) {
+      return <>{children}</>
+    }
+    
+    return (
+      <div className="relative">
+        <div className="opacity-50 pointer-events-none">
+          {children}
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-50/80 rounded-lg border-2 border-dashed border-gray-300">
+          <div className="text-center p-4">
+            <Lock className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+            <p className="text-sm font-medium text-gray-600 mb-1">Pro Feature</p>
+            <p className="text-xs text-gray-500 mb-3">
+              {label ? `${label} is` : 'This field is'} only available to Pro users
+            </p>
+            <Link href="https://buy.stripe.com/dRm00k5GHeK0dRqfL81ck00">
+              <Button size="sm" className="bg-[#6366F1] hover:bg-[#4F46E5] text-white">
+                <Crown className="mr-1 h-3 w-3" />
+                Upgrade to Pro
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const saveProfile = async () => {
@@ -345,192 +405,206 @@ function ProfilePageContent() {
                     placeholder="Your full name"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="job_title">Job Title</Label>
-                  <Input
-                    id="job_title"
-                    value={profile.job_title}
-                    onChange={(e) => handleInputChange('job_title', e.target.value)}
-                    placeholder="e.g., Software Engineer"
-                  />
-                </div>
+                <ProOnlyField label="Job Title">
+                  <div>
+                    <Label htmlFor="job_title">Job Title</Label>
+                    <Input
+                      id="job_title"
+                      value={profile.job_title}
+                      onChange={(e) => handleInputChange('job_title', e.target.value)}
+                      placeholder="e.g., Software Engineer"
+                    />
+                  </div>
+                </ProOnlyField>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="company">Company</Label>
-                  <Input
-                    id="company"
-                    value={profile.company}
-                    onChange={(e) => handleInputChange('company', e.target.value)}
-                    placeholder="e.g., Google"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    value={profile.location}
-                    onChange={(e) => handleInputChange('location', e.target.value)}
-                    placeholder="e.g., San Francisco, CA"
-                  />
-                </div>
+                <ProOnlyField label="Company">
+                  <div>
+                    <Label htmlFor="company">Company</Label>
+                    <Input
+                      id="company"
+                      value={profile.company}
+                      onChange={(e) => handleInputChange('company', e.target.value)}
+                      placeholder="e.g., Google"
+                    />
+                  </div>
+                </ProOnlyField>
+                <ProOnlyField label="Location">
+                  <div>
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={profile.location}
+                      onChange={(e) => handleInputChange('location', e.target.value)}
+                      placeholder="e.g., San Francisco, CA"
+                    />
+                  </div>
+                </ProOnlyField>
               </div>
             </CardContent>
           </Card>
 
           {/* Education */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <GraduationCap className="h-5 w-5" />
-                Education
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="school">School/University</Label>
-                  <Input
-                    id="school"
-                    value={profile.education.school}
-                    onChange={(e) => handleEducationChange('school', e.target.value)}
-                    placeholder="e.g., University of Illinois"
-                  />
+          <ProOnlyField label="Education Information">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GraduationCap className="h-5 w-5" />
+                  Education
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="school">School/University</Label>
+                    <Input
+                      id="school"
+                      value={profile.education.school}
+                      onChange={(e) => handleEducationChange('school', e.target.value)}
+                      placeholder="e.g., University of Illinois"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="degree">Degree</Label>
+                    <Input
+                      id="degree"
+                      value={profile.education.degree}
+                      onChange={(e) => handleEducationChange('degree', e.target.value)}
+                      placeholder="e.g., Bachelor's"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="degree">Degree</Label>
-                  <Input
-                    id="degree"
-                    value={profile.education.degree}
-                    onChange={(e) => handleEducationChange('degree', e.target.value)}
-                    placeholder="e.g., Bachelor's"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="major">Major/Field of Study</Label>
+                    <Input
+                      id="major"
+                      value={profile.education.major}
+                      onChange={(e) => handleEducationChange('major', e.target.value)}
+                      placeholder="e.g., Computer Science"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="graduation_year">Graduation Year</Label>
+                    <Input
+                      id="graduation_year"
+                      value={profile.education.graduation_year}
+                      onChange={(e) => handleEducationChange('graduation_year', e.target.value)}
+                      placeholder="e.g., 2023"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="major">Major/Field of Study</Label>
-                  <Input
-                    id="major"
-                    value={profile.education.major}
-                    onChange={(e) => handleEducationChange('major', e.target.value)}
-                    placeholder="e.g., Computer Science"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="graduation_year">Graduation Year</Label>
-                  <Input
-                    id="graduation_year"
-                    value={profile.education.graduation_year}
-                    onChange={(e) => handleEducationChange('graduation_year', e.target.value)}
-                    placeholder="e.g., 2023"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </ProOnlyField>
 
           {/* Professional Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Briefcase className="h-5 w-5" />
-                Professional Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="industry">Industry</Label>
-                  <Input
-                    id="industry"
-                    value={profile.industry}
-                    onChange={(e) => handleInputChange('industry', e.target.value)}
-                    placeholder="e.g., Technology"
-                  />
+          <ProOnlyField label="Professional Information">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Briefcase className="h-5 w-5" />
+                  Professional Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="industry">Industry</Label>
+                    <Input
+                      id="industry"
+                      value={profile.industry}
+                      onChange={(e) => handleInputChange('industry', e.target.value)}
+                      placeholder="e.g., Technology"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="experience_years">Years of Experience</Label>
+                    <Input
+                      id="experience_years"
+                      value={profile.experience_years}
+                      onChange={(e) => handleInputChange('experience_years', e.target.value)}
+                      placeholder="e.g., 3-5 years"
+                    />
+                  </div>
                 </div>
                 <div>
-                  <Label htmlFor="experience_years">Years of Experience</Label>
-                  <Input
-                    id="experience_years"
-                    value={profile.experience_years}
-                    onChange={(e) => handleInputChange('experience_years', e.target.value)}
-                    placeholder="e.g., 3-5 years"
+                  <Label htmlFor="background">Professional Background</Label>
+                  <Textarea
+                    id="background"
+                    value={profile.background}
+                    onChange={(e) => handleInputChange('background', e.target.value)}
+                    placeholder="Brief description of your professional background, key achievements, and career goals..."
+                    rows={3}
                   />
                 </div>
-              </div>
-              <div>
-                <Label htmlFor="background">Professional Background</Label>
-                <Textarea
-                  id="background"
-                  value={profile.background}
-                  onChange={(e) => handleInputChange('background', e.target.value)}
-                  placeholder="Brief description of your professional background, key achievements, and career goals..."
-                  rows={3}
-                />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </ProOnlyField>
 
           {/* Skills & Interests */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Code className="h-5 w-5" />
-                Skills & Interests
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="skills">Skills (comma-separated)</Label>
-                <Input
-                  id="skills"
-                  value={profile.skills.join(', ')}
-                  onChange={(e) => handleArrayChange('skills', e.target.value)}
-                  placeholder="e.g., JavaScript, React, Product Management, Data Analysis"
-                />
-              </div>
-              <div>
-                <Label htmlFor="interests">Interests (comma-separated)</Label>
-                <Input
-                  id="interests"
-                  value={profile.interests.join(', ')}
-                  onChange={(e) => handleArrayChange('interests', e.target.value)}
-                  placeholder="e.g., AI, Startups, Photography, Travel"
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <ProOnlyField label="Skills & Interests">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Code className="h-5 w-5" />
+                  Skills & Interests
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="skills">Skills (comma-separated)</Label>
+                  <Input
+                    id="skills"
+                    value={profile.skills.join(', ')}
+                    onChange={(e) => handleArrayChange('skills', e.target.value)}
+                    placeholder="e.g., JavaScript, React, Product Management, Data Analysis"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="interests">Interests (comma-separated)</Label>
+                  <Input
+                    id="interests"
+                    value={profile.interests.join(', ')}
+                    onChange={(e) => handleArrayChange('interests', e.target.value)}
+                    placeholder="e.g., AI, Startups, Photography, Travel"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </ProOnlyField>
 
           {/* Links */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Heart className="h-5 w-5" />
-                Professional Links
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="linkedin_url">LinkedIn URL</Label>
-                <Input
-                  id="linkedin_url"
-                  value={profile.linkedin_url}
-                  onChange={(e) => handleInputChange('linkedin_url', e.target.value)}
-                  placeholder="https://linkedin.com/in/yourprofile"
-                />
-              </div>
-              <div>
-                <Label htmlFor="website">Personal Website</Label>
-                <Input
-                  id="website"
-                  value={profile.website}
-                  onChange={(e) => handleInputChange('website', e.target.value)}
-                  placeholder="https://yourwebsite.com"
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <ProOnlyField label="Professional Links">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="h-5 w-5" />
+                  Professional Links
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="linkedin_url">LinkedIn URL</Label>
+                  <Input
+                    id="linkedin_url"
+                    value={profile.linkedin_url}
+                    onChange={(e) => handleInputChange('linkedin_url', e.target.value)}
+                    placeholder="https://linkedin.com/in/yourprofile"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="website">Personal Website</Label>
+                  <Input
+                    id="website"
+                    value={profile.website}
+                    onChange={(e) => handleInputChange('website', e.target.value)}
+                    placeholder="https://yourwebsite.com"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </ProOnlyField>
 
           {/* Save Button */}
           <div className="flex justify-end">
