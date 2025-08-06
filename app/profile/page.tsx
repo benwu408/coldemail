@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import SubscriptionDashboard from '@/components/SubscriptionDashboard'
 
 interface ProfileData {
   full_name: string
@@ -322,6 +323,9 @@ function ProfilePageContent() {
         </div>
 
         <div className="space-y-6">
+          {/* Subscription Management */}
+          <SubscriptionDashboard />
+
           {/* Basic Information */}
           <Card>
             <CardHeader>
