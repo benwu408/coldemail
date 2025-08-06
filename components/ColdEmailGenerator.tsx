@@ -186,6 +186,9 @@ export default function ColdEmailGenerator() {
       setCommonalities(data.commonalities)
       setShowEditSection(true)
 
+      // Refresh usage data after successful generation
+      await fetchCurrentUsage()
+
       toast({
         title: "Email Generated Successfully!",
         description: "Your personalized cold email is ready.",
@@ -314,26 +317,58 @@ export default function ColdEmailGenerator() {
     }
   }
 
-  // Get user subscription on component mount
+  // Get user subscription and usage on component mount
   useEffect(() => {
-    const getUserSubscription = async () => {
+    const getUserSubscriptionAndUsage = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-          const { data } = await supabase.rpc('get_user_subscription', { 
+          // Get user subscription
+          const { data: subscriptionData } = await supabase.rpc('get_user_subscription', { 
             user_uuid: user.id 
           })
-          if (data && data.length > 0) {
-            setUserSubscription(data[0])
+          if (subscriptionData && subscriptionData.length > 0) {
+            setUserSubscription(subscriptionData[0])
           }
+          
+          // Get current usage for the day
+          await fetchCurrentUsage(user.id)
         }
       } catch (error) {
-        console.error('Error getting user subscription:', error)
+        console.error('Error getting user subscription and usage:', error)
       }
     }
     
-    getUserSubscription()
+    getUserSubscriptionAndUsage()
   }, [])
+
+  // Function to fetch current usage
+  const fetchCurrentUsage = async (userId?: string) => {
+    try {
+      const userIdToUse = userId || user?.id
+      if (!userIdToUse) return
+
+      const { data, error } = await supabase.rpc('check_daily_usage_limit', {
+        user_uuid: userIdToUse
+      })
+
+      if (error) {
+        console.error('Error fetching usage:', error)
+        return
+      }
+
+      if (data && data.length > 0) {
+        const usageData = data[0]
+        setUserUsage({
+          generationsToday: usageData.generations_today || 0,
+          dailyLimit: usageData.daily_limit,
+          limitReached: usageData.limit_reached || false
+        })
+      }
+    } catch (error) {
+      console.error('Error in fetchCurrentUsage:', error)
+    }
+  }
 
   return (
     <motion.div 
@@ -678,39 +713,92 @@ export default function ColdEmailGenerator() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.8 }}
             >
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Button
-                  onClick={generateEmail}
-                  disabled={isGenerating}
-                  className="w-full bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-lg font-medium shadow-md hover:shadow-lg transition-all duration-200 group"
+              {/* Usage Counter for Free Users */}
+              {userSubscription?.plan_name === 'free' && userUsage && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.85 }}
+                  className="mb-4"
                 >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="mr-3 h-6 w-6 animate-spin" />
-                      Generating Email...
-                    </>
-                  ) : (
-                    <>
-                      <Mail className="mr-3 h-6 w-6" />
-                      Generate Email
-                    </>
-                  )}
-                </Button>
-              </motion.div>
-              <motion.p 
-                className="text-xs text-gray-500 text-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-amber-800 font-medium">
+                        Daily Generations
+                      </span>
+                      <span className="text-amber-900 font-semibold">
+                        {userUsage.dailyLimit && userUsage.dailyLimit > 0 
+                          ? `${userUsage.generationsToday} / ${userUsage.dailyLimit} used`
+                          : `${userUsage.generationsToday} used`
+                        }
+                      </span>
+                    </div>
+                    {userUsage.dailyLimit && userUsage.dailyLimit > 0 && (
+                      <div className="mt-2">
+                        <div className="w-full bg-amber-200 rounded-full h-2">
+                          <div
+                            className="bg-amber-500 h-2 rounded-full transition-all duration-300"
+                            style={{
+                              width: `${Math.min((userUsage.generationsToday / userUsage.dailyLimit) * 100, 100)}%`
+                            }}
+                          ></div>
+                        </div>
+                        {userUsage.limitReached && (
+                          <p className="text-xs text-amber-700 mt-1">
+                            Daily limit reached. <Link href="/pricing" className="underline hover:text-amber-900">Upgrade to Pro</Link> for unlimited generations.
+                          </p>
+                        )}
+                        {!userUsage.limitReached && userUsage.dailyLimit - userUsage.generationsToday === 1 && (
+                          <p className="text-xs text-amber-700 mt-1">
+                            1 generation remaining today
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.9 }}
+                className="space-y-4"
               >
-                {searchMode === 'deep' 
-                  ? 'Your email will be generated in about 90 seconds' 
-                  : 'Your email will be generated in about 30 seconds'
-                }
-              </motion.p>
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Button
+                    onClick={generateEmail}
+                    disabled={isGenerating}
+                    className="w-full bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-lg font-medium shadow-md hover:shadow-lg transition-all duration-200 group"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                        Generating Email...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="mr-3 h-6 w-6" />
+                        Generate Email
+                      </>
+                    )}
+                  </Button>
+                </motion.div>
+                <motion.p 
+                  className="text-xs text-gray-500 text-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 0.9 }}
+                >
+                  {searchMode === 'deep' 
+                    ? 'Your email will be generated in about 90 seconds' 
+                    : 'Your email will be generated in about 30 seconds'
+                  }
+                </motion.p>
+              </motion.div>
             </motion.div>
           </div>
 
