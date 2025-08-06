@@ -1,9 +1,11 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Mail, ArrowLeft } from 'lucide-react'
+import { Mail, ArrowLeft, Crown } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
 interface HeaderProps {
   showBackButton?: boolean
@@ -20,6 +22,8 @@ export default function Header({
   title,
   subtitle 
 }: HeaderProps) {
+  const [userPlan, setUserPlan] = useState<string>('free')
+  
   // Handle case where AuthProvider might not be available during static generation
   let user = null
   try {
@@ -29,6 +33,35 @@ export default function Header({
     // AuthProvider not available, continue without user data
     user = null
   }
+
+  // Fetch user's subscription plan
+  useEffect(() => {
+    const fetchUserPlan = async () => {
+      if (!user?.id) return
+
+      try {
+        const { data, error } = await supabase.rpc('get_user_subscription', {
+          user_uuid: user.id
+        })
+
+        if (error) {
+          console.error('Error fetching user subscription:', error)
+          return
+        }
+
+        if (data && data.length > 0) {
+          setUserPlan(data[0].plan_name || 'free')
+        } else {
+          setUserPlan('free')
+        }
+      } catch (error) {
+        console.error('Error in fetchUserPlan:', error)
+        setUserPlan('free')
+      }
+    }
+
+    fetchUserPlan()
+  }, [user?.id])
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100">
@@ -108,8 +141,16 @@ export default function Header({
                     Profile
                   </Button>
                 </Link>
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium">{user.email}</span>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-gray-600 font-medium">{user.email}</span>
+                  <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                    userPlan === 'pro' 
+                      ? 'bg-[#6366F1] text-white' 
+                      : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {userPlan === 'pro' && <Crown className="h-3 w-3" />}
+                    {userPlan === 'pro' ? 'Pro' : 'Free'}
+                  </div>
                 </div>
               </>
             ) : (
