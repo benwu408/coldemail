@@ -46,7 +46,8 @@ export async function POST(request: NextRequest) {
         // Get customer details
         const customerEmail = session.customer_details?.email
         const customerId = session.customer as string
-        const subscriptionId = session.subscription as string
+        // Use safe access for subscription property
+        const subscriptionId = (session as any).subscription as string | null
         console.log('Customer email from session:', customerEmail)
         console.log('Customer ID:', customerId)
         console.log('Subscription ID:', subscriptionId)
@@ -111,7 +112,8 @@ export async function POST(request: NextRequest) {
         
         // This happens every month when subscription renews
         const successCustomerId = successfulInvoice.customer as string
-        const successSubscriptionId = successfulInvoice.subscription as string | null
+        // Use bracket notation to access subscription property safely
+        const successSubscriptionId = (successfulInvoice as any).subscription as string | null
         
         console.log('Payment succeeded for customer:', successCustomerId)
         console.log('Subscription:', successSubscriptionId)
@@ -164,7 +166,8 @@ export async function POST(request: NextRequest) {
         
         // This happens when monthly payment fails
         const failedCustomerId = failedInvoice.customer as string
-        const failedSubscriptionId = failedInvoice.subscription as string | null
+        // Use bracket notation to access subscription property safely
+        const failedSubscriptionId = (failedInvoice as any).subscription as string | null
         
         console.log('Payment failed for customer:', failedCustomerId)
         console.log('Subscription:', failedSubscriptionId)
