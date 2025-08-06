@@ -607,7 +607,41 @@ function ProfilePageContent() {
           </ProOnlyField>
 
           {/* Save Button */}
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            <Button
+              onClick={async () => {
+                try {
+                  const { error } = await supabase.auth.signOut()
+                  if (error) {
+                    console.error('Error signing out:', error)
+                    toast({
+                      title: "Error",
+                      description: "Failed to sign out. Please try again.",
+                      variant: "destructive",
+                    })
+                  } else {
+                    toast({
+                      title: "Signed Out",
+                      description: "You have been successfully signed out.",
+                    })
+                    // Redirect will be handled by the auth context
+                    window.location.href = '/'
+                  }
+                } catch (error) {
+                  console.error('Sign out error:', error)
+                  toast({
+                    title: "Error",
+                    description: "Failed to sign out. Please try again.",
+                    variant: "destructive",
+                  })
+                }
+              }}
+              variant="outline"
+              className="text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400"
+            >
+              Sign Out
+            </Button>
+            
             <Button
               onClick={saveProfile}
               disabled={isSaving}
