@@ -213,6 +213,29 @@ function ProfilePageContent() {
     )
   }
 
+  // Simplified component for basic info fields - just shows centered upgrade button
+  const BasicInfoProField = ({ children }: { children: React.ReactNode }) => {
+    if (isPro) {
+      return <>{children}</>
+    }
+    
+    return (
+      <div className="relative">
+        <div className="opacity-50 pointer-events-none">
+          {children}
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-50/80 rounded-lg border-2 border-dashed border-gray-300">
+          <Link href="https://buy.stripe.com/dRm00k5GHeK0dRqfL81ck00">
+            <Button size="sm" className="bg-[#6366F1] hover:bg-[#4F46E5] text-white">
+              <Crown className="mr-1 h-3 w-3" />
+              Upgrade to Pro
+            </Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   const saveProfile = async () => {
     setIsSaving(true)
     try {
@@ -405,7 +428,7 @@ function ProfilePageContent() {
                     placeholder="Your full name"
                   />
                 </div>
-                <ProOnlyField label="Job Title">
+                <BasicInfoProField>
                   <div>
                     <Label htmlFor="job_title">Job Title</Label>
                     <Input
@@ -415,10 +438,10 @@ function ProfilePageContent() {
                       placeholder="e.g., Software Engineer"
                     />
                   </div>
-                </ProOnlyField>
+                </BasicInfoProField>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <ProOnlyField label="Company">
+                <BasicInfoProField>
                   <div>
                     <Label htmlFor="company">Company</Label>
                     <Input
@@ -428,8 +451,8 @@ function ProfilePageContent() {
                       placeholder="e.g., Google"
                     />
                   </div>
-                </ProOnlyField>
-                <ProOnlyField label="Location">
+                </BasicInfoProField>
+                <BasicInfoProField>
                   <div>
                     <Label htmlFor="location">Location</Label>
                     <Input
@@ -439,7 +462,7 @@ function ProfilePageContent() {
                       placeholder="e.g., San Francisco, CA"
                     />
                   </div>
-                </ProOnlyField>
+                </BasicInfoProField>
               </div>
             </CardContent>
           </Card>
