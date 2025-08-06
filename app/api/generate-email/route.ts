@@ -198,7 +198,7 @@ Please respond with ONLY 4 search queries, one per line, in this exact format:
 4. [search query 4]`
 
       const phase2Response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -285,7 +285,7 @@ Please respond with ONLY 4 search queries, one per line, in this exact format:
 4. [search query 4]`
 
       const phase3Response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -417,7 +417,7 @@ IMPORTANT FORMATTING REQUIREMENTS:
 - Make this valuable for someone wanting to build a meaningful professional relationship`
 
       const finalReportResponse = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -499,7 +499,7 @@ IMPORTANT FORMATTING:
 Focus on finding genuine commonalities that could create meaningful conversation starters for a networking email.`
 
       const commonalitiesResponse = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
