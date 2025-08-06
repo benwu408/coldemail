@@ -32,8 +32,17 @@ export default function ResetPasswordPage() {
         setIsValidSession(true)
       } else {
         // Try to get session from URL parameters (from email link)
-        const accessToken = searchParams.get('access_token')
-        const refreshToken = searchParams.get('refresh_token')
+        // Supabase can send tokens as either search params or hash fragments
+        let accessToken = searchParams.get('access_token')
+        let refreshToken = searchParams.get('refresh_token')
+        
+        // If not in search params, check hash fragments
+        if (!accessToken || !refreshToken) {
+          const hash = window.location.hash.substring(1)
+          const hashParams = new URLSearchParams(hash)
+          accessToken = hashParams.get('access_token')
+          refreshToken = hashParams.get('refresh_token')
+        }
         
         if (accessToken && refreshToken) {
           const { error } = await supabase.auth.setSession({
@@ -52,11 +61,17 @@ export default function ResetPasswordPage() {
             })
           }
         } else {
-          toast({
-            title: "Invalid Reset Link",
-            description: "This password reset link is invalid or has expired. Please request a new one.",
-            variant: "destructive"
-          })
+          // Also check if this is coming from Supabase auth callback
+          const { data, error } = await supabase.auth.getSession()
+          if (data.session) {
+            setIsValidSession(true)
+          } else {
+            toast({
+              title: "Invalid Reset Link",
+              description: "This password reset link is invalid or has expired. Please request a new one.",
+              variant: "destructive"
+            })
+          }
         }
       }
     }
