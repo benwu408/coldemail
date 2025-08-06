@@ -119,69 +119,105 @@ export async function POST(request: NextRequest) {
 
         console.log('Found user:', user.id, user.email)
 
-        // Check if RPC function exists
-        console.log('Testing assign_user_subscription function...')
-        try {
-          // Upgrade user to pro and store Stripe IDs
-          const { error: upgradeError } = await supabase.rpc('assign_user_subscription', {
-            user_uuid: user.id,
-            plan_name: 'pro',
-            subscription_status: 'active',
-            billing_cycle_param: 'monthly'
-          })
+        // Get Pro plan ID first
+        console.log('Getting Pro plan ID...')
+        const { data: proPlanData, error: planError } = await supabase
+          .from('subscription_plans')
+          .select('id')
+          .eq('name', 'pro')
+          .single()
 
-          if (upgradeError) {
-            console.error('Error upgrading user to pro:', upgradeError)
-            console.error('Error details:', JSON.stringify(upgradeError, null, 2))
-            
-            // Try to continue without RPC function
-            console.log('RPC function failed, trying direct table updates...')
-          } else {
-            console.log('RPC function executed successfully')
-          }
-        } catch (rpcErr) {
-          console.error('RPC function exception:', rpcErr)
+        if (planError || !proPlanData) {
+          console.error('Error getting Pro plan:', planError)
+          return NextResponse.json({ error: 'Pro plan not found' }, { status: 500 })
         }
 
-        // Update the profiles table with Stripe IDs (always try this)
-        console.log('Updating profiles table...')
-        try {
-          const { error: profileError } = await supabase
+        const proPlanId = proPlanData.id
+        console.log('Pro plan ID:', proPlanId)
+
+        // First, ensure the user has a profile (create if doesn't exist)
+        console.log('Ensuring user profile exists...')
+        const { data: existingProfile, error: profileCheckError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', user.id)
+          .single()
+
+        if (profileCheckError && profileCheckError.code === 'PGRST116') {
+          // Profile doesn't exist, create it
+          console.log('Profile does not exist, creating...')
+          const { error: createProfileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              subscription_plan: 'pro',
+              subscription_status: 'active',
+              stripe_customer_id: customerId,
+              stripe_subscription_id: subscriptionId,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+
+          if (createProfileError) {
+            console.error('Error creating profile:', createProfileError)
+            return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 })
+          }
+          console.log('Profile created successfully')
+        } else if (profileCheckError) {
+          console.error('Error checking profile:', profileCheckError)
+          return NextResponse.json({ error: 'Profile check failed' }, { status: 500 })
+        } else {
+          // Profile exists, update it
+          console.log('Profile exists, updating...')
+          const { error: updateProfileError } = await supabase
             .from('profiles')
             .update({
               subscription_plan: 'pro',
               subscription_status: 'active',
               stripe_customer_id: customerId,
-              stripe_subscription_id: subscriptionId
+              stripe_subscription_id: subscriptionId,
+              updated_at: new Date().toISOString()
             })
             .eq('id', user.id)
 
-          if (profileError) {
-            console.error('Error updating profile:', profileError)
-            console.error('Profile error details:', JSON.stringify(profileError, null, 2))
-            
-            // Try without Stripe columns
-            console.log('Trying profile update without Stripe columns...')
-            const { error: basicProfileError } = await supabase
-              .from('profiles')
-              .update({
-                subscription_plan: 'pro',
-                subscription_status: 'active'
-              })
-              .eq('id', user.id)
-              
-            if (basicProfileError) {
-              console.error('Basic profile update also failed:', basicProfileError)
-              return NextResponse.json({ error: 'Profile update failed' }, { status: 500 })
-            } else {
-              console.log('Basic profile update succeeded')
-            }
-          } else {
-            console.log('Profile updated successfully with all fields')
+          if (updateProfileError) {
+            console.error('Error updating profile:', updateProfileError)
+            return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
           }
-        } catch (profileErr) {
-          console.error('Profile update exception:', profileErr)
-          return NextResponse.json({ error: 'Profile update exception' }, { status: 500 })
+          console.log('Profile updated successfully')
+        }
+
+        // Now handle user_subscriptions table
+        console.log('Updating user_subscriptions table...')
+        const { error: subscriptionError } = await supabase
+          .from('user_subscriptions')
+          .upsert({
+            user_id: user.id,
+            plan_id: proPlanId,
+            status: 'active',
+            billing_cycle: 'monthly',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id'
+          })
+
+        if (subscriptionError) {
+          console.error('Error updating user_subscriptions:', subscriptionError)
+          return NextResponse.json({ error: 'Failed to update subscription' }, { status: 500 })
+        }
+        console.log('User subscription updated successfully')
+
+        // Verify the updates worked
+        console.log('Verifying updates...')
+        const { data: verifyData, error: verifyError } = await supabase.rpc('get_user_subscription', {
+          user_uuid: user.id
+        })
+
+        if (verifyError) {
+          console.error('Verification failed:', verifyError)
+        } else {
+          console.log('Verification result:', verifyData?.[0])
         }
 
         console.log('Successfully processed checkout.session.completed for user:', user.email)
