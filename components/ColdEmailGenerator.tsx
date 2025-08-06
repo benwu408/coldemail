@@ -655,6 +655,57 @@ export default function ColdEmailGenerator() {
               </Card>
             </motion.div>
 
+            {/* Upgrade Prompt for Free Users */}
+            {userSubscription?.plan_name === 'free' && (
+              <motion.div 
+                className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl p-6"
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.9 }}
+                whileHover={{ y: -2, scale: 1.02 }}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Crown className="h-6 w-6 text-[#6366F1]" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-bold text-[#111827] mb-2 flex items-center gap-2">
+                      Unlock Pro Features
+                      <span className="text-xs bg-[#6366F1] text-white px-2 py-1 rounded-full font-medium">$10/mo</span>
+                    </h4>
+                    <p className="text-gray-600 leading-relaxed mb-4">
+                      Get unlimited generations, deep research, custom tones, email editing, and more personalization features.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Link href="https://buy.stripe.com/dRm00k5GHeK0dRqfL81ck00">
+                        <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <Button
+                            className="bg-[#6366F1] hover:bg-[#4F46E5] text-white font-medium shadow-md"
+                            size="sm"
+                          >
+                            <Crown className="h-4 w-4 mr-2" />
+                            Upgrade to Pro
+                          </Button>
+                        </motion.div>
+                      </Link>
+                      <Link href="/pricing">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-indigo-300 text-[#6366F1] hover:bg-indigo-100 hover:border-indigo-400 font-medium"
+                        >
+                          View Features
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {/* Profile Enhancement Button - Only show if profile is incomplete */}
             <AnimatePresence>
               {userProfile && (
