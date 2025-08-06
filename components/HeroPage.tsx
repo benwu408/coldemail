@@ -21,7 +21,8 @@ import {
   Quote,
   Briefcase,
   MapPin,
-  Heart
+  Heart,
+  Crown
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import ProtectedRoute from './ProtectedRoute'
@@ -281,16 +282,32 @@ Founder & CEO, DataSync`,
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-[#6366F1] text-sm font-medium rounded-full border border-indigo-100">
                 <Sparkles className="h-3 w-3" />
-                AI-powered personalization
+                AI-powered deep research
               </div>
               <h1 className="text-5xl lg:text-6xl font-bold leading-tight tracking-tight">
                 Cold outreach that feels
                 <span className="text-[#6366F1]"> warm</span>
               </h1>
               <p className="text-xl text-gray-600 leading-relaxed max-w-lg">
-                Stop sending generic emails. Our AI researches your prospects, finds commonalities, 
-                and crafts personalized outreach that sounds human.
+                Transform generic emails into personalized conversations. Our AI conducts deep research, 
+                finds genuine connections, and crafts human-sounding outreach that gets responses.
               </p>
+              
+              {/* Key features highlight */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="w-2 h-2 bg-[#6366F1] rounded-full"></div>
+                  <span className="text-gray-700"><strong>Progressive AI Research</strong> - 12-phase deep search with 3x more data</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="w-2 h-2 bg-[#6366F1] rounded-full"></div>
+                  <span className="text-gray-700"><strong>Smart Connections</strong> - Finds alumni, industry, and location matches</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="w-2 h-2 bg-[#6366F1] rounded-full"></div>
+                  <span className="text-gray-700"><strong>Human-like Writing</strong> - Natural tone that doesn't sound robotic</span>
+                </div>
+              </div>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4">
@@ -298,19 +315,30 @@ Founder & CEO, DataSync`,
                 href={user ? "/generate" : "/login"}
                 className="inline-flex items-center justify-center bg-[#111827] hover:bg-gray-800 text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
               >
-                Start generating emails
+                Start free - 2 emails/day
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:animate-pulse transition-all duration-200" />
+              </Link>
+              <Link 
+                href="https://buy.stripe.com/dRm00k5GHeK0dRqfL81ck00"
+                className="inline-flex items-center justify-center bg-white border-2 border-[#6366F1] text-[#6366F1] hover:bg-[#6366F1] hover:text-white rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
+              >
+                <Crown className="mr-2 h-5 w-5" />
+                Upgrade to Pro
               </Link>
             </div>
 
             <div className="flex items-center gap-8 text-sm text-gray-500">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>30-second generation</span>
+                <span>30s basic / 90s deep search</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 <span>60% higher response rate</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span>No credit card required</span>
               </div>
             </div>
 
@@ -650,10 +678,23 @@ Founder & CEO, DataSync`,
       <section id="demo-section" className="py-24 bg-white">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="text-center mb-20">
-            <h2 className="text-4xl font-bold text-[#111827] mb-6 tracking-tight">See it in action</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Watch how our AI transforms basic information into personalized emails that get responses
+            <h2 className="text-4xl font-bold text-[#111827] mb-6 tracking-tight">See how AI research transforms outreach</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              From basic prospect details to comprehensive professional insights, watch our AI 
+              conduct progressive research and create personalized emails that get responses.
             </p>
+            
+            {/* Tier highlight */}
+            <div className="flex justify-center gap-4 mt-8">
+              <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full">
+                <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                <span className="text-sm font-medium text-gray-700">Free: Basic Search (4 queries)</span>
+              </div>
+              <div className="flex items-center gap-2 bg-indigo-100 px-4 py-2 rounded-full">
+                <Crown className="h-4 w-4 text-[#6366F1]" />
+                <span className="text-sm font-medium text-[#6366F1]">Pro: Deep Search (12 queries)</span>
+              </div>
+            </div>
           </div>
           
           {/* Step 1: Enter Details */}
@@ -862,47 +903,137 @@ Software Engineer & Co-founder`
       <section className="py-24 bg-white">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="text-center mb-20">
-            <h2 className="text-4xl font-bold text-[#111827] mb-6 tracking-tight">Why professionals choose Reachful</h2>
+            <h2 className="text-4xl font-bold text-[#111827] mb-6 tracking-tight">Two tiers. Maximum flexibility.</h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Our AI-powered platform combines cutting-edge technology with human-like personalization to deliver results that generic email tools simply can't match.
+              Start free with powerful AI research, then upgrade to Pro for advanced features, 
+              unlimited access, and comprehensive deep search capabilities.
             </p>
           </div>
           
-          {/* Asymmetric grid layout */}
-          <div className="grid lg:grid-cols-2 gap-8 mb-8">
-            {/* Large feature card */}
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-10 border border-indigo-100 hover:shadow-lg transition-all duration-200 hover:translate-y-1">
-              <div className="w-16 h-16 bg-indigo-100 text-[#6366F1] rounded-2xl flex items-center justify-center mb-6">
-                <CheckCircle className="h-8 w-8" />
+          {/* Free vs Pro Comparison */}
+          <div className="grid lg:grid-cols-2 gap-8 mb-16">
+            {/* Free Plan Features */}
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-10 border border-gray-200 hover:shadow-lg transition-all duration-200">
+              <div className="w-16 h-16 bg-gray-100 text-gray-600 rounded-2xl flex items-center justify-center mb-6">
+                <Zap className="h-8 w-8" />
               </div>
-              <h3 className="text-2xl font-bold text-[#111827] mb-4">Real-time Research</h3>
-              <p className="text-gray-600 text-lg leading-relaxed">AI searches LinkedIn, company websites, and news for fresh insights that make your emails genuinely personal.</p>
+              <h3 className="text-2xl font-bold text-[#111827] mb-4 flex items-center gap-2">
+                Free Plan
+                <span className="text-sm bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium">$0/mo</span>
+              </h3>
+              <div className="space-y-3 text-gray-700">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  <span><strong>Basic search</strong> - 4 targeted queries for essential insights</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  <span><strong>2 generations/day</strong> - Perfect for getting started</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  <span>Professional tone & commonality detection</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  <span>Export to email clients & history</span>
+                </div>
+              </div>
             </div>
             
-            {/* Large feature card */}
-            <div className="bg-gradient-to-br from-teal-50 to-blue-50 rounded-2xl p-10 border border-teal-100 hover:shadow-lg transition-all duration-200 hover:translate-y-1">
-              <div className="w-16 h-16 bg-teal-100 text-[#0F766E] rounded-2xl flex items-center justify-center mb-6">
-                <Users className="h-8 w-8" />
+            {/* Pro Plan Features */}
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-10 border border-indigo-200 hover:shadow-lg transition-all duration-200 relative">
+              <div className="absolute top-4 right-4 bg-[#6366F1] text-white px-3 py-1 rounded-full text-xs font-semibold">
+                RECOMMENDED
               </div>
-              <h3 className="text-2xl font-bold text-[#111827] mb-4">Smart Connections</h3>
-              <p className="text-gray-600 text-lg leading-relaxed">Finds alumni, industry, and location-based commonalities that create authentic rapport with prospects.</p>
+              <div className="w-16 h-16 bg-indigo-100 text-[#6366F1] rounded-2xl flex items-center justify-center mb-6">
+                <Crown className="h-8 w-8" />
+              </div>
+              <h3 className="text-2xl font-bold text-[#111827] mb-4 flex items-center gap-2">
+                Pro Plan
+                <span className="text-sm bg-[#6366F1] text-white px-3 py-1 rounded-full font-medium">$10/mo</span>
+              </h3>
+              <div className="space-y-3 text-gray-700">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
+                  <span><strong>Deep search</strong> - 12-phase progressive research with 3x more data</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
+                  <span><strong>Unlimited generations</strong> - No daily limits</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
+                  <span><strong>Multiple tones</strong> - Casual, Formal, Confident options</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
+                  <span><strong>Email editing</strong> - AI-powered refinement & revision</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
+                  <span>Priority support & advanced analytics</span>
+                </div>
+              </div>
             </div>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white rounded-xl p-8 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:translate-y-1">
+          {/* Advanced Features Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:translate-y-1">
               <div className="w-12 h-12 bg-purple-100 text-[#6366F1] rounded-xl flex items-center justify-center mb-4">
+                <Search className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-bold text-[#111827] mb-2">Progressive Research</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">AI-guided multi-phase search that gets deeper with each iteration</p>
+            </div>
+            <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:translate-y-1">
+              <div className="w-12 h-12 bg-teal-100 text-[#0F766E] rounded-xl flex items-center justify-center mb-4">
+                <Users className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-bold text-[#111827] mb-2">Smart Gating</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">Seamless upgrade prompts when you need more powerful features</p>
+            </div>
+            <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:translate-y-1">
+              <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-4">
                 <Brain className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-bold text-[#111827] mb-3">Human-like Writing</h3>
-              <p className="text-gray-600 leading-relaxed">Natural, conversational tone that doesn't sound automated or robotic.</p>
+              <h3 className="text-lg font-bold text-[#111827] mb-2">Usage Tracking</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">Transparent daily limits with visual progress indicators</p>
             </div>
-            <div className="bg-white rounded-xl p-8 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:translate-y-1">
-              <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mb-4">
+            <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:translate-y-1">
+              <div className="w-12 h-12 bg-indigo-100 text-[#6366F1] rounded-xl flex items-center justify-center mb-4">
                 <Shield className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-bold text-[#111827] mb-3">Privacy First</h3>
-              <p className="text-gray-600 leading-relaxed">Your data stays secure and is never shared with third parties.</p>
+              <h3 className="text-lg font-bold text-[#111827] mb-2">Secure & Private</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">Enterprise-grade security with user data protection</p>
+            </div>
+          </div>
+          
+          {/* Technical Features Showcase */}
+          <div className="mt-16 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-10 border border-indigo-100">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold text-[#111827] mb-4">Advanced AI Research Engine</h3>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Our sophisticated AI system conducts comprehensive research and creates authentic connections
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="text-4xl font-bold text-[#6366F1] mb-2">4-12</div>
+                <div className="text-sm text-gray-600 font-medium">Search queries per email</div>
+                <div className="text-xs text-gray-500 mt-1">Basic vs Pro research depth</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-bold text-[#6366F1] mb-2">3x</div>
+                <div className="text-sm text-gray-600 font-medium">More data with Pro</div>
+                <div className="text-xs text-gray-500 mt-1">Comprehensive professional insights</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-bold text-[#6366F1] mb-2">60%</div>
+                <div className="text-sm text-gray-600 font-medium">Higher response rate</div>
+                <div className="text-xs text-gray-500 mt-1">Compared to generic emails</div>
+              </div>
             </div>
           </div>
         </div>
@@ -958,8 +1089,9 @@ Software Engineer & Co-founder`
                   <div className="text-sm text-gray-600 font-medium">Higher response rate</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-[#6366F1] mb-2">30s</div>
-                  <div className="text-sm text-gray-600 font-medium">Average generation time</div>
+                  <div className="text-4xl font-bold text-[#6366F1] mb-2">30-90s</div>
+                  <div className="text-sm text-gray-600 font-medium">Generation time</div>
+                  <div className="text-xs text-gray-500 mt-1">Basic vs Deep search</div>
                 </div>
                 <div className="text-center md:text-right">
                   <div className="text-4xl font-bold text-[#6366F1] mb-2">2,000+</div>
@@ -1106,15 +1238,36 @@ Software Engineer & Co-founder`
         <div className="container mx-auto px-6 max-w-7xl text-center">
           <h2 className="text-4xl font-bold mb-6 tracking-tight">Ready to transform your outreach?</h2>
           <p className="text-xl mb-10 opacity-90 max-w-2xl mx-auto leading-relaxed">
-            Join thousands of professionals who are getting better responses with AI-powered personalization.
+            Start free with 2 emails per day, then upgrade to Pro for unlimited access and advanced features.
           </p>
-          <Link 
-            href={user ? "/generate" : "/login"}
-            className="inline-flex items-center justify-center bg-white text-[#111827] hover:bg-gray-100 rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group"
-          >
-            Start generating now
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Link>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-lg mx-auto">
+            <Link 
+              href={user ? "/generate" : "/login"}
+              className="inline-flex items-center justify-center bg-white text-[#111827] hover:bg-gray-100 rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group w-full sm:w-auto"
+            >
+              Start free
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Link>
+            <Link 
+              href="https://buy.stripe.com/dRm00k5GHeK0dRqfL81ck00"
+              className="inline-flex items-center justify-center bg-transparent border-2 border-white text-white hover:bg-white hover:text-[#111827] rounded-full px-8 py-4 text-base font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 group w-full sm:w-auto"
+            >
+              <Crown className="mr-2 h-5 w-5" />
+              View Pro plans
+            </Link>
+          </div>
+          
+          <div className="flex items-center justify-center gap-8 mt-8 text-sm opacity-75">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              <span>No credit card required</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              <span>Start free, upgrade anytime</span>
+            </div>
+          </div>
         </div>
       </section>
 

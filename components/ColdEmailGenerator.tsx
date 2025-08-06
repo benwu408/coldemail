@@ -5,33 +5,52 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Copy, Download, Mail, Sparkles, Search, User, Edit3 } from 'lucide-react'
+import { Loader2, Copy, Download, Mail, Sparkles, Search, User, Edit3, Crown } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import Link from 'next/link'
-import { useAuth } from '@/contexts/AuthContext'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { motion, AnimatePresence } from 'framer-motion'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function ColdEmailGenerator() {
   const { user } = useAuth()
   const { toast } = useToast()
+  
+  // Main state variables
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedEmail, setGeneratedEmail] = useState('')
+  const [displayedEmail, setDisplayedEmail] = useState('')
   const [researchFindings, setResearchFindings] = useState('')
   const [commonalities, setCommonalities] = useState('')
   const [searchMode, setSearchMode] = useState<'basic' | 'deep'>('basic')
   const [userProfile, setUserProfile] = useState<any>(null)
   const [activeTab, setActiveTab] = useState<'email' | 'findings'>('email')
-  const [displayedEmail, setDisplayedEmail] = useState('')
-  const [displayedFindings, setDisplayedFindings] = useState('')
-  const [displayedCommonalities, setDisplayedCommonalities] = useState('')
+  
+  // Edit functionality state
   const [editRequest, setEditRequest] = useState('')
   const [isEditing, setIsEditing] = useState(false)
   const [showEditSection, setShowEditSection] = useState(false)
+  
+  // Subscription and usage state
+  const [userUsage, setUserUsage] = useState<{
+    generationsToday: number
+    dailyLimit: number | null
+    limitReached: boolean
+  } | null>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [upgradePrompt, setUpgradePrompt] = useState<{
+    feature: string
+    message: string
+  } | null>(null)
+  const [userSubscription, setUserSubscription] = useState<{
+    plan_name: string
+    search_type: string
+    email_editing_enabled: boolean
+  } | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -40,7 +59,7 @@ export default function ColdEmailGenerator() {
     recipientRole: '',
     recipientLinkedIn: '',
     purpose: '',
-    tone: 'casual'
+    tone: 'professional'
   })
 
   // Load user profile on component mount
@@ -88,65 +107,95 @@ export default function ColdEmailGenerator() {
 
     setIsGenerating(true)
     setGeneratedEmail('')
+    setDisplayedEmail('')
     setResearchFindings('')
     setCommonalities('')
-
-    console.log('Starting email generation...')
-    console.log('User ID:', user?.id)
-    console.log('Form data:', formData)
-    console.log('Search mode:', searchMode)
+    setShowEditSection(false)
 
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to generate emails.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Get user profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
       const response = await fetch('/api/generate-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.id}`,
+          'Authorization': `Bearer ${user.id}`
         },
         body: JSON.stringify({
-          ...formData,
-          userProfile,
-          searchMode
+          recipientName: formData.recipientName,
+          recipientCompany: formData.recipientCompany,
+          recipientRole: formData.recipientRole,
+          recipientLinkedIn: formData.recipientLinkedIn,
+          purpose: formData.purpose,
+          tone: formData.tone,
+          userProfile: profile,
+          searchMode: searchMode
         }),
       })
 
-      console.log('API Response status:', response.status)
       const data = await response.json()
 
-      if (response.ok) {
-        console.log('API Response received:', data)
-        console.log('Email content:', data.email)
-        console.log('Research findings:', data.researchFindings)
-        console.log('Commonalities:', data.commonalities)
+      if (!response.ok) {
+        // Handle subscription-specific errors
+        if (data.errorType === 'SUBSCRIPTION_REQUIRED') {
+          setUpgradePrompt({
+            feature: data.feature,
+            message: data.error
+          })
+          setShowUpgradeModal(true)
+          return
+        }
         
-        setGeneratedEmail(data.email)
-        setResearchFindings(data.researchFindings || '')
-        setCommonalities(data.commonalities || '')
-        
-        // Set the displayed content immediately
-        setDisplayedEmail(data.email)
-        setDisplayedFindings(data.researchFindings || '')
-        setDisplayedCommonalities(data.commonalities || '')
-        
-        console.log('States set - Generated Email:', data.email ? 'Has content' : 'Empty')
-        console.log('States set - Research Findings:', data.researchFindings ? 'Has content' : 'Empty')
-        console.log('States set - Commonalities:', data.commonalities ? 'Has content' : 'Empty')
-        
-        toast({
-          title: "Email Generated!",
-          description: "Your personalized email has been created and saved successfully.",
-        })
-        
-        // Show edit section after email is generated
-        setShowEditSection(true)
-      } else {
+        if (data.errorType === 'DAILY_LIMIT_REACHED') {
+          setUserUsage(data.usageInfo)
+          toast({
+            title: "Daily Limit Reached",
+            description: data.error,
+            variant: "destructive",
+          })
+          setUpgradePrompt({
+            feature: "Unlimited Generations",
+            message: data.upgradeMessage || "Upgrade to Pro for unlimited generations"
+          })
+          setShowUpgradeModal(true)
+          return
+        }
+
         throw new Error(data.error || 'Failed to generate email')
       }
+
+      setGeneratedEmail(data.email)
+      setDisplayedEmail(data.email)
+      setResearchFindings(data.researchFindings)
+      setCommonalities(data.commonalities)
+      setShowEditSection(true)
+
+      toast({
+        title: "Email Generated Successfully!",
+        description: "Your personalized cold email is ready.",
+      })
+
     } catch (error) {
       console.error('Error generating email:', error)
       toast({
         title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Failed to generate email. Please try again.",
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -188,27 +237,36 @@ export default function ColdEmailGenerator() {
   const editEmail = async () => {
     if (!editRequest.trim()) {
       toast({
-        title: "Edit Request Required",
-        description: "Please describe what changes you'd like to make to the email.",
+        title: "Missing Edit Request",
+        description: "Please describe what changes you'd like to make.",
         variant: "destructive",
       })
       return
     }
 
     setIsEditing(true)
-
-    // Store the current email as the original before making changes
     const originalEmailContent = generatedEmail
 
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to edit emails.",
+          variant: "destructive",
+        })
+        return
+      }
+
       const response = await fetch('/api/edit-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.id}`,
+          'Authorization': `Bearer ${user.id}`
         },
         body: JSON.stringify({
-          originalEmail: originalEmailContent, // Pass the stored original content
+          originalEmail: originalEmailContent,
           editRequest: editRequest,
           recipientName: formData.recipientName,
           recipientCompany: formData.recipientCompany,
@@ -219,21 +277,31 @@ export default function ColdEmailGenerator() {
         }),
       })
 
-      if (response.ok) {
-        const data = await response.json()
-        setGeneratedEmail(data.email)
-        setDisplayedEmail(data.email)
-        setEditRequest('')
-        // Keep the edit section visible after updating
-        // setShowEditSection(false) - removed this line
-        toast({
-          title: "Email Updated!",
-          description: "Your email has been revised based on your request.",
-        })
-      } else {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to edit email')
+      const data = await response.json()
+
+      if (!response.ok) {
+        // Handle subscription-specific errors
+        if (data.errorType === 'SUBSCRIPTION_REQUIRED') {
+          setUpgradePrompt({
+            feature: data.feature,
+            message: data.error
+          })
+          setShowUpgradeModal(true)
+          return
+        }
+
+        throw new Error(data.error || 'Failed to edit email')
       }
+
+      setGeneratedEmail(data.editedEmail)
+      setDisplayedEmail(data.editedEmail)
+      setEditRequest('')
+
+      toast({
+        title: "Email Updated!",
+        description: "Your email has been successfully updated.",
+      })
+
     } catch (error) {
       console.error('Error editing email:', error)
       toast({
@@ -245,6 +313,27 @@ export default function ColdEmailGenerator() {
       setIsEditing(false)
     }
   }
+
+  // Get user subscription on component mount
+  useEffect(() => {
+    const getUserSubscription = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data } = await supabase.rpc('get_user_subscription', { 
+            user_uuid: user.id 
+          })
+          if (data && data.length > 0) {
+            setUserSubscription(data[0])
+          }
+        }
+      } catch (error) {
+        console.error('Error getting user subscription:', error)
+      }
+    }
+    
+    getUserSubscription()
+  }, [])
 
   return (
     <motion.div 
@@ -379,24 +468,56 @@ export default function ColdEmailGenerator() {
                     <p className="text-xs text-gray-500 mt-1">Be specific about what you want to achieve. This becomes your email's foundation.</p>
                   </motion.div>
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.8 }}
-                  >
-                    <Label htmlFor="tone" className="text-sm font-medium text-[#111827] mb-2 block">Communication Style</Label>
-                    <Select value={formData.tone} onValueChange={(value) => handleInputChange('tone', value)}>
-                      <SelectTrigger className="border-gray-200 focus:border-[#6366F1] focus:ring-[#6366F1]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="casual">Casual & Friendly</SelectItem>
-                        <SelectItem value="formal">Formal & Professional</SelectItem>
-                        <SelectItem value="confident">Confident & Direct</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-gray-500 mt-1">Choose the tone that best matches your relationship and industry.</p>
-                  </motion.div>
+                  <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 1.0 }}
+                      >
+                        <Label htmlFor="tone" className="text-sm font-medium text-[#111827] mb-2 block">Tone</Label>
+                        <select
+                          id="tone"
+                          value={formData.tone}
+                          onChange={(e) => {
+                            const selectedTone = e.target.value
+                            if (userSubscription?.plan_name === 'free' && selectedTone !== 'professional') {
+                              setUpgradePrompt({
+                                feature: "Tone Customization",
+                                message: "Unlock casual, formal, and confident tones with Pro"
+                              })
+                              setShowUpgradeModal(true)
+                              return
+                            }
+                            handleInputChange('tone', selectedTone)
+                          }}
+                          className="w-full p-3 border border-gray-200 rounded-lg focus:border-[#6366F1] focus:ring-[#6366F1] focus:outline-none"
+                        >
+                          <option value="professional">Professional</option>
+                          <option 
+                            value="casual"
+                            disabled={userSubscription?.plan_name === 'free'}
+                          >
+                            Casual {userSubscription?.plan_name === 'free' ? '(Pro)' : ''}
+                          </option>
+                          <option 
+                            value="formal"
+                            disabled={userSubscription?.plan_name === 'free'}
+                          >
+                            Formal {userSubscription?.plan_name === 'free' ? '(Pro)' : ''}
+                          </option>
+                          <option 
+                            value="confident"
+                            disabled={userSubscription?.plan_name === 'free'}
+                          >
+                            Confident {userSubscription?.plan_name === 'free' ? '(Pro)' : ''}
+                          </option>
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {userSubscription?.plan_name === 'free' 
+                            ? 'Professional tone included. Upgrade to Pro for more options.' 
+                            : 'Choose the tone that best fits your outreach style.'
+                          }
+                        </p>
+                      </motion.div>
                 </CardContent>
               </Card>
             </motion.div>
@@ -419,57 +540,54 @@ export default function ColdEmailGenerator() {
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <motion.div 
-                      className="flex items-start space-x-3 p-4 border border-gray-200 rounded-xl hover:border-[#6366F1] transition-colors duration-200"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <input
-                        type="radio"
-                        id="basic-search"
-                        name="searchMode"
-                        value="basic"
-                        checked={searchMode === 'basic'}
-                        onChange={(e) => setSearchMode(e.target.value as 'basic' | 'deep')}
-                        className="text-[#6366F1] focus:ring-[#6366F1] mt-1"
-                      />
-                      <div className="flex-1">
-                        <Label htmlFor="basic-search" className="flex items-center gap-2 cursor-pointer text-[#111827] font-medium">
-                          <Search className="h-4 w-4" />
-                          Quick Research
-                        </Label>
-                        <p className="text-gray-600 leading-relaxed mt-1">
-                          Basic web search for essential information. Perfect for quick outreach.
-                        </p>
-                      </div>
-                    </motion.div>
-
-                    <motion.div 
-                      className="flex items-start space-x-3 p-4 border border-gray-200 rounded-xl hover:border-[#6366F1] transition-colors duration-200"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <input
-                        type="radio"
-                        id="deep-search"
-                        name="searchMode"
-                        value="deep"
-                        checked={searchMode === 'deep'}
-                        onChange={(e) => setSearchMode(e.target.value as 'basic' | 'deep')}
-                        className="text-[#6366F1] focus:ring-[#6366F1] mt-1"
-                      />
-                      <div className="flex-1">
-                        <Label htmlFor="deep-search" className="flex items-center gap-2 cursor-pointer text-[#111827] font-medium">
-                          <Sparkles className="h-4 w-4 text-[#6366F1]" />
-                          Deep Research (Premium)
-                        </Label>
-                        <p className="text-gray-600 leading-relaxed mt-1">
-                          Comprehensive analysis with detailed reports and advanced connection finding.
-                        </p>
-                      </div>
-                    </motion.div>
-                  </div>
+                  {/* Search Mode Toggle */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.8 }}
+                    className="flex items-center justify-center space-x-4 p-4 bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => setSearchMode('basic')}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                          searchMode === 'basic'
+                            ? 'bg-[#6366F1] text-white'
+                            : 'bg-white text-gray-600 hover:text-gray-900'
+                        }`}
+                      >
+                        <Search className="h-4 w-4 inline mr-2" />
+                        Basic Search
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (userSubscription?.plan_name === 'free') {
+                            setUpgradePrompt({
+                              feature: "Deep Search",
+                              message: "Get 3x more comprehensive research with 12-phase progressive search"
+                            })
+                            setShowUpgradeModal(true)
+                          } else {
+                            setSearchMode('deep')
+                          }
+                        }}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors relative ${
+                          searchMode === 'deep'
+                            ? 'bg-[#6366F1] text-white'
+                            : userSubscription?.plan_name === 'free'
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : 'bg-white text-gray-600 hover:text-gray-900'
+                        }`}
+                        disabled={userSubscription?.plan_name === 'free'}
+                      >
+                        <Sparkles className="h-4 w-4 inline mr-2" />
+                        Deep Search
+                        {userSubscription?.plan_name === 'free' && (
+                          <Crown className="h-3 w-3 inline ml-1 text-[#6366F1]" />
+                        )}
+                      </button>
+                    </div>
+                  </motion.div>
 
                   <AnimatePresence>
                     {searchMode === 'deep' && (
@@ -588,7 +706,10 @@ export default function ColdEmailGenerator() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.9 }}
               >
-                Your email will be generated in about 30 seconds
+                {searchMode === 'deep' 
+                  ? 'Your email will be generated in about 90 seconds' 
+                  : 'Your email will be generated in about 30 seconds'
+                }
               </motion.p>
             </motion.div>
           </div>
@@ -858,8 +979,8 @@ export default function ColdEmailGenerator() {
                                     <Loader2 className="h-10 w-10 animate-spin mr-4" />
                                     <span className="text-xl">Researching...</span>
                                   </div>
-                                ) : displayedFindings ? (
-                                  <ReactMarkdown>{displayedFindings}</ReactMarkdown>
+                                ) : researchFindings ? (
+                                  <ReactMarkdown>{researchFindings}</ReactMarkdown>
                                 ) : (
                                   <div className="flex items-center justify-center h-full">
                                     <div className="text-center text-gray-400">
@@ -887,8 +1008,8 @@ export default function ColdEmailGenerator() {
                                     <Loader2 className="h-10 w-10 animate-spin mr-4" />
                                     <span className="text-xl">Finding connections...</span>
                                   </div>
-                                ) : displayedCommonalities ? (
-                                  <ReactMarkdown>{displayedCommonalities}</ReactMarkdown>
+                                ) : commonalities ? (
+                                  <ReactMarkdown>{commonalities}</ReactMarkdown>
                                 ) : (
                                   <div className="flex items-center justify-center h-full">
                                     <div className="text-center text-gray-400">
@@ -912,6 +1033,82 @@ export default function ColdEmailGenerator() {
         </div>
       </div>
       <Footer />
+
+      {/* Upgrade Modal */}
+      {showUpgradeModal && upgradePrompt && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowUpgradeModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-white rounded-xl p-8 max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] rounded-full flex items-center justify-center mx-auto mb-4">
+                <Crown className="h-8 w-8 text-white" />
+              </div>
+              
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                Upgrade to Pro
+              </h3>
+              
+              <p className="text-gray-600 mb-2">
+                <strong>{upgradePrompt.feature}</strong> is a Pro feature
+              </p>
+              
+              <p className="text-gray-500 text-sm mb-6">
+                {upgradePrompt.message}
+              </p>
+
+              {userUsage && (
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <div className="text-sm text-gray-600">
+                    <div className="flex justify-between items-center">
+                      <span>Today's Usage:</span>
+                      <span className="font-semibold">
+                        {userUsage.generationsToday} / {userUsage.dailyLimit} emails
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                      <div 
+                        className="bg-[#6366F1] h-2 rounded-full" 
+                        style={{ 
+                          width: userUsage.dailyLimit ? 
+                            `${Math.min((userUsage.generationsToday / userUsage.dailyLimit) * 100, 100)}%` : 
+                            '0%' 
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="space-y-3">
+                <Link href="https://buy.stripe.com/dRm00k5GHeK0dRqfL81ck00">
+                  <Button className="w-full bg-[#6366F1] hover:bg-[#4F46E5] text-white">
+                    Upgrade to Pro - $10/month
+                  </Button>
+                </Link>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => setShowUpgradeModal(false)}
+                >
+                  Maybe Later
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </motion.div>
   )
 } 

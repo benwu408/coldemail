@@ -107,12 +107,156 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  console.log('All required fields present, proceeding with email generation...')
+  // Get user ID from authorization header
+  const authHeader = request.headers.get('authorization')
+  const userId = authHeader ? authHeader.replace('Bearer ', '') : null
+  
+  if (!userId) {
+    console.log('No authenticated user found')
+    return NextResponse.json(
+      { error: 'Authentication required' },
+      { status: 401 }
+    )
+  }
+
+  console.log('Checking user subscription and usage limits...')
+
+  // Check user's subscription and usage limits
+  try {
+    // Get user's subscription details
+    const { data: subscriptionData, error: subscriptionError } = await supabase
+      .rpc('get_user_subscription', { user_uuid: userId })
+    
+    if (subscriptionError) {
+      console.error('Error getting user subscription:', subscriptionError)
+      return NextResponse.json(
+        { error: 'Failed to check subscription status' },
+        { status: 500 }
+      )
+    }
+
+    if (!subscriptionData || subscriptionData.length === 0) {
+      console.log('No subscription found, defaulting to free plan')
+      // Default to free plan if no subscription found
+      subscriptionData.push({
+        plan_name: 'free',
+        plan_display_name: 'Free',
+        search_type: 'basic',
+        daily_generation_limit: 2,
+        tone_options: ['professional'],
+        email_editing_enabled: false,
+        priority_support: false,
+        status: 'active',
+        trial_end_date: null
+      })
+    }
+
+    const userSubscription = subscriptionData[0]
+    console.log('User subscription:', userSubscription)
+
+    // Check if user requested pro features but doesn't have pro plan
+    if (userSubscription.plan_name === 'free') {
+      // Check if user is trying to use deep search
+      if (searchMode === 'deep') {
+        return NextResponse.json(
+          { 
+            error: 'Deep search is a Pro feature',
+            errorType: 'SUBSCRIPTION_REQUIRED',
+            requiredPlan: 'pro',
+            feature: 'Deep Search'
+          },
+          { status: 403 }
+        )
+      }
+
+      // Check if user is trying to use non-professional tone
+      if (tone && tone !== 'professional') {
+        return NextResponse.json(
+          { 
+            error: 'Custom tones are a Pro feature',
+            errorType: 'SUBSCRIPTION_REQUIRED',
+            requiredPlan: 'pro',
+            feature: 'Tone Customization'
+          },
+          { status: 403 }
+        )
+      }
+
+      // Check daily generation limit for free users
+      const { data: usageData, error: usageError } = await supabase
+        .rpc('check_daily_usage_limit', { user_uuid: userId })
+      
+      if (usageError) {
+        console.error('Error checking usage limit:', usageError)
+        return NextResponse.json(
+          { error: 'Failed to check usage limits' },
+          { status: 500 }
+        )
+      }
+
+      if (usageData && usageData.length > 0) {
+        const usage = usageData[0]
+        console.log('User daily usage:', usage)
+        
+        if (usage.limit_reached) {
+          return NextResponse.json(
+            { 
+              error: `Daily limit reached (${usage.daily_limit} generations per day)`,
+              errorType: 'DAILY_LIMIT_REACHED',
+              usageInfo: {
+                generationsToday: usage.generations_today,
+                dailyLimit: usage.daily_limit,
+                limitReached: true
+              },
+              upgradeMessage: 'Upgrade to Pro for unlimited generations'
+            },
+            { status: 429 }
+          )
+        }
+      }
+    }
+
+    // Force basic search for free users
+    // const effectiveSearchMode = userSubscription.plan_name === 'free' ? 'basic' : searchMode
+    // const effectiveTone = userSubscription.plan_name === 'free' ? 'professional' : tone
+
+    // console.log(`User plan: ${userSubscription.plan_name}, effective search mode: ${effectiveSearchMode}, effective tone: ${effectiveTone}`)
+
+  } catch (error) {
+    console.error('Error in subscription check:', error)
+    return NextResponse.json(
+      { error: 'Failed to validate subscription' },
+      { status: 500 }
+    )
+  }
+
+  console.log('All required fields present and subscription validated, proceeding with email generation...')
+
+  // Set effective values based on subscription
+  let effectiveSearchMode = searchMode
+  let effectiveTone = tone
+
+  // Apply subscription restrictions
+  try {
+    const { data: subscriptionData } = await supabase
+      .rpc('get_user_subscription', { user_uuid: userId })
+    
+    if (subscriptionData && subscriptionData.length > 0) {
+      const userSubscription = subscriptionData[0]
+      effectiveSearchMode = userSubscription.plan_name === 'free' ? 'basic' : searchMode
+      effectiveTone = userSubscription.plan_name === 'free' ? 'professional' : tone
+    }
+  } catch (error) {
+    console.error('Error getting subscription for effective values:', error)
+    // Default to free restrictions if error
+    effectiveSearchMode = 'basic'
+    effectiveTone = 'professional'
+  }
 
   let researchFindings = ''
   let commonalities = ''
 
-  if (searchMode === 'deep') {
+  if (effectiveSearchMode === 'deep') {
     // Deep search mode using progressive SearchAPI + ChatGPT analysis
     console.log('Starting deep search mode with progressive SearchAPI + ChatGPT analysis...')
     
@@ -807,7 +951,7 @@ Do not confuse their names, companies, or roles.`
   
   prompt += `=== EMAIL REQUIREMENTS ===\n`
   prompt += `- Write from the SENDER'S perspective (${userProfile?.full_name || '[Your Name]'}) to the RECIPIENT (${recipientName})\n`
-  prompt += `- Use the ${tone} tone appropriately\n`
+  prompt += `- Use the ${effectiveTone} tone appropriately\n`
   prompt += `- Keep it concise (2-3 paragraphs max)\n`
   prompt += `- Include a clear call-to-action\n`
   prompt += `- Make it sound human-written, not robotic\n`
@@ -861,11 +1005,20 @@ Do not confuse their names, companies, or roles.`
       throw new Error('No email content generated from OpenAI response')
     }
 
-    // Save the generated email to the database (optional - only if user is authenticated)
+    // Increment usage count for successful generation
     try {
-      const authHeader = request.headers.get('authorization')
-      const userId = authHeader ? authHeader.replace('Bearer ', '') : null
-      
+      await supabase.rpc('increment_user_usage', { 
+        user_uuid: userId, 
+        usage_type: 'generation' 
+      })
+      console.log('Usage count incremented successfully')
+    } catch (usageError) {
+      console.error('Error incrementing usage count:', usageError)
+      // Continue even if usage tracking fails
+    }
+
+    // Save the generated email to the database
+    try {
       if (userId) {
         console.log('Saving email to database for user:', userId)
         console.log('Data to save:', {
@@ -874,7 +1027,7 @@ Do not confuse their names, companies, or roles.`
           recipient_company: recipientCompany,
           recipient_role: recipientRole,
           purpose: purpose,
-          search_mode: searchMode,
+          search_mode: effectiveSearchMode,
           research_findings: researchFindings,
           commonalities: commonalities,
           generated_email: generatedEmail
@@ -888,7 +1041,7 @@ Do not confuse their names, companies, or roles.`
             recipient_company: recipientCompany,
             recipient_role: recipientRole,
             purpose: purpose,
-            search_mode: searchMode,
+            search_mode: effectiveSearchMode,
             research_findings: researchFindings,
             commonalities: commonalities,
             generated_email: generatedEmail
