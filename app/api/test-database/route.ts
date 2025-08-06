@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       })
       
       // If we get a specific error about the user not existing, the function exists
-      rpcFunctionExists = rpcError?.message?.includes('not found') || rpcError?.message?.includes('does not exist')
+      rpcFunctionExists = !!(rpcError?.message?.includes('not found') || rpcError?.message?.includes('does not exist'))
     } catch (rpcErr) {
       rpcFunctionExists = false
     }
