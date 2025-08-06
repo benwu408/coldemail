@@ -11,8 +11,8 @@ export async function GET(request: NextRequest) {
   
   try {
     // Check if Stripe columns exist in profiles table by trying to select them
-    let profilesColumns = []
-    let columnError = null
+    let profilesColumns: string[] = []
+    let columnError: string | null = null
     
     try {
       const { data: testData, error: testError } = await supabase
