@@ -273,7 +273,7 @@ export default function SubscriptionDashboard() {
                   <Button 
                     variant="outline" 
                     className="border-amber-300 text-amber-700 hover:bg-amber-50"
-                    onClick={() => window.open('https://billing.stripe.com/p/login/test_your_portal_link', '_blank')}
+                    onClick={() => window.open('https://billing.stripe.com/p/login/dRm00k5GHeK0dRqfL81ck00', '_blank')}
                   >
                     Update Payment Method
                   </Button>
@@ -283,7 +283,7 @@ export default function SubscriptionDashboard() {
               <div className="flex gap-3">
                 <Button 
                   variant="outline"
-                  onClick={() => window.open('https://billing.stripe.com/p/login/test_your_portal_link', '_blank')}
+                  onClick={() => window.open('https://billing.stripe.com/p/login/dRm00k5GHeK0dRqfL81ck00', '_blank')}
                 >
                   <CreditCard className="mr-2 h-4 w-4" />
                   Manage Billing
@@ -291,7 +291,7 @@ export default function SubscriptionDashboard() {
                 
                 <Button 
                   variant="outline"
-                  onClick={() => window.open('https://billing.stripe.com/p/login/test_your_portal_link', '_blank')}
+                  onClick={() => window.open('https://billing.stripe.com/p/login/dRm00k5GHeK0dRqfL81ck00', '_blank')}
                 >
                   <Calendar className="mr-2 h-4 w-4" />
                   View Invoices
