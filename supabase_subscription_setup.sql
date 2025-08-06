@@ -3,59 +3,53 @@
 
 -- 1. Create subscription plans table
 CREATE TABLE IF NOT EXISTS subscription_plans (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE,
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,
     display_name VARCHAR(100) NOT NULL,
-    price_monthly DECIMAL(10,2) NOT NULL DEFAULT 0,
-    price_yearly DECIMAL(10,2) NOT NULL DEFAULT 0,
-    features JSONB NOT NULL DEFAULT '{}',
-    search_type VARCHAR(20) NOT NULL DEFAULT 'basic',
-    daily_generation_limit INTEGER DEFAULT NULL, -- NULL means unlimited
+    search_type VARCHAR(20) NOT NULL CHECK (search_type IN ('basic', 'deep')),
+    daily_generation_limit INTEGER,
     tone_options TEXT[] DEFAULT ARRAY['professional'],
     email_editing_enabled BOOLEAN DEFAULT FALSE,
     priority_support BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 2. Insert default subscription plans
-INSERT INTO subscription_plans (name, display_name, price_monthly, price_yearly, features, search_type, daily_generation_limit, tone_options, email_editing_enabled, priority_support) VALUES
-('free', 'Free', 0.00, 0.00, 
- '{"basic_search": true, "ai_research": true, "commonality_detection": true, "email_history": true, "export_email": true}',
- 'basic', 2, ARRAY['professional'], FALSE, FALSE),
-('pro', 'Pro', 29.00, 290.00,
- '{"deep_research": true, "unlimited_generations": true, "tone_customization": true, "email_editing": true, "advanced_commonalities": true, "priority_support": true, "analytics": true}',
- 'deep', NULL, ARRAY['casual', 'formal', 'confident', 'professional'], TRUE, TRUE);
+INSERT INTO subscription_plans (name, display_name, search_type, daily_generation_limit, tone_options, email_editing_enabled, priority_support)
+VALUES 
+    ('free', 'Free', 'basic', 2, ARRAY['professional'], FALSE, FALSE),
+    ('pro', 'Pro', 'deep', NULL, ARRAY['professional', 'casual', 'formal', 'confident'], TRUE, TRUE)
+ON CONFLICT (name) DO UPDATE SET
+    display_name = EXCLUDED.display_name,
+    search_type = EXCLUDED.search_type,
+    daily_generation_limit = EXCLUDED.daily_generation_limit,
+    tone_options = EXCLUDED.tone_options,
+    email_editing_enabled = EXCLUDED.email_editing_enabled,
+    priority_support = EXCLUDED.priority_support;
 
 -- 3. Create user subscriptions table
 CREATE TABLE IF NOT EXISTS user_subscriptions (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    plan_id UUID NOT NULL REFERENCES subscription_plans(id),
-    status VARCHAR(20) NOT NULL DEFAULT 'active', -- active, cancelled, expired, trial
-    billing_cycle VARCHAR(10) NOT NULL DEFAULT 'monthly', -- monthly, yearly
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    plan_id UUID REFERENCES subscription_plans(id) ON DELETE CASCADE,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('active', 'cancelled', 'expired', 'trialing')),
+    billing_cycle VARCHAR(20) CHECK (billing_cycle IN ('monthly', 'yearly')),
     trial_start_date TIMESTAMP WITH TIME ZONE,
     trial_end_date TIMESTAMP WITH TIME ZONE,
-    subscription_start_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    subscription_end_date TIMESTAMP WITH TIME ZONE,
-    cancelled_at TIMESTAMP WITH TIME ZONE,
-    stripe_customer_id VARCHAR(255),
-    stripe_subscription_id VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(user_id) -- One subscription per user
+    UNIQUE(user_id)
 );
 
 -- 4. Create usage tracking table
 CREATE TABLE IF NOT EXISTS user_usage (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    date DATE NOT NULL DEFAULT CURRENT_DATE,
-    generations_count INTEGER DEFAULT 0,
-    searches_count INTEGER DEFAULT 0,
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    usage_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    generation_count INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(user_id, date) -- One record per user per day
+    UNIQUE(user_id, usage_date)
 );
 
 -- 5. Add subscription fields to profiles table (if it doesn't exist, create it)
@@ -90,14 +84,14 @@ END $$;
 -- 6. Function to get user's current subscription
 CREATE OR REPLACE FUNCTION get_user_subscription(user_uuid UUID)
 RETURNS TABLE(
-    plan_name VARCHAR(50),
-    plan_display_name VARCHAR(100),
-    search_type VARCHAR(20),
+    plan_name VARCHAR,
+    plan_display_name VARCHAR,
+    search_type VARCHAR,
     daily_generation_limit INTEGER,
     tone_options TEXT[],
     email_editing_enabled BOOLEAN,
     priority_support BOOLEAN,
-    status VARCHAR(20),
+    status VARCHAR,
     trial_end_date TIMESTAMP WITH TIME ZONE
 ) AS $$
 BEGIN
@@ -110,74 +104,71 @@ BEGIN
         sp.tone_options,
         sp.email_editing_enabled,
         sp.priority_support,
-        COALESCE(us.status, 'active'),
+        us.status,
         us.trial_end_date
-    FROM subscription_plans sp
-    LEFT JOIN user_subscriptions us ON sp.id = us.plan_id AND us.user_id = user_uuid
-    WHERE sp.name = COALESCE(
-        (SELECT profiles.subscription_plan FROM profiles WHERE profiles.id = user_uuid),
-        'free'
-    );
+    FROM user_subscriptions us
+    JOIN subscription_plans sp ON us.plan_id = sp.id
+    WHERE us.user_id = user_uuid;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- 7. Function to check daily usage limit
 CREATE OR REPLACE FUNCTION check_daily_usage_limit(user_uuid UUID)
 RETURNS TABLE(
     generations_today INTEGER,
-    limit_reached BOOLEAN,
-    daily_limit INTEGER
+    daily_limit INTEGER,
+    limit_reached BOOLEAN
 ) AS $$
 DECLARE
-    user_plan_limit INTEGER;
-    user_generations INTEGER;
+    current_usage INTEGER := 0;
+    user_limit INTEGER;
 BEGIN
-    -- Get user's daily limit
-    SELECT sp.daily_generation_limit INTO user_plan_limit
-    FROM subscription_plans sp
-    LEFT JOIN profiles p ON p.id = user_uuid
-    WHERE sp.name = COALESCE(p.subscription_plan, 'free');
+    -- Get user's daily limit from their subscription
+    SELECT sp.daily_generation_limit INTO user_limit
+    FROM user_subscriptions us
+    JOIN subscription_plans sp ON us.plan_id = sp.id
+    WHERE us.user_id = user_uuid;
+    
+    -- If no subscription found, use free plan limit
+    IF user_limit IS NULL THEN
+        user_limit := 2;
+    END IF;
     
     -- Get today's usage
-    SELECT COALESCE(uu.generations_count, 0) INTO user_generations
-    FROM user_usage uu
-    WHERE uu.user_id = user_uuid AND uu.date = CURRENT_DATE;
+    SELECT COALESCE(generation_count, 0) INTO current_usage
+    FROM user_usage
+    WHERE user_id = user_uuid AND usage_date = CURRENT_DATE;
     
-    RETURN QUERY SELECT 
-        user_generations,
-        CASE 
-            WHEN user_plan_limit IS NULL THEN FALSE -- Unlimited
-            ELSE user_generations >= user_plan_limit
-        END,
-        user_plan_limit;
+    RETURN QUERY
+    SELECT 
+        current_usage,
+        user_limit,
+        (user_limit IS NOT NULL AND current_usage >= user_limit);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- 8. Function to increment usage count
-CREATE OR REPLACE FUNCTION increment_user_usage(user_uuid UUID, usage_type VARCHAR(20))
+CREATE OR REPLACE FUNCTION increment_user_usage(
+    user_uuid UUID,
+    usage_type VARCHAR DEFAULT 'generation'
+)
 RETURNS VOID AS $$
 BEGIN
-    INSERT INTO user_usage (user_id, date, generations_count, searches_count)
-    VALUES (
-        user_uuid, 
-        CURRENT_DATE, 
-        CASE WHEN usage_type = 'generation' THEN 1 ELSE 0 END,
-        CASE WHEN usage_type = 'search' THEN 1 ELSE 0 END
-    )
-    ON CONFLICT (user_id, date) 
+    INSERT INTO user_usage (user_id, usage_date, generation_count)
+    VALUES (user_uuid, CURRENT_DATE, 1)
+    ON CONFLICT (user_id, usage_date)
     DO UPDATE SET 
-        generations_count = user_usage.generations_count + CASE WHEN usage_type = 'generation' THEN 1 ELSE 0 END,
-        searches_count = user_usage.searches_count + CASE WHEN usage_type = 'search' THEN 1 ELSE 0 END,
+        generation_count = user_usage.generation_count + 1,
         updated_at = NOW();
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- 9. Function to assign subscription to user
 CREATE OR REPLACE FUNCTION assign_user_subscription(
     user_uuid UUID,
-    plan_name VARCHAR(50),
-    subscription_status VARCHAR(20) DEFAULT 'active',
-    billing_cycle VARCHAR(10) DEFAULT 'monthly',
+    plan_name VARCHAR,
+    subscription_status VARCHAR DEFAULT 'active',
+    billing_cycle_param VARCHAR DEFAULT 'monthly',
     trial_days INTEGER DEFAULT NULL
 )
 RETURNS VOID AS $$
@@ -192,12 +183,12 @@ BEGIN
         RAISE EXCEPTION 'Plan % not found', plan_name;
     END IF;
     
-    -- Calculate trial end date if trial days provided
+    -- Calculate trial end date if trial_days is provided
     IF trial_days IS NOT NULL THEN
         trial_end := NOW() + (trial_days || ' days')::INTERVAL;
     END IF;
     
-    -- Update or insert subscription
+    -- Insert or update user subscription
     INSERT INTO user_subscriptions (
         user_id, 
         plan_id, 
@@ -210,46 +201,38 @@ BEGIN
         user_uuid, 
         plan_uuid, 
         subscription_status, 
-        billing_cycle,
+        billing_cycle_param,
         CASE WHEN trial_days IS NOT NULL THEN NOW() ELSE NULL END,
         trial_end
     )
     ON CONFLICT (user_id) 
     DO UPDATE SET 
-        plan_id = plan_uuid,
-        status = subscription_status,
-        billing_cycle = billing_cycle,
+        plan_id = EXCLUDED.plan_id,
+        status = EXCLUDED.status,
+        billing_cycle = EXCLUDED.billing_cycle,
         trial_start_date = CASE WHEN trial_days IS NOT NULL THEN NOW() ELSE user_subscriptions.trial_start_date END,
-        trial_end_date = trial_end,
+        trial_end_date = EXCLUDED.trial_end_date,
         updated_at = NOW();
-    
-    -- Update profile subscription
-    UPDATE profiles 
-    SET 
-        subscription_plan = plan_name,
-        subscription_status = subscription_status,
-        updated_at = NOW()
-    WHERE id = user_uuid;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 -- 10. Set up Row Level Security (RLS)
 ALTER TABLE user_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_usage ENABLE ROW LEVEL SECURITY;
 
 -- Users can only see their own subscription data
-CREATE POLICY "Users can view own subscription" ON user_subscriptions
-    FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can read own subscription" ON user_subscriptions 
+FOR SELECT USING (auth.uid() = user_id);
 
 -- Users can only see their own usage data
-CREATE POLICY "Users can view own usage" ON user_usage
-    FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can read own usage" ON user_usage 
+FOR SELECT USING (auth.uid() = user_id);
 
 -- 11. Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user_id ON user_subscriptions(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_subscriptions_status ON user_subscriptions(status);
-CREATE INDEX IF NOT EXISTS idx_user_usage_user_date ON user_usage(user_id, date);
-CREATE INDEX IF NOT EXISTS idx_profiles_subscription_plan ON profiles(subscription_plan);
+CREATE INDEX IF NOT EXISTS idx_user_usage_user_date ON user_usage(user_id, usage_date);
+CREATE INDEX IF NOT EXISTS idx_profiles_subscription ON profiles(subscription_plan);
 
 -- 12. Sample data: Assign all existing users to free plan
 INSERT INTO user_subscriptions (user_id, plan_id, status)
