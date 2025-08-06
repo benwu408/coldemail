@@ -31,6 +31,8 @@ export async function POST(request: NextRequest) {
   console.log('Body length:', body.length)
   console.log('Signature present:', !!signature)
   console.log('STRIPE_WEBHOOK_SECRET exists:', !!process.env.STRIPE_WEBHOOK_SECRET)
+  console.log('SUPABASE_URL exists:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
+  console.log('SUPABASE_SERVICE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
   
   if (!signature) {
     console.error('No Stripe signature found')
@@ -79,7 +81,26 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'No customer email' }, { status: 400 })
         }
 
+        // Test Supabase connection first
+        console.log('Testing Supabase connection...')
+        try {
+          const { data: connectionTest, error: connectionError } = await supabase
+            .from('profiles')
+            .select('count(*)')
+            .limit(1)
+          
+          if (connectionError) {
+            console.error('Supabase connection failed:', connectionError)
+            return NextResponse.json({ error: 'Database connection failed' }, { status: 500 })
+          }
+          console.log('Supabase connection successful')
+        } catch (connErr) {
+          console.error('Supabase connection error:', connErr)
+          return NextResponse.json({ error: 'Database connection error' }, { status: 500 })
+        }
+
         // Find the user by email
+        console.log('Looking up user by email:', customerEmail)
         const { data: userData, error: userError } = await supabase.auth.admin.listUsers()
         
         if (userError) {
@@ -87,45 +108,83 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'User lookup failed' }, { status: 500 })
         }
 
+        console.log('Total users found:', userData.users.length)
         const user = userData.users.find(u => u.email === customerEmail)
         
         if (!user) {
           console.error('User not found for email:', customerEmail)
+          console.log('Available user emails:', userData.users.map(u => u.email))
           return NextResponse.json({ error: 'User not found' }, { status: 404 })
         }
 
         console.log('Found user:', user.id, user.email)
 
-        // Upgrade user to pro and store Stripe IDs
-        const { error: upgradeError } = await supabase.rpc('assign_user_subscription', {
-          user_uuid: user.id,
-          plan_name: 'pro',
-          subscription_status: 'active',
-          billing_cycle_param: 'monthly'
-        })
-
-        if (upgradeError) {
-          console.error('Error upgrading user to pro:', upgradeError)
-          return NextResponse.json({ error: 'Upgrade failed' }, { status: 500 })
-        }
-
-        // Update the profiles table with Stripe IDs
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            subscription_plan: 'pro',
+        // Check if RPC function exists
+        console.log('Testing assign_user_subscription function...')
+        try {
+          // Upgrade user to pro and store Stripe IDs
+          const { error: upgradeError } = await supabase.rpc('assign_user_subscription', {
+            user_uuid: user.id,
+            plan_name: 'pro',
             subscription_status: 'active',
-            stripe_customer_id: customerId,
-            stripe_subscription_id: subscriptionId
+            billing_cycle_param: 'monthly'
           })
-          .eq('id', user.id)
 
-        if (profileError) {
-          console.error('Error updating profile:', profileError)
-          // Don't fail the webhook for this, just log it
+          if (upgradeError) {
+            console.error('Error upgrading user to pro:', upgradeError)
+            console.error('Error details:', JSON.stringify(upgradeError, null, 2))
+            
+            // Try to continue without RPC function
+            console.log('RPC function failed, trying direct table updates...')
+          } else {
+            console.log('RPC function executed successfully')
+          }
+        } catch (rpcErr) {
+          console.error('RPC function exception:', rpcErr)
         }
 
-        console.log('Successfully upgraded user to Pro:', user.email)
+        // Update the profiles table with Stripe IDs (always try this)
+        console.log('Updating profiles table...')
+        try {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({
+              subscription_plan: 'pro',
+              subscription_status: 'active',
+              stripe_customer_id: customerId,
+              stripe_subscription_id: subscriptionId
+            })
+            .eq('id', user.id)
+
+          if (profileError) {
+            console.error('Error updating profile:', profileError)
+            console.error('Profile error details:', JSON.stringify(profileError, null, 2))
+            
+            // Try without Stripe columns
+            console.log('Trying profile update without Stripe columns...')
+            const { error: basicProfileError } = await supabase
+              .from('profiles')
+              .update({
+                subscription_plan: 'pro',
+                subscription_status: 'active'
+              })
+              .eq('id', user.id)
+              
+            if (basicProfileError) {
+              console.error('Basic profile update also failed:', basicProfileError)
+              return NextResponse.json({ error: 'Profile update failed' }, { status: 500 })
+            } else {
+              console.log('Basic profile update succeeded')
+            }
+          } else {
+            console.log('Profile updated successfully with all fields')
+          }
+        } catch (profileErr) {
+          console.error('Profile update exception:', profileErr)
+          return NextResponse.json({ error: 'Profile update exception' }, { status: 500 })
+        }
+
+        console.log('Successfully processed checkout.session.completed for user:', user.email)
         break
 
       case 'invoice.payment_succeeded':
