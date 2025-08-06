@@ -12,6 +12,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+export async function GET(request: NextRequest) {
+  return NextResponse.json({ 
+    message: "Stripe webhook endpoint is active",
+    method: "This endpoint only accepts POST requests from Stripe",
+    status: "Ready to receive webhooks"
+  }, { status: 200 })
+}
+
 export async function POST(request: NextRequest) {
   console.log('=== Stripe Webhook Handler Started ===')
   console.log('Request URL:', request.url)
@@ -22,10 +30,16 @@ export async function POST(request: NextRequest) {
   
   console.log('Body length:', body.length)
   console.log('Signature present:', !!signature)
+  console.log('STRIPE_WEBHOOK_SECRET exists:', !!process.env.STRIPE_WEBHOOK_SECRET)
   
   if (!signature) {
     console.error('No Stripe signature found')
     return NextResponse.json({ error: 'No signature' }, { status: 400 })
+  }
+
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    console.error('STRIPE_WEBHOOK_SECRET environment variable not set')
+    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
   }
 
   let event: Stripe.Event
@@ -41,6 +55,7 @@ export async function POST(request: NextRequest) {
     console.log('Event created:', new Date(event.created * 1000).toISOString())
   } catch (err) {
     console.error('Webhook signature verification failed:', err)
+    console.error('Expected webhook secret length:', process.env.STRIPE_WEBHOOK_SECRET?.length)
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
