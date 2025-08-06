@@ -111,10 +111,16 @@ export async function POST(request: NextRequest) {
         
         // This happens every month when subscription renews
         const successCustomerId = successfulInvoice.customer as string
-        const successSubscriptionId = successfulInvoice.subscription as string
+        const successSubscriptionId = successfulInvoice.subscription as string | null
         
         console.log('Payment succeeded for customer:', successCustomerId)
         console.log('Subscription:', successSubscriptionId)
+        
+        // Skip if this is not a subscription invoice
+        if (!successSubscriptionId) {
+          console.log('Invoice is not for a subscription, skipping')
+          break
+        }
         
         // Find user by Stripe customer ID
         const { data: successUserData, error: successUserError } = await supabase
@@ -158,10 +164,16 @@ export async function POST(request: NextRequest) {
         
         // This happens when monthly payment fails
         const failedCustomerId = failedInvoice.customer as string
-        const failedSubscriptionId = failedInvoice.subscription as string
+        const failedSubscriptionId = failedInvoice.subscription as string | null
         
         console.log('Payment failed for customer:', failedCustomerId)
         console.log('Subscription:', failedSubscriptionId)
+        
+        // Skip if this is not a subscription invoice
+        if (!failedSubscriptionId) {
+          console.log('Invoice is not for a subscription, skipping')
+          break
+        }
         
         // Find user by Stripe customer ID
         const { data: failedUserData, error: failedUserError } = await supabase

@@ -42,6 +42,10 @@ FROM information_schema.columns
 WHERE table_name = 'profiles' 
 AND column_name IN ('stripe_customer_id', 'stripe_subscription_id');
 
-RAISE NOTICE 'Stripe columns added successfully to profiles table';
-RAISE NOTICE 'Indexes created for fast webhook processing';
-RAISE NOTICE 'Database is now ready for recurring billing!'; 
+-- Success messages
+DO $$
+BEGIN
+    RAISE NOTICE 'Stripe columns added successfully to profiles table';
+    RAISE NOTICE 'Indexes created for fast webhook processing';
+    RAISE NOTICE 'Database is now ready for recurring billing!';
+END $$; 
