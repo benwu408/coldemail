@@ -93,8 +93,13 @@ export default function LoginForm() {
     setResetLoading(true)
 
     try {
+      // Use the correct URL based on environment
+      const redirectUrl = window.location.hostname === 'localhost' 
+        ? `${window.location.origin}/reset-password`
+        : 'https://www.reachful.io/reset-password'
+        
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: redirectUrl,
       })
 
       if (error) {
