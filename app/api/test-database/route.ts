@@ -10,17 +10,33 @@ export async function GET(request: NextRequest) {
   console.log('Testing database schema...')
   
   try {
-    // Check if Stripe columns exist in profiles table
-    const { data: columnCheck, error: columnError } = await supabase
-      .rpc('sql', {
-        query: `
-          SELECT column_name, data_type 
-          FROM information_schema.columns 
-          WHERE table_name = 'profiles' 
-          AND column_name IN ('stripe_customer_id', 'stripe_subscription_id', 'subscription_plan', 'subscription_status')
-          ORDER BY column_name;
-        `
-      })
+    // Check if Stripe columns exist in profiles table by trying to select them
+    let profilesColumns = []
+    let columnError = null
+    
+    try {
+      const { data: testData, error: testError } = await supabase
+        .from('profiles')
+        .select('stripe_customer_id, stripe_subscription_id, subscription_plan, subscription_status')
+        .limit(1)
+      
+      if (testError) {
+        columnError = testError.message
+        // Try without Stripe columns
+        const { data: basicData, error: basicError } = await supabase
+          .from('profiles')
+          .select('subscription_plan, subscription_status')
+          .limit(1)
+        
+        if (!basicError) {
+          profilesColumns = ['subscription_plan', 'subscription_status']
+        }
+      } else {
+        profilesColumns = ['stripe_customer_id', 'stripe_subscription_id', 'subscription_plan', 'subscription_status']
+      }
+    } catch (err) {
+      columnError = 'Failed to test columns'
+    }
     
     // Check if RPC function exists
     let rpcFunctionExists = false
@@ -47,8 +63,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ 
       success: true,
       database: {
-        profilesColumns: columnCheck || [],
-        columnError: columnError?.message,
+        profilesColumns: profilesColumns,
+        columnError: columnError,
         rpcFunctionExists,
         subscriptionPlans: plansData || [],
         plansError: plansError?.message
