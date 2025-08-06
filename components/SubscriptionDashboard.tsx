@@ -48,15 +48,25 @@ export default function SubscriptionDashboard() {
         setSubscription(subscriptionData[0])
       }
 
-      // Get profile data with Stripe IDs
+      // Get profile data with Stripe IDs (handle missing columns gracefully)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('stripe_customer_id, stripe_subscription_id, subscription_plan, subscription_status')
+        .select('subscription_plan, subscription_status, stripe_customer_id, stripe_subscription_id')
         .eq('id', user.id)
         .single()
 
       if (profileError) {
         console.error('Error fetching profile:', profileError)
+        // If columns don't exist, create default profile data
+        if (profileError.message?.includes('column') || profileError.code === '42703') {
+          console.log('Stripe columns not found, using default profile data')
+          setProfile({
+            stripe_customer_id: null,
+            stripe_subscription_id: null,
+            subscription_plan: 'free',
+            subscription_status: 'active'
+          })
+        }
       } else {
         setProfile(profileData)
       }
