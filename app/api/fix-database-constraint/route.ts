@@ -1,138 +1,152 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-export async function GET(request: NextRequest) {
-  return await POST(request)
+export async function POST(request: NextRequest) {
+  console.log('=== Database Constraint Fix Started ===')
+  
+  // Check environment variables
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    return NextResponse.json(
+      { error: 'NEXT_PUBLIC_SUPABASE_URL is not configured' },
+      { status: 500 }
+    )
+  }
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json(
+      { error: 'SUPABASE_SERVICE_ROLE_KEY is not configured' },
+      { status: 500 }
+    )
+  }
+  
+  // Initialize Supabase client
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  )
+  
+  try {
+    // First, get a real user ID from the database
+    console.log('Getting a real user ID from the database...')
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id')
+      .limit(1)
+    
+    if (usersError) {
+      console.error('Error getting users:', usersError)
+      return NextResponse.json(
+        { error: 'Failed to get users from database', details: usersError },
+        { status: 500 }
+      )
+    }
+    
+    if (!users || users.length === 0) {
+      console.log('No users found in database')
+      return NextResponse.json(
+        { 
+          error: 'No users found in database',
+          message: 'Cannot fix database constraints without any users. Please create a user account first.'
+        },
+        { status: 400 }
+      )
+    }
+    
+    const realUserId = users[0].id
+    console.log('Using real user ID:', realUserId)
+    
+    const results = {
+      constraintCheck: { success: false, error: null, constraints: [] },
+      constraintDrop: { success: false, error: null },
+      testInsert: { success: false, error: null }
+    }
+    
+    // Step 1: Check current constraints on search_mode column
+    console.log('Checking current constraints on search_mode column...')
+    try {
+      const { data: constraintData, error: constraintError } = await supabase
+        .rpc('get_table_constraints', { table_name: 'generated_emails' })
+      
+      if (constraintError) {
+        console.error('Error checking constraints:', constraintError)
+        results.constraintCheck = { success: false, error: constraintError, constraints: [] }
+      } else {
+        console.log('Current constraints:', constraintData)
+        results.constraintCheck = { success: true, error: null, constraints: constraintData || [] }
+      }
+    } catch (constraintException) {
+      console.error('Constraint check exception:', constraintException)
+      results.constraintCheck = { success: false, error: constraintException, constraints: [] }
+    }
+    
+    // Step 2: Try to drop any CHECK constraints on search_mode column
+    console.log('Attempting to drop CHECK constraints on search_mode column...')
+    try {
+      // Use direct SQL to drop constraints
+      const { data: dropData, error: dropError } = await supabase
+        .rpc('drop_search_mode_constraints')
+      
+      if (dropError) {
+        console.error('Error dropping constraints:', dropError)
+        results.constraintDrop = { success: false, error: dropError }
+      } else {
+        console.log('Constraints dropped successfully:', dropData)
+        results.constraintDrop = { success: true, error: null }
+      }
+    } catch (dropException) {
+      console.error('Drop constraint exception:', dropException)
+      results.constraintDrop = { success: false, error: dropException }
+    }
+    
+    // Step 3: Test if we can now insert 'deep' values
+    console.log('Testing if deep insert works after constraint fix...')
+    try {
+      const { data: testData, error: testError } = await supabase
+        .from('generated_emails')
+        .insert({
+          user_id: realUserId,
+          recipient_name: 'Constraint Fix Test',
+          recipient_company: 'Test Company',
+          recipient_role: 'Test Role',
+          purpose: 'Testing constraint fix',
+          search_mode: 'deep',
+          research_findings: 'Test research findings',
+          commonalities: 'Test commonalities',
+          generated_email: 'Test email content'
+        })
+        .select()
+      
+      if (testError) {
+        console.error('Test insert failed:', testError)
+        results.testInsert = { success: false, error: testError }
+      } else {
+        console.log('Test insert succeeded:', testData)
+        results.testInsert = { success: true, error: null }
+        
+        // Clean up the test record
+        if (testData && testData.length > 0) {
+          await supabase
+            .from('generated_emails')
+            .delete()
+            .eq('id', testData[0].id)
+        }
+      }
+    } catch (testException) {
+      console.error('Test insert exception:', testException)
+      results.testInsert = { success: false, error: testException }
+    }
+    
+    console.log('Database constraint fix completed')
+    return NextResponse.json(results)
+    
+  } catch (error) {
+    console.error('Database constraint fix error:', error)
+    return NextResponse.json(
+      { error: 'Database constraint fix failed', details: error },
+      { status: 500 }
+    )
+  }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-
-    console.log('=== Fixing Database Constraint ===')
-
-    // Drop any check constraints on search_mode column
-    const { error: dropConstraintError } = await supabase
-      .rpc('exec_sql', { 
-        sql: `
-          DO $$
-          BEGIN
-            -- Drop any check constraints on search_mode column
-            IF EXISTS (
-              SELECT 1 FROM information_schema.table_constraints 
-              WHERE table_name = 'generated_emails' 
-              AND constraint_name LIKE '%search_mode%'
-              AND constraint_type = 'CHECK'
-            ) THEN
-              EXECUTE 'ALTER TABLE generated_emails DROP CONSTRAINT IF EXISTS generated_emails_search_mode_check';
-            END IF;
-          END $$;
-        `
-      })
-
-    if (dropConstraintError) {
-      console.error('Error dropping constraint:', dropConstraintError)
-      return NextResponse.json({ 
-        error: 'Failed to drop constraint',
-        details: dropConstraintError
-      }, { status: 500 })
-    }
-
-    // Verify the column exists and has no constraints
-    const { data: columnInfo, error: columnError } = await supabase
-      .rpc('exec_sql', { 
-        sql: `
-          SELECT 
-            column_name, 
-            data_type, 
-            column_default,
-            is_nullable
-          FROM information_schema.columns 
-          WHERE table_name = 'generated_emails' 
-          AND column_name = 'search_mode';
-        `
-      })
-
-    if (columnError) {
-      console.error('Error getting column info:', columnError)
-      return NextResponse.json({ 
-        error: 'Failed to get column info',
-        details: columnError
-      }, { status: 500 })
-    }
-
-    // Show any remaining constraints on the table
-    const { data: constraints, error: constraintsError } = await supabase
-      .rpc('exec_sql', { 
-        sql: `
-          SELECT 
-            constraint_name,
-            constraint_type
-          FROM information_schema.table_constraints 
-          WHERE table_name = 'generated_emails';
-        `
-      })
-
-    if (constraintsError) {
-      console.error('Error getting constraints:', constraintsError)
-      return NextResponse.json({ 
-        error: 'Failed to get constraints',
-        details: constraintsError
-      }, { status: 500 })
-    }
-
-    // Test insert with 'deep' value
-    const { data: testInsert, error: testInsertError } = await supabase
-      .from('generated_emails')
-      .insert({
-        user_id: '00000000-0000-0000-0000-000000000001', // Test user ID
-        recipient_name: 'Database Test',
-        recipient_company: 'Test Company',
-        recipient_role: 'Test Role',
-        purpose: 'Test Purpose',
-        search_mode: 'deep', // This should now work
-        research_findings: 'Test research findings',
-        commonalities: 'Test commonalities',
-        generated_email: 'Test email content'
-      })
-      .select()
-
-    if (testInsertError) {
-      console.error('Test insert failed:', testInsertError)
-      return NextResponse.json({ 
-        error: 'Test insert failed',
-        details: testInsertError
-      }, { status: 500 })
-    }
-
-    // Clean up test data
-    const { error: cleanupError } = await supabase
-      .from('generated_emails')
-      .delete()
-      .eq('recipient_name', 'Database Test')
-
-    if (cleanupError) {
-      console.error('Cleanup failed:', cleanupError)
-    }
-
-    console.log('Database constraint fix completed successfully')
-
-    return NextResponse.json({
-      success: true,
-      message: 'Database constraint fixed successfully',
-      columnInfo,
-      constraints,
-      testInsert: testInsert ? 'Success' : 'Failed'
-    })
-
-  } catch (error) {
-    console.error('Error fixing database constraint:', error)
-    return NextResponse.json({ 
-      error: 'Failed to fix database constraint',
-      details: error
-    }, { status: 500 })
-  }
+export async function GET(request: NextRequest) {
+  return await POST(request)
 } 
