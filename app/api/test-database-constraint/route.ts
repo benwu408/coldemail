@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+export async function GET(request: NextRequest) {
+  return await POST(request)
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = createClient(
