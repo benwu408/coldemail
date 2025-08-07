@@ -137,7 +137,7 @@ Format the email with proper greeting, body, and signature using the actual send
     // Track usage for this generation
     try {
       const { error: usageError } = await supabase
-        .rpc('increment_daily_usage', { user_uuid: userId })
+        .rpc('increment_user_usage', { user_uuid: userId })
       
       if (usageError) {
         console.error('Error tracking usage:', usageError)
