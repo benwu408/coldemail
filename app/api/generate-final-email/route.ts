@@ -88,6 +88,8 @@ SENDER INFORMATION:
 - Company: ${profile.company || 'Not provided'}
 - Job Title: ${profile.job_title || 'Not provided'}
 - Location: ${profile.location || 'Not provided'}
+- LinkedIn: ${profile.linkedin || 'Not provided'}
+- Email: ${profile.email || 'Not provided'}
 
 RECIPIENT RESEARCH:
 ${researchFindings}
@@ -108,15 +110,18 @@ INSTRUCTIONS:
 - Include a clear call-to-action
 - Use the specified tone
 - Make it feel personal and relevant to the recipient
+- IMPORTANT: End the email with a proper signature using the sender's ACTUAL name and information from the SENDER INFORMATION above
+- Do NOT use placeholder text like [Your Name] or [Your Company]
+- Use the real sender information provided above
 
-Format the email with proper greeting, body, and signature.`
+Format the email with proper greeting, body, and signature using the actual sender details.`
 
     const emailResponse = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
-          content: 'You are a professional email writer who creates compelling, personalized cold emails.'
+          content: 'You are a professional email writer who creates compelling, personalized cold emails. Always use the actual sender information provided and never use placeholder text like [Your Name] or [Your Company]. Include the sender\'s real name, job title, company, and contact information in the signature.'
         },
         {
           role: 'user',
