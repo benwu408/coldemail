@@ -80,6 +80,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('Using sender profile for email generation:', {
+      fullName: profile.full_name,
+      company: profile.company,
+      jobTitle: profile.job_title,
+      location: profile.location,
+      linkedin: profile.linkedin,
+      email: profile.email
+    })
+
     // Generate the final email
     const emailPrompt = `Write a professional cold email to ${recipientName}${recipientCompany ? ` at ${recipientCompany}` : ''}${recipientRole ? ` (${recipientRole})` : ''}.
 
@@ -189,4 +198,4 @@ Format the email with proper greeting, body, and signature using the actual send
       { status: 500 }
     )
   }
-} 
+}

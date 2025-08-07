@@ -72,6 +72,15 @@ export async function POST(request: NextRequest) {
       senderInfo = profile
     }
 
+    console.log('Using sender profile for commonalities:', {
+      fullName: senderInfo.full_name,
+      company: senderInfo.company,
+      jobTitle: senderInfo.job_title,
+      location: senderInfo.location,
+      education: senderInfo.education,
+      pastJobs: senderInfo.past_jobs
+    })
+
     // Generate commonalities based on research findings and sender profile
     const commonalitiesPrompt = `Based on the research findings about ${recipientName}${recipientCompany ? ` who works at ${recipientCompany}` : ''}${recipientRole ? ` as ${recipientRole}` : ''} and the sender's profile, identify meaningful connections and commonalities that could be used in a cold email.
 
