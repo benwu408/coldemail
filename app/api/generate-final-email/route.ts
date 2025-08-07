@@ -134,6 +134,22 @@ Format the email with proper greeting, body, and signature using the actual send
 
     const generatedEmail = emailResponse.choices[0]?.message?.content?.trim() || ''
 
+    // Track usage for this generation
+    try {
+      const { error: usageError } = await supabase
+        .rpc('increment_daily_usage', { user_uuid: userId })
+      
+      if (usageError) {
+        console.error('Error tracking usage:', usageError)
+        // Continue even if usage tracking fails
+      } else {
+        console.log('Usage tracked successfully')
+      }
+    } catch (usageException) {
+      console.error('Exception tracking usage:', usageException)
+      // Continue even if usage tracking fails
+    }
+
     // Save to database
     const { data: savedEmail, error: saveError } = await supabase
       .from('generated_emails')
