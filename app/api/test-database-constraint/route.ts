@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     // First, get a real user ID from the database
     console.log('Getting a real user ID from the database...')
     const { data: users, error: usersError } = await supabase
-      .from('users')
+      .from('profiles')
       .select('id')
       .limit(1)
     
