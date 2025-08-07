@@ -28,6 +28,27 @@ export async function POST(request: NextRequest) {
     apiKey: process.env.OPENAI_API_KEY,
   })
 
+  // Initialize results object outside try block so it's accessible in all catch blocks
+  let results: any = {
+    testInfo: {
+      timestamp: new Date().toISOString(),
+      searchMode: 'unknown',
+      testPhase: 'unknown',
+      recipientName: 'unknown',
+      recipientCompany: 'unknown',
+      recipientRole: 'unknown',
+      environmentChecks: envChecks,
+      validationTests: null
+    },
+    phase1: null,
+    phase2: null,
+    phase2_5: null,
+    phase3: null,
+    finalReport: null,
+    errors: [],
+    databaseSimulation: null
+  }
+
   try {
     const body = await request.json()
     const { 
@@ -42,42 +63,30 @@ export async function POST(request: NextRequest) {
 
     console.log('Request body:', { recipientName, recipientCompany, recipientRole, searchMode, testPhase, simulateDatabase, validateSearchMode })
 
-    // Initialize results object after we have the variables
-    const results: any = {
-      testInfo: {
-        timestamp: new Date().toISOString(),
-        searchMode,
-        testPhase,
-        recipientName,
-        recipientCompany,
-        recipientRole,
-        environmentChecks: envChecks,
-        validationTests: validateSearchMode ? {
-          exactMatch: searchMode === 'deep',
-          includesDeep: searchMode?.includes('deep'),
-          startsWithDeep: searchMode?.startsWith('deep'),
-          endsWithDeep: searchMode?.endsWith('deep'),
-          toLowerCase: searchMode?.toLowerCase() === 'deep',
-          trim: searchMode?.trim() === 'deep',
-          regexTest: /^deep$/.test(searchMode),
-          arrayIncludes: ['basic', 'deep'].includes(searchMode)
-        } : null
-      },
-      phase1: null,
-      phase2: null,
-      phase2_5: null,
-      phase3: null,
-      finalReport: null,
-      errors: [],
-      databaseSimulation: simulateDatabase ? {
-        searchModeValidation: {
-          received: searchMode,
-          type: typeof searchMode,
-          length: searchMode?.length,
-          isValid: ['basic', 'deep'].includes(searchMode)
-        }
-      } : null
-    }
+    // Update results with actual values
+    results.testInfo.searchMode = searchMode
+    results.testInfo.testPhase = testPhase
+    results.testInfo.recipientName = recipientName
+    results.testInfo.recipientCompany = recipientCompany
+    results.testInfo.recipientRole = recipientRole
+    results.testInfo.validationTests = validateSearchMode ? {
+      exactMatch: searchMode === 'deep',
+      includesDeep: searchMode?.includes('deep'),
+      startsWithDeep: searchMode?.startsWith('deep'),
+      endsWithDeep: searchMode?.endsWith('deep'),
+      toLowerCase: searchMode?.toLowerCase() === 'deep',
+      trim: searchMode?.trim() === 'deep',
+      regexTest: /^deep$/.test(searchMode),
+      arrayIncludes: ['basic', 'deep'].includes(searchMode)
+    } : null
+    results.databaseSimulation = simulateDatabase ? {
+      searchModeValidation: {
+        received: searchMode,
+        type: typeof searchMode,
+        length: searchMode?.length,
+        isValid: ['basic', 'deep'].includes(searchMode)
+      }
+    } : null
 
     // Validate searchMode format (exactly like the real Pro search)
     if (validateSearchMode) {
