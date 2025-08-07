@@ -174,8 +174,8 @@ Active on LinkedIn with 500+ connections and regular industry content sharing.`
     // Test 6: Email Generation
     console.log('Testing email generation...')
     try {
-      const researchFindings = results.research?.success ? results.research.details.researchFindings : 'Test research findings'
-      const commonalities = results.commonalities?.success ? results.commonalities.details.commonalities : 'Test commonalities'
+      const researchFindings = results.research?.success ? (results.research.details as any).researchFindings : 'Test research findings'
+      const commonalities = results.commonalities?.success ? (results.commonalities.details as any).commonalities : 'Test commonalities'
 
       const emailPrompt = `Write a professional cold email to ${recipientName}${recipientCompany ? ` at ${recipientCompany}` : ''}${recipientRole ? ` (${recipientRole})` : ''}.
 
@@ -280,8 +280,8 @@ Format the email with proper greeting, body, and signature using the actual send
         recipient_linkedin: recipientLinkedIn,
         purpose: purpose,
         search_mode: 'deep',
-        research_findings: results.research.success ? results.research.details.researchFindings : 'Test research',
-        commonalities: results.commonalities.success ? results.commonalities.details.commonalities : 'Test commonalities',
+        research_findings: results.research?.success ? (results.research.details as any).researchFindings : 'Test research',
+        commonalities: results.commonalities?.success ? (results.commonalities.details as any).commonalities : 'Test commonalities',
         generated_email: results.emailGeneration.success ? results.emailGeneration.details.fullEmail : 'Test email content'
       }
 
