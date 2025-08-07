@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
     console.log('Using real user ID:', realUserId)
     
     const results = {
-      basicInsert: { success: false, error: null },
-      deepInsert: { success: false, error: null },
+      basicInsert: { success: false, error: null as any },
+      deepInsert: { success: false, error: null as any },
       userInfo: { userId: realUserId, totalUsers: users.length }
     }
     

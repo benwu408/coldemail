@@ -55,9 +55,9 @@ export async function POST(request: NextRequest) {
     console.log('Using real user ID:', realUserId)
     
     const results = {
-      constraintCheck: { success: false, error: null, constraints: [] },
-      constraintDrop: { success: false, error: null },
-      testInsert: { success: false, error: null }
+      constraintCheck: { success: false, error: null as any, constraints: [] },
+      constraintDrop: { success: false, error: null as any },
+      testInsert: { success: false, error: null as any }
     }
     
     // Step 1: Check current constraints on search_mode column
