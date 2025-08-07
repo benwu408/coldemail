@@ -42,6 +42,43 @@ export async function POST(request: NextRequest) {
 
     console.log('Request body:', { recipientName, recipientCompany, recipientRole, searchMode, testPhase, simulateDatabase, validateSearchMode })
 
+    // Initialize results object after we have the variables
+    const results: any = {
+      testInfo: {
+        timestamp: new Date().toISOString(),
+        searchMode,
+        testPhase,
+        recipientName,
+        recipientCompany,
+        recipientRole,
+        environmentChecks: envChecks,
+        validationTests: validateSearchMode ? {
+          exactMatch: searchMode === 'deep',
+          includesDeep: searchMode?.includes('deep'),
+          startsWithDeep: searchMode?.startsWith('deep'),
+          endsWithDeep: searchMode?.endsWith('deep'),
+          toLowerCase: searchMode?.toLowerCase() === 'deep',
+          trim: searchMode?.trim() === 'deep',
+          regexTest: /^deep$/.test(searchMode),
+          arrayIncludes: ['basic', 'deep'].includes(searchMode)
+        } : null
+      },
+      phase1: null,
+      phase2: null,
+      phase2_5: null,
+      phase3: null,
+      finalReport: null,
+      errors: [],
+      databaseSimulation: simulateDatabase ? {
+        searchModeValidation: {
+          received: searchMode,
+          type: typeof searchMode,
+          length: searchMode?.length,
+          isValid: ['basic', 'deep'].includes(searchMode)
+        }
+      } : null
+    }
+
     // Validate searchMode format (exactly like the real Pro search)
     if (validateSearchMode) {
       console.log('=== VALIDATING SEARCH MODE ===')
@@ -98,42 +135,6 @@ export async function POST(request: NextRequest) {
           }, { status: 400 })
         }
       }
-    }
-
-    const results: any = {
-      testInfo: {
-        timestamp: new Date().toISOString(),
-        searchMode,
-        testPhase,
-        recipientName,
-        recipientCompany,
-        recipientRole,
-        environmentChecks: envChecks,
-        validationTests: validateSearchMode ? {
-          exactMatch: searchMode === 'deep',
-          includesDeep: searchMode?.includes('deep'),
-          startsWithDeep: searchMode?.startsWith('deep'),
-          endsWithDeep: searchMode?.endsWith('deep'),
-          toLowerCase: searchMode?.toLowerCase() === 'deep',
-          trim: searchMode?.trim() === 'deep',
-          regexTest: /^deep$/.test(searchMode),
-          arrayIncludes: ['basic', 'deep'].includes(searchMode)
-        } : null
-      },
-      phase1: null,
-      phase2: null,
-      phase2_5: null,
-      phase3: null,
-      finalReport: null,
-      errors: [],
-      databaseSimulation: simulateDatabase ? {
-        searchModeValidation: {
-          received: searchMode,
-          type: typeof searchMode,
-          length: searchMode?.length,
-          isValid: ['basic', 'deep'].includes(searchMode)
-        }
-      } : null
     }
 
     // Initialize Supabase
