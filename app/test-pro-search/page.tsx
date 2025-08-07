@@ -19,7 +19,9 @@ export default function TestProSearchPage() {
     recipientCompany: 'Google',
     recipientRole: 'Software Engineer',
     searchMode: 'deep',
-    testPhase: 'all'
+    testPhase: 'all',
+    simulateDatabase: false,
+    validateSearchMode: false
   })
 
   const handleInputChange = (field: string, value: string) => {
@@ -80,62 +82,80 @@ export default function TestProSearchPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="recipientName">Recipient Name</Label>
-                  <Input
-                    id="recipientName"
-                    value={formData.recipientName}
-                    onChange={(e) => handleInputChange('recipientName', e.target.value)}
-                    placeholder="John Doe"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="recipientCompany">Company</Label>
-                  <Input
-                    id="recipientCompany"
-                    value={formData.recipientCompany}
-                    onChange={(e) => handleInputChange('recipientCompany', e.target.value)}
-                    placeholder="Google"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="recipientRole">Role</Label>
-                  <Input
-                    id="recipientRole"
-                    value={formData.recipientRole}
-                    onChange={(e) => handleInputChange('recipientRole', e.target.value)}
-                    placeholder="Software Engineer"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="searchMode">Search Mode</Label>
-                  <select
-                    id="searchMode"
-                    value={formData.searchMode}
-                    onChange={(e) => handleInputChange('searchMode', e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="deep">Deep Search</option>
-                    <option value="basic">Basic Search</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="testPhase">Test Phase</Label>
-                  <select
-                    id="testPhase"
-                    value={formData.testPhase}
-                    onChange={(e) => handleInputChange('testPhase', e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="all">All Phases</option>
-                    <option value="phase1">Phase 1 Only</option>
-                    <option value="phase2">Phase 2 Only</option>
-                    <option value="phase3">Phase 3 Only</option>
-                  </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="recipientName">Recipient Name</Label>
+                    <Input
+                      id="recipientName"
+                      value={formData.recipientName}
+                      onChange={(e) => handleInputChange('recipientName', e.target.value)}
+                      placeholder="John Doe"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="recipientCompany">Company</Label>
+                    <Input
+                      id="recipientCompany"
+                      value={formData.recipientCompany}
+                      onChange={(e) => handleInputChange('recipientCompany', e.target.value)}
+                      placeholder="Google"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="recipientRole">Role</Label>
+                    <Input
+                      id="recipientRole"
+                      value={formData.recipientRole}
+                      onChange={(e) => handleInputChange('recipientRole', e.target.value)}
+                      placeholder="Software Engineer"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="searchMode">Search Mode</Label>
+                    <select
+                      id="searchMode"
+                      value={formData.searchMode}
+                      onChange={(e) => handleInputChange('searchMode', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="deep">Deep (Pro)</option>
+                      <option value="basic">Basic (Free)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label htmlFor="testPhase">Test Phase</Label>
+                    <select
+                      id="testPhase"
+                      value={formData.testPhase}
+                      onChange={(e) => handleInputChange('testPhase', e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="all">All Phases</option>
+                      <option value="phase1">Phase 1 Only</option>
+                      <option value="phase2">Phase 2 Only</option>
+                      <option value="phase3">Phase 3 Only</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="simulateDatabase"
+                      checked={formData.simulateDatabase}
+                      onChange={(e) => handleInputChange('simulateDatabase', e.target.checked)}
+                      className="rounded"
+                    />
+                    <Label htmlFor="simulateDatabase">Simulate Database Validation</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="validateSearchMode"
+                      checked={formData.validateSearchMode}
+                      onChange={(e) => handleInputChange('validateSearchMode', e.target.checked)}
+                      className="rounded"
+                    />
+                    <Label htmlFor="validateSearchMode">Detailed Search Mode Validation</Label>
+                  </div>
                 </div>
                 
                 <Button
@@ -176,34 +196,70 @@ export default function TestProSearchPage() {
             {results && (
               <div className="space-y-6">
                 {/* Test Info */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      Test Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium">Timestamp:</span>
-                        <p className="text-gray-600">{results.testInfo?.timestamp}</p>
+                {results.testInfo && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Test Information</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div><strong>Timestamp:</strong> {results.testInfo.timestamp}</div>
+                        <div><strong>Search Mode:</strong> {results.testInfo.searchMode}</div>
+                        <div><strong>Test Phase:</strong> {results.testInfo.testPhase}</div>
+                        <div><strong>Recipient:</strong> {results.testInfo.recipientName}</div>
+                        <div><strong>Company:</strong> {results.testInfo.recipientCompany}</div>
+                        <div><strong>Role:</strong> {results.testInfo.recipientRole}</div>
                       </div>
-                      <div>
-                        <span className="font-medium">Search Mode:</span>
-                        <p className="text-gray-600">{results.testInfo?.searchMode}</p>
+                      
+                      {results.testInfo.environmentChecks && (
+                        <div className="mt-4">
+                          <strong>Environment Checks:</strong>
+                          <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                            {Object.entries(results.testInfo.environmentChecks).map(([key, value]) => (
+                              <div key={key} className={`p-2 rounded ${value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                {key}: {value ? '✅' : '❌'}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {results.testInfo.validationTests && (
+                        <div className="mt-4">
+                          <strong>Search Mode Validation Tests:</strong>
+                          <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                            {Object.entries(results.testInfo.validationTests).map(([key, value]) => (
+                              <div key={key} className={`p-2 rounded ${value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                {key}: {value ? '✅' : '❌'}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Database Simulation Results */}
+                {results.databaseSimulation && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Database Simulation Results</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div><strong>Search Mode Received:</strong> {results.databaseSimulation.searchModeValidation.received}</div>
+                        <div><strong>Type:</strong> {results.databaseSimulation.searchModeValidation.type}</div>
+                        <div><strong>Length:</strong> {results.databaseSimulation.searchModeValidation.length}</div>
+                        <div><strong>Is Valid:</strong> 
+                          <span className={`ml-2 px-2 py-1 rounded text-sm ${results.databaseSimulation.searchModeValidation.isValid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {results.databaseSimulation.searchModeValidation.isValid ? '✅ Valid' : '❌ Invalid'}
+                          </span>
+                        </div>
                       </div>
-                      <div>
-                        <span className="font-medium">Test Phase:</span>
-                        <p className="text-gray-600">{results.testInfo?.testPhase}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Recipient:</span>
-                        <p className="text-gray-600">{results.testInfo?.recipientName}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Summary */}
                 {results.summary && (
