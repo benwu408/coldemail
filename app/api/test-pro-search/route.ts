@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
 
     // Phase 2: ChatGPT generates targeted searches
     if (testPhase === 'all' || testPhase === 'phase2') {
-      console.log('=== PHASE 2: ChatGPT Generated Searches ===')
+      console.log('=== PHASE 2: ChatGPT Generated Searches (Round 1) ===')
       
       if (!results.phase1 || results.phase1.results.length === 0) {
         console.log('Skipping Phase 2 - no Phase 1 results')
@@ -235,13 +235,128 @@ EXAMPLE FORMAT:
       }
     }
 
+    // Phase 2.5: ChatGPT generates second round of targeted searches
+    if (testPhase === 'all' || testPhase === 'phase2') {
+      console.log('=== PHASE 2.5: ChatGPT Generated Searches (Round 2) ===')
+      
+      const allPhase1And2Results = [
+        ...(results.phase1?.results || []),
+        ...(results.phase2?.results || [])
+      ]
+      
+      if (allPhase1And2Results.length === 0) {
+        console.log('Skipping Phase 2.5 - no previous results')
+        results.phase2_5 = { error: 'No previous results to base searches on' }
+      } else {
+        const allResultsInfo = allPhase1And2Results.map((result: any) => 
+          `**Title:** ${result.title}\n**Snippet:** ${result.snippet}\n**URL:** ${result.link}`
+        ).join('\n\n---\n\n')
+        
+        const phase2_5QueryPrompt = `Based on ALL the search results below about ${recipientName}${recipientCompany ? ` who works at ${recipientCompany}` : ''}${recipientRole ? ` as ${recipientRole}` : ''}, generate 4 MORE specific and targeted Google search queries that would help gather the deepest and most comprehensive information about this person.
+
+ALL PREVIOUS SEARCH RESULTS:
+${allResultsInfo}
+
+INSTRUCTIONS:
+- Generate 4 MORE specific Google search queries that would uncover the deepest information
+- Focus on areas that are STILL not fully covered after the previous searches
+- Look for: recent news, industry trends, company performance, market analysis, professional networks, industry events, thought leadership, emerging opportunities
+- These should be the MOST targeted and specific queries yet
+- Return ONLY the 4 search queries, one per line, no additional text
+
+EXAMPLE FORMAT:
+"John Doe" 2024 market trends analysis
+"John Doe" industry conference keynote
+"John Doe" company performance metrics
+"John Doe" professional network connections`
+
+        console.log('Phase 2.5 prompt length:', phase2_5QueryPrompt.length)
+        
+        try {
+          const phase2_5Response = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a research assistant that generates highly targeted Google search queries. Return only the search queries, one per line.'
+              },
+              {
+                role: 'user',
+                content: phase2_5QueryPrompt
+              }
+            ],
+            max_tokens: 200,
+            temperature: 0.7
+          })
+
+          const phase2_5Queries = phase2_5Response.choices[0]?.message?.content?.trim().split('\n').filter(q => q.trim()) || []
+          console.log('Phase 2.5 generated queries:', phase2_5Queries)
+          
+          // Execute Phase 2.5 searches
+          const phase2_5Results = []
+          
+          for (let i = 0; i < phase2_5Queries.length; i++) {
+            const query = phase2_5Queries[i]
+            console.log(`Phase 2.5 - Query ${i + 1}: ${query}`)
+            
+            try {
+              const response = await fetch(`https://www.searchapi.io/api/v1/search?engine=google&q=${encodeURIComponent(query)}&api_key=${process.env.SEARCHAPI_KEY}&num=5`)
+              
+              console.log(`Phase 2.5 - Query ${i + 1} response status:`, response.status)
+              
+              if (!response.ok) {
+                const errorText = await response.text()
+                console.error(`Phase 2.5 - Query ${i + 1} failed:`, response.status, errorText)
+                results.errors.push(`Phase 2.5 Query ${i + 1} failed: ${response.status} - ${errorText}`)
+                continue
+              }
+              
+              const data = await response.json()
+              console.log(`Phase 2.5 - Query ${i + 1} results count:`, data.organic_results?.length || 0)
+              
+              if (data.organic_results && data.organic_results.length > 0) {
+                const queryResults = data.organic_results.slice(0, 3).map((result: any) => ({
+                  title: result.title,
+                  snippet: result.snippet,
+                  link: result.link,
+                  query: query,
+                  phase: 2.5,
+                  queryIndex: i + 1
+                }))
+                phase2_5Results.push(...queryResults)
+              }
+              
+              await new Promise(resolve => setTimeout(resolve, 200))
+            } catch (searchError) {
+              console.error(`Phase 2.5 - Query ${i + 1} error:`, searchError)
+              results.errors.push(`Phase 2.5 Query ${i + 1} error: ${searchError}`)
+              continue
+            }
+          }
+          
+          results.phase2_5 = {
+            generatedQueries: phase2_5Queries,
+            results: phase2_5Results,
+            totalResults: phase2_5Results.length
+          }
+          
+          console.log(`Phase 2.5 completed. Found ${phase2_5Results.length} results.`)
+        } catch (error) {
+          console.error('Phase 2.5 ChatGPT error:', error)
+          results.phase2_5 = { error: `ChatGPT error: ${error}` }
+          results.errors.push(`Phase 2.5 ChatGPT error: ${error}`)
+        }
+      }
+    }
+
     // Phase 3: ChatGPT generates final report
     if (testPhase === 'all' || testPhase === 'phase3') {
       console.log('=== PHASE 3: Final Report Generation ===')
       
       const allResults = [
         ...(results.phase1?.results || []),
-        ...(results.phase2?.results || [])
+        ...(results.phase2?.results || []),
+        ...(results.phase2_5?.results || [])
       ]
       
       if (allResults.length === 0) {
@@ -307,7 +422,7 @@ Format the report with clear section headers using markdown. Be thorough but con
 
     // Summary
     results.summary = {
-      totalSearchResults: (results.phase1?.totalResults || 0) + (results.phase2?.totalResults || 0),
+      totalSearchResults: (results.phase1?.totalResults || 0) + (results.phase2?.totalResults || 0) + (results.phase2_5?.totalResults || 0),
       totalErrors: results.errors.length,
       success: results.errors.length === 0
     }

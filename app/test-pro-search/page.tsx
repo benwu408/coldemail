@@ -285,7 +285,7 @@ export default function TestProSearchPage() {
                 {results.phase2 && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>Phase 2: ChatGPT Generated Searches</CardTitle>
+                      <CardTitle>Phase 2: ChatGPT Generated Searches (Round 1)</CardTitle>
                     </CardHeader>
                     <CardContent>
                       {results.phase2.error ? (
@@ -309,6 +309,51 @@ export default function TestProSearchPage() {
                             <span className="font-medium">Results:</span>
                             <div className="mt-2 space-y-3 max-h-60 overflow-y-auto">
                               {results.phase2.results?.map((result: any, index: number) => (
+                                <div key={index} className="border border-gray-200 rounded p-3 bg-white">
+                                  <div className="font-medium text-sm">{result.title}</div>
+                                  <div className="text-sm text-gray-600 mt-1">{result.snippet}</div>
+                                  <div className="text-xs text-blue-600 mt-1">{result.link}</div>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    Query: {result.query} | Phase: {result.phase}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Phase 2.5 Results */}
+                {results.phase2_5 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Phase 2.5: ChatGPT Generated Searches (Round 2)</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {results.phase2_5.error ? (
+                        <div className="text-red-600">{results.phase2_5.error}</div>
+                      ) : (
+                        <div>
+                          <div className="mb-4">
+                            <span className="font-medium">Total Results:</span> {results.phase2_5.totalResults}
+                          </div>
+                          <div className="mb-4">
+                            <span className="font-medium">Generated Queries:</span>
+                            <ul className="mt-2 space-y-1">
+                              {results.phase2_5.generatedQueries?.map((query: string, index: number) => (
+                                <li key={index} className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                                  {query}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <span className="font-medium">Results:</span>
+                            <div className="mt-2 space-y-3 max-h-60 overflow-y-auto">
+                              {results.phase2_5.results?.map((result: any, index: number) => (
                                 <div key={index} className="border border-gray-200 rounded p-3 bg-white">
                                   <div className="font-medium text-sm">{result.title}</div>
                                   <div className="text-sm text-gray-600 mt-1">{result.snippet}</div>
