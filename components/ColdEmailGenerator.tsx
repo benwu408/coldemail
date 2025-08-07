@@ -131,59 +131,157 @@ export default function ColdEmailGenerator() {
         .eq('id', user.id)
         .single()
 
-      const response = await fetch('/api/generate-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.id}`
-        },
-        body: JSON.stringify({
-          recipientName: formData.recipientName,
-          recipientCompany: formData.recipientCompany,
-          recipientRole: formData.recipientRole,
-          recipientLinkedIn: formData.recipientLinkedIn,
-          purpose: formData.purpose,
-          tone: formData.tone,
-          userProfile: profile,
-          searchMode: searchMode
-        }),
-      })
+      // For Pro search, use progressive API calls
+      if (searchMode === 'deep') {
+        // Step 1: Generate research report
+        toast({
+          title: "Research Phase",
+          description: "Conducting comprehensive research (12 searches)...",
+        })
 
-      const data = await response.json()
+        const researchResponse = await fetch('/api/generate-research', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.id}`
+          },
+          body: JSON.stringify({
+            recipientName: formData.recipientName,
+            recipientCompany: formData.recipientCompany,
+            recipientRole: formData.recipientRole,
+            recipientLinkedIn: formData.recipientLinkedIn,
+            searchMode: searchMode
+          }),
+        })
 
-      if (!response.ok) {
-        // Handle subscription-specific errors
-        if (data.errorType === 'SUBSCRIPTION_REQUIRED') {
-          setUpgradePrompt({
-            feature: data.feature,
-            message: data.error
-          })
-          setShowUpgradeModal(true)
-          return
+        const researchData = await researchResponse.json()
+
+        if (!researchResponse.ok) {
+          throw new Error(researchData.error || 'Failed to generate research report')
         }
+
+        setResearchFindings(researchData.researchFindings)
         
-        if (data.errorType === 'DAILY_LIMIT_REACHED') {
-          setUserUsage(data.usageInfo)
-          toast({
-            title: "Daily Limit Reached",
-            description: data.error,
-            variant: "destructive",
-          })
-          setUpgradePrompt({
-            feature: "Unlimited Generations",
-            message: data.upgradeMessage || "Upgrade to Pro for unlimited generations"
-          })
-          setShowUpgradeModal(true)
-          return
+        // Step 2: Generate commonalities
+        toast({
+          title: "Connections Phase",
+          description: "Identifying meaningful connections...",
+        })
+
+        const commonalitiesResponse = await fetch('/api/generate-commonalities', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.id}`
+          },
+          body: JSON.stringify({
+            recipientName: formData.recipientName,
+            recipientCompany: formData.recipientCompany,
+            recipientRole: formData.recipientRole,
+            researchFindings: researchData.researchFindings,
+            senderProfile: profile
+          }),
+        })
+
+        const commonalitiesData = await commonalitiesResponse.json()
+
+        if (!commonalitiesResponse.ok) {
+          throw new Error(commonalitiesData.error || 'Failed to generate commonalities')
         }
 
-        throw new Error(data.error || 'Failed to generate email')
+        setCommonalities(commonalitiesData.commonalities)
+        
+        // Step 3: Generate final email
+        toast({
+          title: "Email Generation",
+          description: "Creating your personalized email...",
+        })
+
+        const emailResponse = await fetch('/api/generate-final-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.id}`
+          },
+          body: JSON.stringify({
+            recipientName: formData.recipientName,
+            recipientCompany: formData.recipientCompany,
+            recipientRole: formData.recipientRole,
+            recipientLinkedIn: formData.recipientLinkedIn,
+            purpose: formData.purpose,
+            tone: formData.tone,
+            researchFindings: researchData.researchFindings,
+            commonalities: commonalitiesData.commonalities,
+            searchMode: searchMode
+          }),
+        })
+
+        const emailData = await emailResponse.json()
+
+        if (!emailResponse.ok) {
+          throw new Error(emailData.error || 'Failed to generate final email')
+        }
+
+        setGeneratedEmail(emailData.email)
+        setDisplayedEmail(emailData.email)
+
+      } else {
+        // For basic search, use the original single API call
+        const response = await fetch('/api/generate-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.id}`
+          },
+          body: JSON.stringify({
+            recipientName: formData.recipientName,
+            recipientCompany: formData.recipientCompany,
+            recipientRole: formData.recipientRole,
+            recipientLinkedIn: formData.recipientLinkedIn,
+            purpose: formData.purpose,
+            tone: formData.tone,
+            userProfile: profile,
+            searchMode: searchMode
+          }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          // Handle subscription-specific errors
+          if (data.errorType === 'SUBSCRIPTION_REQUIRED') {
+            setUpgradePrompt({
+              feature: data.feature,
+              message: data.error
+            })
+            setShowUpgradeModal(true)
+            return
+          }
+          
+          if (data.errorType === 'DAILY_LIMIT_REACHED') {
+            setUserUsage(data.usageInfo)
+            toast({
+              title: "Daily Limit Reached",
+              description: data.error,
+              variant: "destructive",
+            })
+            setUpgradePrompt({
+              feature: "Unlimited Generations",
+              message: data.upgradeMessage || "Upgrade to Pro for unlimited generations"
+            })
+            setShowUpgradeModal(true)
+            return
+          }
+
+          throw new Error(data.error || 'Failed to generate email')
+        }
+
+        setGeneratedEmail(data.email)
+        setDisplayedEmail(data.email)
+        setResearchFindings(data.researchFindings)
+        setCommonalities(data.commonalities)
       }
 
-      setGeneratedEmail(data.email)
-      setDisplayedEmail(data.email)
-      setResearchFindings(data.researchFindings)
-      setCommonalities(data.commonalities)
       setShowEditSection(true)
 
       // Refresh usage data after successful generation
