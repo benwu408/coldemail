@@ -282,7 +282,7 @@ Format the email with proper greeting, body, and signature using the actual send
         search_mode: 'deep',
         research_findings: results.research?.success ? (results.research.details as any).researchFindings : 'Test research',
         commonalities: results.commonalities?.success ? (results.commonalities.details as any).commonalities : 'Test commonalities',
-        generated_email: results.emailGeneration.success ? results.emailGeneration.details.fullEmail : 'Test email content'
+        generated_email: results.emailGeneration.success ? (results.emailGeneration.details as any).fullEmail : 'Test email content'
       }
 
       console.log('Attempting to save email data:', {
