@@ -257,7 +257,7 @@ export async function POST(request: NextRequest) {
   let commonalities = ''
 
   if (effectiveSearchMode === 'deep') {
-    // Deep search mode using progressive SearchAPI + ChatGPT analysis
+    // Deep search mode using progressive SearchAPI + ChatGPT analysis (same as tester)
     console.log('Starting deep search mode with progressive SearchAPI + ChatGPT analysis...')
     
     try {
@@ -269,24 +269,21 @@ export async function POST(request: NextRequest) {
         throw new Error('SearchAPI key not configured')
       }
       
-      // Phase 1: Initial search queries (same as basic search)
+      // Phase 1: Initial search queries (same as tester)
       const initialSearchQueries = [
-        // LinkedIn search
         `site:linkedin.com/in/ "${recipientName}"${recipientCompany ? ` "${recipientCompany}"` : ''}`,
-        // General professional information
         `"${recipientName}"${recipientCompany ? ` "${recipientCompany}"` : ''}${recipientRole ? ` "${recipientRole}"` : ''} professional background`,
-        // Education search
         `"${recipientName}" education university college${recipientCompany ? ` OR "${recipientCompany}"` : ''}`,
-        // Career and experience search
         `"${recipientName}" career experience${recipientRole ? ` "${recipientRole}"` : ''}${recipientCompany ? ` "${recipientCompany}"` : ''}`
       ]
       
       console.log('Executing Phase 1 SearchAPI searches...')
       const phase1Results = []
       
-      for (const query of initialSearchQueries) {
+      for (let i = 0; i < initialSearchQueries.length; i++) {
+        const query = initialSearchQueries[i]
         try {
-          console.log(`Phase 1 - Searching: ${query}`)
+          console.log(`Phase 1 - Query ${i + 1}: ${query}`)
           const response = await fetch(`https://www.searchapi.io/api/v1/search?engine=google&q=${encodeURIComponent(query)}&api_key=${process.env.SEARCHAPI_KEY}&num=5`)
           
           if (!response.ok) {
@@ -302,7 +299,8 @@ export async function POST(request: NextRequest) {
               snippet: result.snippet,
               link: result.link,
               query: query,
-              phase: 1
+              phase: 1,
+              queryIndex: i + 1
             }))
             phase1Results.push(...queryResults)
           }
@@ -316,8 +314,13 @@ export async function POST(request: NextRequest) {
       
       console.log(`Phase 1 completed. Found ${phase1Results.length} results.`)
       
-      // Phase 2: Ask ChatGPT to generate 4 more targeted search queries based on Phase 1 results
-      console.log('Deep search - Phase 2: Generating targeted searches based on initial findings...')
+      // Phase 2: ChatGPT generates targeted searches (same as tester)
+      console.log('Deep search - Phase 2: ChatGPT Generated Searches (Round 1)...')
+      
+      if (phase1Results.length === 0) {
+        console.log('Skipping Phase 2 - no Phase 1 results')
+        throw new Error('No Phase 1 results to base searches on')
+      }
       
       const phase1Info = phase1Results.map((result: any) => 
         `**Title:** ${result.title}\n**Snippet:** ${result.snippet}\n**URL:** ${result.link}`
@@ -326,54 +329,46 @@ export async function POST(request: NextRequest) {
       const phase2QueryPrompt = `Based on the initial search results below about ${recipientName}${recipientCompany ? ` who works at ${recipientCompany}` : ''}${recipientRole ? ` as ${recipientRole}` : ''}, generate 4 more specific and targeted Google search queries that would help gather deeper information about this person.
 
 INITIAL SEARCH RESULTS:
-${phase1Info || 'Limited initial results found'}
+${phase1Info}
 
 INSTRUCTIONS:
 - Generate 4 specific Google search queries that would uncover more detailed information
 - Focus on areas that weren't fully covered in the initial searches
 - Look for: achievements, publications, speaking engagements, projects, industry recognition, social media presence, interviews, news mentions
-- Make the queries specific and likely to return valuable professional information
-- Avoid repeating the same type of searches already done
+- Return ONLY the 4 search queries, one per line, no additional text
 
-Please respond with ONLY 4 search queries, one per line, in this exact format:
-1. [search query 1]
-2. [search query 2] 
-3. [search query 3]
-4. [search query 4]`
+EXAMPLE FORMAT:
+"John Doe" speaking engagements conferences
+"John Doe" publications research papers
+"John Doe" awards recognition
+"John Doe" projects portfolio`
 
       const phase2Response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: 'gpt-4o-mini',
         messages: [
           {
-            role: "system",
-            content: "You are a research expert who creates targeted Google search queries to find comprehensive information about professionals. Generate specific, actionable search queries that will uncover deeper insights."
+            role: 'system',
+            content: 'You are a research assistant that generates targeted Google search queries. Return only the search queries, one per line.'
           },
           {
-            role: "user",
+            role: 'user',
             content: phase2QueryPrompt
           }
         ],
-        temperature: 0.3,
-        max_tokens: 300
+        max_tokens: 200,
+        temperature: 0.7
       })
 
-      const phase2QueriesText = phase2Response.choices[0]?.message?.content || ''
-      const phase2Queries = phase2QueriesText
-        .split('\n')
-        .filter(line => line.trim() && /^\d+\./.test(line.trim()))
-        .map(line => line.replace(/^\d+\.\s*/, '').trim())
-        .slice(0, 4)
-
-      console.log('Generated Phase 2 queries:', phase2Queries)
+      const phase2Queries = phase2Response.choices[0]?.message?.content?.trim().split('\n').filter(q => q.trim()) || []
+      console.log('Phase 2 generated queries:', phase2Queries)
       
       // Execute Phase 2 searches
       const phase2Results = []
       
-      for (const query of phase2Queries) {
-        if (!query) continue
-        
+      for (let i = 0; i < phase2Queries.length; i++) {
+        const query = phase2Queries[i]
         try {
-          console.log(`Phase 2 - Searching: ${query}`)
+          console.log(`Phase 2 - Query ${i + 1}: ${query}`)
           const response = await fetch(`https://www.searchapi.io/api/v1/search?engine=google&q=${encodeURIComponent(query)}&api_key=${process.env.SEARCHAPI_KEY}&num=5`)
           
           if (!response.ok) {
@@ -389,7 +384,8 @@ Please respond with ONLY 4 search queries, one per line, in this exact format:
               snippet: result.snippet,
               link: result.link,
               query: query,
-              phase: 2
+              phase: 2,
+              queryIndex: i + 1
             }))
             phase2Results.push(...queryResults)
           }
@@ -403,64 +399,64 @@ Please respond with ONLY 4 search queries, one per line, in this exact format:
       
       console.log(`Phase 2 completed. Found ${phase2Results.length} results.`)
       
-      // Phase 3: Ask ChatGPT to generate 4 final targeted search queries based on all previous results
-      console.log('Deep search - Phase 3: Generating final targeted searches...')
+      // Phase 2.5: ChatGPT generates second round of targeted searches (same as tester)
+      console.log('Deep search - Phase 2.5: ChatGPT Generated Searches (Round 2)...')
       
-      const combinedPhase1And2Info = [...phase1Results, ...phase2Results].map((result: any) => 
-        `**Phase ${result.phase} - Title:** ${result.title}\n**Snippet:** ${result.snippet}\n**URL:** ${result.link}\n**Query:** ${result.query}`
+      const allPhase1And2Results = [...phase1Results, ...phase2Results]
+      
+      if (allPhase1And2Results.length === 0) {
+        console.log('Skipping Phase 2.5 - no previous results')
+        throw new Error('No previous results to base searches on')
+      }
+      
+      const allResultsInfo = allPhase1And2Results.map((result: any) => 
+        `**Title:** ${result.title}\n**Snippet:** ${result.snippet}\n**URL:** ${result.link}`
       ).join('\n\n---\n\n')
       
-      const phase3QueryPrompt = `Based on all the search results below about ${recipientName}${recipientCompany ? ` who works at ${recipientCompany}` : ''}${recipientRole ? ` as ${recipientRole}` : ''}, generate 4 final specific search queries to fill any remaining gaps and gather the most comprehensive information possible.
+      const phase2_5QueryPrompt = `Based on ALL the search results below about ${recipientName}${recipientCompany ? ` who works at ${recipientCompany}` : ''}${recipientRole ? ` as ${recipientRole}` : ''}, generate 4 MORE specific and targeted Google search queries that would help gather the deepest and most comprehensive information about this person.
 
 ALL PREVIOUS SEARCH RESULTS:
-${combinedPhase1And2Info || 'Limited results found in previous phases'}
+${allResultsInfo}
 
 INSTRUCTIONS:
-- Generate 4 final specific Google search queries to complete the research
-- Look for any gaps in the information gathered so far
-- Focus on: detailed background, specific achievements, industry impact, thought leadership, personal interests, volunteer work, awards, certifications
-- Make these queries highly specific and likely to uncover unique information not found yet
-- Avoid repeating similar searches already performed
+- Generate 4 MORE specific Google search queries that would uncover the deepest information
+- Focus on areas that are STILL not fully covered after the previous searches
+- Look for: recent news, industry trends, company performance, market analysis, professional networks, industry events, thought leadership, emerging opportunities
+- These should be the MOST targeted and specific queries yet
+- Return ONLY the 4 search queries, one per line, no additional text
 
-Please respond with ONLY 4 search queries, one per line, in this exact format:
-1. [search query 1]
-2. [search query 2]
-3. [search query 3] 
-4. [search query 4]`
+EXAMPLE FORMAT:
+"John Doe" 2024 market trends analysis
+"John Doe" industry conference keynote
+"John Doe" company performance metrics
+"John Doe" professional network connections`
 
-      const phase3Response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+      const phase2_5Response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
         messages: [
           {
-            role: "system",
-            content: "You are a research expert who creates highly targeted Google search queries to complete comprehensive professional research. Focus on uncovering unique insights and filling information gaps."
+            role: 'system',
+            content: 'You are a research assistant that generates highly targeted Google search queries. Return only the search queries, one per line.'
           },
           {
-            role: "user",
-            content: phase3QueryPrompt
+            role: 'user',
+            content: phase2_5QueryPrompt
           }
         ],
-        temperature: 0.3,
-        max_tokens: 300
+        max_tokens: 200,
+        temperature: 0.7
       })
 
-      const phase3QueriesText = phase3Response.choices[0]?.message?.content || ''
-      const phase3Queries = phase3QueriesText
-        .split('\n')
-        .filter(line => line.trim() && /^\d+\./.test(line.trim()))
-        .map(line => line.replace(/^\d+\.\s*/, '').trim())
-        .slice(0, 4)
-
-      console.log('Generated Phase 3 queries:', phase3Queries)
+      const phase2_5Queries = phase2_5Response.choices[0]?.message?.content?.trim().split('\n').filter(q => q.trim()) || []
+      console.log('Phase 2.5 generated queries:', phase2_5Queries)
       
-      // Execute Phase 3 searches
-      const phase3Results = []
+      // Execute Phase 2.5 searches
+      const phase2_5Results = []
       
-      for (const query of phase3Queries) {
-        if (!query) continue
-        
+      for (let i = 0; i < phase2_5Queries.length; i++) {
+        const query = phase2_5Queries[i]
         try {
-          console.log(`Phase 3 - Searching: ${query}`)
+          console.log(`Phase 2.5 - Query ${i + 1}: ${query}`)
           const response = await fetch(`https://www.searchapi.io/api/v1/search?engine=google&q=${encodeURIComponent(query)}&api_key=${process.env.SEARCHAPI_KEY}&num=5`)
           
           if (!response.ok) {
@@ -476,24 +472,25 @@ Please respond with ONLY 4 search queries, one per line, in this exact format:
               snippet: result.snippet,
               link: result.link,
               query: query,
-              phase: 3
+              phase: 2.5,
+              queryIndex: i + 1
             }))
-            phase3Results.push(...queryResults)
+            phase2_5Results.push(...queryResults)
           }
           
           await new Promise(resolve => setTimeout(resolve, 200))
         } catch (searchError) {
-          console.error(`Error in Phase 3 SearchAPI search for query "${query}":`, searchError)
+          console.error(`Error in Phase 2.5 SearchAPI search for query "${query}":`, searchError)
           continue
         }
       }
       
-      console.log(`Phase 3 completed. Found ${phase3Results.length} results.`)
+      console.log(`Phase 2.5 completed. Found ${phase2_5Results.length} results.`)
       
-      // Final Phase: Generate comprehensive report using all search results
+      // Final Phase: Generate comprehensive report using all search results (same as tester)
       console.log('Deep search - Final Phase: Generating comprehensive report with all search data...')
       
-      const allSearchResults = [...phase1Results, ...phase2Results, ...phase3Results]
+      const allSearchResults = [...phase1Results, ...phase2Results, ...phase2_5Results]
       console.log(`Total search results collected: ${allSearchResults.length}`)
       
       // Extract LinkedIn URL if found
@@ -509,12 +506,12 @@ Please respond with ONLY 4 search queries, one per line, in this exact format:
         }
       }
       
-      // Compile all search information for final ChatGPT analysis
+      // Compile all search information for final ChatGPT analysis (same as tester)
       const allSearchInfo = allSearchResults.map((result: any) => 
         `**Phase ${result.phase} Result**\n**Source:** ${result.title}\n**URL:** ${result.link}\n**Info:** ${result.snippet}\n**Search Query:** ${result.query}`
       ).join('\n\n---\n\n')
       
-      // Generate final comprehensive report
+      // Generate final comprehensive report (same as tester)
       const finalReportPrompt = `Create a DETAILED and COMPREHENSIVE professional research report about ${recipientName}${recipientCompany ? ` who works at ${recipientCompany}` : ''}${recipientRole ? ` as ${recipientRole}` : ''}.
 
 ${recipientLinkedIn ? `PROVIDED LINKEDIN URL: ${recipientLinkedIn}` : ''}
@@ -524,145 +521,42 @@ COMPREHENSIVE SEARCH RESULTS FROM 3-PHASE DEEP RESEARCH:
 ${allSearchInfo || 'Limited search results found'}
 
 INSTRUCTIONS:
-- Create a detailed and comprehensive professional research report about this person
-- Use all the search results above as your primary source of information
-- Organize the information logically to tell their complete professional story
-- Include as much verified detail as possible from the search results
-- If LinkedIn information was found, prioritize that as the most reliable source
-- Create sections that make sense based on the actual information found
-- Be specific about achievements, background, experience, education, and notable work
-- Only include information that can be verified from the search results provided
-- If any information seems contradictory, note the discrepancies
+Create a comprehensive research report with the following sections:
+1. **Professional Background** - Current role, company, and career overview
+2. **Education & Credentials** - Academic background and qualifications
+3. **Career Experience** - Key positions, companies, and responsibilities
+4. **Achievements & Recognition** - Awards, publications, speaking engagements
+5. **Recent Activities** - Latest projects, news, or developments
+6. **Professional Interests** - Focus areas, expertise, and specializations
+7. **Online Presence** - LinkedIn, social media, and digital footprint
 
-Structure the report comprehensively but adapt completely based on what information was actually found. Consider including sections like:
+Format the report with clear section headers using markdown. Be thorough but concise.`
 
-# Research Report: ${recipientName}
-
-## **Professional Overview**
-## **Current Role & Responsibilities**
-## **Career Background & Progression**
-## **Education & Qualifications**
-## **Notable Achievements & Recognition**
-## **Industry Involvement & Thought Leadership**
-## **Publications, Speaking, or Media Presence**
-## **Professional Network & Associations**
-## **Skills & Expertise Areas**
-## **Personal Interests** (if found)
-## **LinkedIn Profile Summary**
-
-IMPORTANT FORMATTING REQUIREMENTS:
-- This is a DEEP research report - be thorough and detailed
-- Use # for the main title
-- Use ## **Section Name** for all section headers (with bold formatting)
-- Only include sections where you have substantial information from search results
-- Be specific about what you found rather than making general assumptions
-- Organize information logically and professionally
-- Base everything strictly on the search results provided above
-- Make this valuable for someone wanting to build a meaningful professional relationship`
-
-      const finalReportResponse = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+      const finalResponse = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
         messages: [
           {
-            role: "system",
-            content: "You are a senior professional research analyst who creates comprehensive, detailed reports about individuals for high-level networking and business development purposes. Base your analysis strictly on the extensive search results provided and create a thorough, well-organized report."
+            role: 'system',
+            content: 'You are a professional research analyst. Create detailed, well-structured research reports based on search results.'
           },
           {
-            role: "user",
+            role: 'user',
             content: finalReportPrompt
           }
         ],
-        temperature: 0.3,
-        max_tokens: 2500
+        max_tokens: 1500,
+        temperature: 0.3
       })
 
-      researchFindings = finalReportResponse.choices[0]?.message?.content || ''
-      console.log('Comprehensive deep research report generated successfully, length:', researchFindings.length)
+      researchFindings = finalResponse.choices[0]?.message?.content?.trim() || ''
+      console.log('Final comprehensive report generated successfully')
       
-      // Add proper spacing around bold lines
-      researchFindings = addSpacingAroundBoldLines(researchFindings)
-
     } catch (error) {
-      console.error('Deep SearchAPI + ChatGPT analysis error:', error)
-      console.log('Falling back to basic information...')
-      
-      // Fallback to basic info
-      researchFindings = `# Research Report: ${recipientName}
-
-## **Overview**
-
-${recipientName}${recipientCompany ? ` works at ${recipientCompany}` : ''}${recipientRole ? ` as ${recipientRole}` : ''}.
-
-## **Professional Background**
-
-Based on their role${recipientRole ? ` as ${recipientRole}` : ''}${recipientCompany ? ` at ${recipientCompany}` : ''}, they likely have relevant professional experience in their field.
-
-${recipientLinkedIn ? `## **LinkedIn Profile**\n\nLinkedIn Profile: ${recipientLinkedIn}\n\nTheir LinkedIn profile would contain detailed information about their professional background, experience, and achievements.` : '## **Additional Information**\n\nMore detailed information would be available with access to their LinkedIn profile and other professional sources.'}`
-      
-      console.log('Using fallback basic info')
+      console.error('Error in deep search mode:', error)
+      // Fallback to basic search if deep search fails
+      console.log('Falling back to basic search mode...')
+      effectiveSearchMode = 'basic'
     }
-
-    // Find commonalities between user profile and recipient
-    if (userProfile) {
-      console.log('Generating commonalities with user profile...')
-      
-      const commonalitiesPrompt = `SENDER'S PROFILE (the person writing the email):
-${JSON.stringify(userProfile, null, 2)}
-
-RECIPIENT'S INFORMATION (the person being emailed):
-${researchFindings}
-
-Create a DETAILED and COMPREHENSIVE list of specific connections between the SENDER and RECIPIENT. Be thorough and find as many potential connections as possible:
-
-# Connections & Shared Experiences
-
-[Create sections based on potential connections you find, such as:
-- Educational Connections
-- Professional Connections  
-- Geographic Connections
-- Industry Connections
-- Skill Connections
-- Interest Connections
-- Career Stage Connections
-- Company/Industry Type Connections
-- Technology Connections
-- Leadership Connections
-- Any other relevant connections]
-
-For each connection found, use this format:
-**Connection:** [Specific connection]
-**Details:** [Detailed explanation with specific details that could be used in a networking email]
-
-IMPORTANT FORMATTING:
-- Use ## for main section headers
-- Use **bold** for connection titles
-- Include empty lines before and after section headers
-- Focus on finding actual connections and shared experiences
-- Each connection should be specific and actionable for networking
-
-Focus on finding genuine commonalities that could create meaningful conversation starters for a networking email.`
-
-      const commonalitiesResponse = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "You are a networking expert. Analyze the sender's profile and the recipient's information to find meaningful commonalities that could create genuine connections for a networking email."
-          },
-          {
-            role: "user",
-            content: commonalitiesPrompt
-          }
-        ]
-      })
-
-      commonalities = commonalitiesResponse.choices[0]?.message?.content || ''
-      console.log('Commonalities generated successfully')
-      
-      // Add proper spacing around bold lines
-      commonalities = addSpacingAroundBoldLines(commonalities)
-    }
-
   } else {
     // Basic search mode using SearchAPI + ChatGPT analysis
     console.log('Using basic search mode with SearchAPI + ChatGPT analysis...')
