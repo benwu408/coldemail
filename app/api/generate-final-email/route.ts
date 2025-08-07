@@ -21,6 +21,16 @@ export async function POST(request: NextRequest) {
       searchMode
     } = body
 
+    // Get user ID from Authorization header
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+    const userId = authHeader.replace('Bearer ', '')
+
     // Validate required fields
     if (!recipientName) {
       return NextResponse.json(
@@ -44,6 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('=== Final Email Generation Started ===')
+    console.log('User ID:', userId)
     console.log('Recipient:', recipientName, recipientCompany, recipientRole)
     console.log('Purpose:', purpose)
     console.log('Tone:', tone)
@@ -55,21 +66,14 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not authenticated' },
-        { status: 401 }
-      )
-    }
-
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single()
 
-    if (!profile) {
+    if (profileError || !profile) {
+      console.error('Error getting user profile:', profileError)
       return NextResponse.json(
         { error: 'User profile not found' },
         { status: 404 }
@@ -129,7 +133,7 @@ Format the email with proper greeting, body, and signature.`
     const { data: savedEmail, error: saveError } = await supabase
       .from('generated_emails')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         recipient_name: recipientName,
         recipient_company: recipientCompany || null,
         recipient_role: recipientRole || null,

@@ -17,6 +17,16 @@ export async function POST(request: NextRequest) {
       senderProfile
     } = body
 
+    // Get user ID from Authorization header
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+    const userId = authHeader.replace('Bearer ', '')
+
     // Validate required fields
     if (!recipientName) {
       return NextResponse.json(
@@ -33,6 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('=== Commonalities Generation Started ===')
+    console.log('User ID:', userId)
     console.log('Recipient:', recipientName, recipientCompany, recipientRole)
 
     // Get sender profile from database
@@ -43,22 +54,15 @@ export async function POST(request: NextRequest) {
 
     let senderInfo = senderProfile
     if (!senderInfo) {
-      // Get sender profile from database
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        return NextResponse.json(
-          { error: 'User not authenticated' },
-          { status: 401 }
-        )
-      }
-
-      const { data: profile } = await supabase
+      // Get sender profile from database using user ID
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', userId)
         .single()
 
-      if (!profile) {
+      if (profileError || !profile) {
+        console.error('Error getting user profile:', profileError)
         return NextResponse.json(
           { error: 'User profile not found' },
           { status: 404 }

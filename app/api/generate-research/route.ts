@@ -17,6 +17,16 @@ export async function POST(request: NextRequest) {
       searchMode
     } = body
 
+    // Get user ID from Authorization header
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+    const userId = authHeader.replace('Bearer ', '')
+
     // Validate required fields
     if (!recipientName) {
       return NextResponse.json(
@@ -33,6 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('=== Research Generation Started ===')
+    console.log('User ID:', userId)
     console.log('Recipient:', recipientName, recipientCompany, recipientRole)
     console.log('Search Mode:', searchMode)
 
