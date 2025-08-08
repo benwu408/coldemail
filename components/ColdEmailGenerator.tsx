@@ -48,8 +48,11 @@ export default function ColdEmailGenerator() {
   } | null>(null)
   const [userSubscription, setUserSubscription] = useState<{
     plan_name: string
+    status: string
     search_type: string
     email_editing_enabled: boolean
+    daily_generation_limit: number | null
+    priority_support: boolean
   } | null>(null)
 
   // Form state
@@ -437,6 +440,7 @@ export default function ColdEmailGenerator() {
             setUserSubscription({
               plan_name: profileData.subscription_plan,
               status: profileData.subscription_status,
+              search_type: profileData.subscription_plan === 'pro' ? 'deep' : 'basic',
               daily_generation_limit: profileData.subscription_plan === 'pro' ? null : 2,
               email_editing_enabled: profileData.subscription_plan === 'pro',
               priority_support: profileData.subscription_plan === 'pro'
