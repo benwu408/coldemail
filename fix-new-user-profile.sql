@@ -1,7 +1,7 @@
--- Create a trigger to automatically create profiles for new users
--- This ensures every new user gets a profile with default free plan
+-- Fix for new user profile creation issue
+-- This script ensures that new users get profiles created automatically
 
--- First, ensure the profiles table exists with the correct structure
+-- Step 1: Ensure profiles table exists with correct structure
 CREATE TABLE IF NOT EXISTS profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Add missing columns if they don't exist
+-- Step 2: Add missing columns if they don't exist
 DO $$
 BEGIN
     -- Add user_id column if it doesn't exist
@@ -53,10 +53,10 @@ BEGIN
     END IF;
 END $$;
 
--- Enable RLS on profiles table
+-- Step 3: Enable RLS on profiles table
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policies for profiles table
+-- Step 4: Create RLS policies for profiles table
 DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
@@ -70,7 +70,7 @@ CREATE POLICY "Users can insert own profile" ON profiles
 CREATE POLICY "Users can update own profile" ON profiles
     FOR UPDATE USING (auth.uid() = id OR auth.uid() = user_id);
 
--- Create the trigger function
+-- Step 5: Create the trigger function
 CREATE OR REPLACE FUNCTION create_user_profile()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -100,18 +100,50 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Drop the trigger if it exists
+-- Step 6: Drop the trigger if it exists and recreate it
 DROP TRIGGER IF EXISTS create_profile_on_signup ON auth.users;
 
--- Create the trigger
 CREATE TRIGGER create_profile_on_signup
     AFTER INSERT ON auth.users
     FOR EACH ROW
     EXECUTE FUNCTION create_user_profile();
 
--- Test message
+-- Step 7: Create missing profiles for existing users
+INSERT INTO profiles (
+    id,
+    user_id,
+    subscription_plan,
+    subscription_status,
+    created_at,
+    updated_at
+)
+SELECT 
+    au.id,
+    au.id,
+    'free',
+    'active',
+    au.created_at,
+    NOW()
+FROM auth.users au
+LEFT JOIN profiles p ON au.id = p.id
+WHERE p.id IS NULL;
+
+-- Step 8: Success message
 DO $$
+DECLARE
+    profile_count INTEGER;
+    user_count INTEGER;
 BEGIN
-    RAISE NOTICE 'Profile creation trigger installed successfully!';
-    RAISE NOTICE 'New users will automatically get profiles with free plan.';
+    SELECT COUNT(*) INTO profile_count FROM profiles;
+    SELECT COUNT(*) INTO user_count FROM auth.users;
+    
+    RAISE NOTICE 'SUCCESS: Profile creation trigger installed!';
+    RAISE NOTICE 'Total users: %', user_count;
+    RAISE NOTICE 'Total profiles: %', profile_count;
+    
+    IF profile_count = user_count THEN
+        RAISE NOTICE 'SUCCESS: All users now have profiles!';
+    ELSE
+        RAISE NOTICE 'WARNING: % users still missing profiles', (user_count - profile_count);
+    END IF;
 END $$; 
