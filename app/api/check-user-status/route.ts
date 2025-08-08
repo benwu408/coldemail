@@ -32,11 +32,11 @@ export async function GET(request: NextRequest) {
       })
     }
     
-    // Get user's profile
+    // Get user's profile with subscription info
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('subscription_plan, subscription_status, stripe_customer_id, stripe_subscription_id, updated_at')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single()
     
     if (profileError) {
@@ -48,11 +48,6 @@ export async function GET(request: NextRequest) {
       })
     }
     
-    // Get subscription details
-    const { data: subscriptionData, error: subError } = await supabase.rpc('get_user_subscription', {
-      user_uuid: user.id
-    })
-    
     return NextResponse.json({
       found: true,
       user: {
@@ -61,8 +56,10 @@ export async function GET(request: NextRequest) {
         created_at: user.created_at
       },
       profile: profileData,
-      subscription: subscriptionData?.[0] || null,
-      subscriptionError: subError?.message || null
+      subscription: {
+        plan_name: profileData.subscription_plan,
+        status: profileData.subscription_status
+      }
     })
     
   } catch (error) {

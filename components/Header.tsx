@@ -45,15 +45,18 @@ export default function Header({
       if (!user?.id) return
 
       try {
-        // Get user subscription
-        const { data: subscriptionData, error: subscriptionError } = await supabase.rpc('get_user_subscription', {
-          user_uuid: user.id
-        })
+        // Get user subscription from profiles table
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('subscription_plan, subscription_status')
+          .eq('user_id', user.id)
+          .single()
 
-        if (subscriptionError) {
-          console.error('Error fetching user subscription:', subscriptionError)
-        } else if (subscriptionData && subscriptionData.length > 0) {
-          setUserPlan(subscriptionData[0].plan_name || 'free')
+        if (profileError) {
+          console.error('Error fetching profile:', profileError)
+          setUserPlan('free')
+        } else if (profileData) {
+          setUserPlan(profileData.subscription_plan === 'pro' && profileData.subscription_status === 'active' ? 'pro' : 'free')
         } else {
           setUserPlan('free')
         }

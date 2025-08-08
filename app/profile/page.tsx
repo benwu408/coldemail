@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -64,7 +64,7 @@ function ProfilePageContent() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [userSubscription, setUserSubscription] = useState<{ plan_name: string } | null>(null)
+  const [userSubscription, setUserSubscription] = useState<{ plan_name: string, status: string } | null>(null)
   const [profile, setProfile] = useState<ProfileData>({
     full_name: '',
     job_title: '',
@@ -86,139 +86,65 @@ function ProfilePageContent() {
     website: ''
   })
   const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null)
+  const profileRef = useRef<ProfileData>(profile)
+  const [skillsDisplay, setSkillsDisplay] = useState('')
+  const [interestsDisplay, setInterestsDisplay] = useState('')
 
+  // Update ref whenever profile changes
   useEffect(() => {
-    if (user) {
-      loadProfile()
-      loadUserSubscription()
-    }
-  }, [user])
+    profileRef.current = profile
+  }, [profile])
 
   const loadProfile = async () => {
     try {
       const response = await fetch('/api/profile', {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${user?.id}`,
         },
       })
-      
+
       if (response.ok) {
         const data = await response.json()
-        console.log('Profile loaded successfully:', data)
-        console.log('Education data from database:', data.education)
-        console.log('School value from database:', data.education?.school)
-        console.log('School value type:', typeof data.education?.school)
-        console.log('School value length:', data.education?.school?.length)
-
-        // Ensure education object exists and has proper structure
-        const education = data.education || {}
-        const parsedEducation = {
-          school: education.school || '',
-          degree: education.degree || '',
-          major: education.major || '',
-          graduation_year: education.graduation_year || ''
-        }
-
-        console.log('Parsed education data:', parsedEducation)
-
-        setProfile({
-          ...data,
-          full_name: data.full_name || '',
-          job_title: data.job_title || '',
-          company: data.company || '',
-          education: parsedEducation,
-          location: data.location || '',
-          industry: data.industry || '',
-          experience_years: data.experience_years || '',
-          job_experiences: data.job_experiences || [],
-          skills: data.skills || [],
-          interests: data.interests || [],
-          background: data.background || '',
-          linkedin_url: data.linkedin_url || '',
-          website: data.website || ''
+        setProfile(data)
+        // Set subscription status from profile data
+        setUserSubscription({
+          plan_name: data.subscription_plan,
+          status: data.subscription_status
         })
-
-        // Log the profile state after setting it
-        console.log('Profile state after setting:', {
-          ...data,
-          full_name: data.full_name || '',
-          job_title: data.job_title || '',
-          company: data.company || '',
-          education: parsedEducation,
-          location: data.location || '',
-          industry: data.industry || '',
-          experience_years: data.experience_years || '',
-          job_experiences: data.job_experiences || [],
-          skills: data.skills || [],
-          interests: data.interests || [],
-          background: data.background || '',
-          linkedin_url: data.linkedin_url || '',
-          website: data.website || '',
-          resume_text: data.resume_text || '',
-          resume_filename: data.resume_filename || ''
-        })
+      } else {
+        console.error('Failed to load profile')
       }
     } catch (error) {
       console.error('Error loading profile:', error)
-      toast({
-        title: "Error",
-        description: "Failed to load profile data.",
-        variant: "destructive",
-      })
     } finally {
       setIsLoading(false)
     }
   }
 
-  const loadUserSubscription = async () => {
-    try {
-      const { data: subscriptionData, error } = await supabase.rpc('get_user_subscription', {
-        user_uuid: user?.id
-      })
-
-      if (error) {
-        console.error('Error fetching subscription:', error)
-        // Default to free plan on error
-        setUserSubscription({ plan_name: 'free' })
-      } else if (subscriptionData && subscriptionData.length > 0) {
-        setUserSubscription(subscriptionData[0])
-      } else {
-        // Default to free plan if no subscription found
-        setUserSubscription({ plan_name: 'free' })
-      }
-    } catch (error) {
-      console.error('Error in loadUserSubscription:', error)
-      setUserSubscription({ plan_name: 'free' })
+  useEffect(() => {
+    if (user) {
+      loadProfile()
     }
-  }
+  }, [user])
 
-  const isPro = userSubscription?.plan_name === 'pro'
-
-  // Component for Pro-only fields
   const ProOnlyField = ({ children, label }: { children: React.ReactNode, label?: string }) => {
-    if (isPro) {
+    // Check both plan and status
+    if (userSubscription?.plan_name === 'pro' && userSubscription?.status === 'active') {
       return <>{children}</>
     }
     
     return (
       <div className="relative">
-        <div className="opacity-50 pointer-events-none">
-          {children}
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-50/80 rounded-lg border-2 border-dashed border-gray-300">
-          <div className="text-center p-4">
-            <Lock className="h-6 w-6 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-600 mb-1">Pro Feature</p>
-            <p className="text-xs text-gray-500 mb-3">
-              {label ? `${label} is` : 'This field is'} only available to Pro users
+        {children}
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-lg">
+          <div className="text-center">
+            <Lock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+            <p className="text-sm text-gray-600 mb-2">
+              {label || 'This feature is available for Pro users'}
             </p>
-            <Link href="https://buy.stripe.com/dRm00k5GHeK0dRqfL81ck00">
-              <Button size="sm" className="bg-[#6366F1] hover:bg-[#4F46E5] text-white">
-                <Crown className="mr-1 h-3 w-3" />
-                Upgrade to Pro
-              </Button>
+            <Link href="/pricing">
+              <Button size="sm">Upgrade to Pro</Button>
             </Link>
           </div>
         </div>
@@ -226,28 +152,26 @@ function ProfilePageContent() {
     )
   }
 
-  // Simplified component for basic info fields - just shows centered upgrade button
   const BasicInfoProField = ({ children }: { children: React.ReactNode }) => {
-    if (isPro) {
+    // Check both plan and status
+    if (userSubscription?.plan_name === 'pro' && userSubscription?.status === 'active') {
       return <>{children}</>
     }
     
     return (
       <div className="relative">
-        <div className="opacity-50 pointer-events-none">
-          {children}
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-50/80 rounded-lg border-2 border-dashed border-gray-300">
-          <Link href="https://buy.stripe.com/dRm00k5GHeK0dRqfL81ck00">
-            <Button size="sm" className="bg-[#6366F1] hover:bg-[#4F46E5] text-white">
-              <Crown className="mr-1 h-3 w-3" />
-              Upgrade to Pro
-            </Button>
-          </Link>
+        {children}
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-lg">
+          <div className="text-center">
+            <Button size="sm">Upgrade to Pro</Button>
+          </div>
         </div>
       </div>
     )
   }
+
+  // Check if user is Pro once and store it
+  const isProUser = userSubscription?.plan_name === 'pro'
 
   const saveProfile = async () => {
     setIsSaving(true)
@@ -324,12 +248,12 @@ function ProfilePageContent() {
     // Set new timeout for debounced auto-save
     const timeout = setTimeout(() => {
       // Use the current profile state at the time of save
-      saveProfileSilently(profile)
+      saveProfileSilently(profileRef.current)
       setAutoSaveTimeout(null)
-    }, 1000)
+    }, 2000)
     
     setAutoSaveTimeout(timeout)
-  }, [autoSaveTimeout, saveProfileSilently, profile])
+  }, [autoSaveTimeout, saveProfileSilently])
 
   const handleInputChange = (field: string, value: any) => {
     const newProfile = {
@@ -338,17 +262,8 @@ function ProfilePageContent() {
     }
     setProfile(newProfile)
     
-    // Trigger auto-save with the new profile data
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout)
-    }
-    
-    const timeout = setTimeout(() => {
-      saveProfileSilently(newProfile)
-      setAutoSaveTimeout(null)
-    }, 1000)
-    
-    setAutoSaveTimeout(timeout)
+    // Use the optimized triggerAutoSave instead of inline logic
+    triggerAutoSave()
   }
 
   const handleEducationChange = (field: string, value: string) => {
@@ -361,41 +276,34 @@ function ProfilePageContent() {
     }
     setProfile(newProfile)
     
-    // Trigger auto-save with the new profile data
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout)
-    }
-    
-    const timeout = setTimeout(() => {
-      saveProfileSilently(newProfile)
-      setAutoSaveTimeout(null)
-    }, 1000)
-    
-    setAutoSaveTimeout(timeout)
+    // Use the optimized triggerAutoSave instead of inline logic
+    triggerAutoSave()
   }
 
   const handleArrayChange = (field: 'skills' | 'interests', value: string) => {
-    const items = value.split(',').map(item => item.trim()).filter(item => item)
+    // Update the display value immediately for natural typing
+    if (field === 'skills') {
+      setSkillsDisplay(value)
+    } else if (field === 'interests') {
+      setInterestsDisplay(value)
+    }
+    
+    // Process the array for saving
+    const processedItems = value
+      .split(',')
+      .map(item => item.trim())
+      .filter(item => item.length > 0)
+    
     const newProfile = {
       ...profile,
-      [field]: items
+      [field]: processedItems
     }
     setProfile(newProfile)
     
-    // Trigger auto-save with the new profile data
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout)
-    }
-    
-    const timeout = setTimeout(() => {
-      saveProfileSilently(newProfile)
-      setAutoSaveTimeout(null)
-    }, 1000)
-    
-    setAutoSaveTimeout(timeout)
+    // Use the optimized triggerAutoSave instead of inline logic
+    triggerAutoSave()
   }
 
-  // Job experience management functions
   const addJobExperience = () => {
     const newExperience = {
       company: '',
@@ -419,17 +327,8 @@ function ProfilePageContent() {
     }
     setProfile(newProfile)
     
-    // Trigger auto-save
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout)
-    }
-    
-    const timeout = setTimeout(() => {
-      saveProfileSilently(newProfile)
-      setAutoSaveTimeout(null)
-    }, 1000)
-    
-    setAutoSaveTimeout(timeout)
+    // Use the optimized triggerAutoSave instead of inline logic
+    triggerAutoSave()
   }
 
   const handleJobExperienceChange = (index: number, field: string, value: string | boolean) => {
@@ -441,17 +340,25 @@ function ProfilePageContent() {
     }
     setProfile(newProfile)
     
-    // Trigger auto-save
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout)
+    // Use the optimized triggerAutoSave instead of inline logic
+    triggerAutoSave()
+  }
+
+  const handleCurrentJobChange = (index: number, isCurrent: boolean) => {
+    const newProfile = {
+      ...profile,
+      job_experiences: profile.job_experiences.map((exp, i) => 
+        i === index ? { 
+          ...exp, 
+          is_current: isCurrent,
+          end_date: isCurrent ? '' : exp.end_date // Clear end date if current job
+        } : exp
+      )
     }
+    setProfile(newProfile)
     
-    const timeout = setTimeout(() => {
-      saveProfileSilently(newProfile)
-      setAutoSaveTimeout(null)
-    }, 1000)
-    
-    setAutoSaveTimeout(timeout)
+    // Use the optimized triggerAutoSave instead of inline logic
+    triggerAutoSave()
   }
 
   if (isLoading) {
@@ -586,7 +493,7 @@ function ProfilePageContent() {
           </Card>
 
           {/* Professional Information */}
-          <ProOnlyField label="Professional Information">
+          {isProUser ? (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -712,12 +619,7 @@ function ProfilePageContent() {
                                   type="checkbox"
                                   id={`current-${index}`}
                                   checked={experience.is_current}
-                                  onChange={(e) => {
-                                    handleJobExperienceChange(index, 'is_current', e.target.checked)
-                                    if (e.target.checked) {
-                                      handleJobExperienceChange(index, 'end_date', '')
-                                    }
-                                  }}
+                                  onChange={(e) => handleCurrentJobChange(index, e.target.checked)}
                                   className="mr-2"
                                 />
                                 <Label htmlFor={`current-${index}`} className="text-sm">
@@ -744,10 +646,30 @@ function ProfilePageContent() {
                 </div>
               </CardContent>
             </Card>
-          </ProOnlyField>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Briefcase className="h-5 w-5" />
+                  Professional Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Lock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm text-gray-600 mb-2">
+                    Professional Information is available for Pro users
+                  </p>
+                  <Link href="/pricing">
+                    <Button size="sm">Upgrade to Pro</Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Skills & Interests */}
-          <ProOnlyField label="Skills & Interests">
+          {isProUser ? (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -760,7 +682,7 @@ function ProfilePageContent() {
                   <Label htmlFor="skills">Skills (comma-separated)</Label>
                   <Input
                     id="skills"
-                    value={profile.skills.join(', ')}
+                    value={skillsDisplay}
                     onChange={(e) => handleArrayChange('skills', e.target.value)}
                     placeholder="e.g., JavaScript, React, Product Management, Data Analysis"
                   />
@@ -769,17 +691,37 @@ function ProfilePageContent() {
                   <Label htmlFor="interests">Interests (comma-separated)</Label>
                   <Input
                     id="interests"
-                    value={profile.interests.join(', ')}
+                    value={interestsDisplay}
                     onChange={(e) => handleArrayChange('interests', e.target.value)}
                     placeholder="e.g., AI, Startups, Photography, Travel"
                   />
                 </div>
               </CardContent>
             </Card>
-          </ProOnlyField>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Code className="h-5 w-5" />
+                  Skills & Interests
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Lock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm text-gray-600 mb-2">
+                    Skills & Interests is available for Pro users
+                  </p>
+                  <Link href="/pricing">
+                    <Button size="sm">Upgrade to Pro</Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Links */}
-          <ProOnlyField label="Professional Links">
+          {isProUser ? (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -808,7 +750,27 @@ function ProfilePageContent() {
                 </div>
               </CardContent>
             </Card>
-          </ProOnlyField>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="h-5 w-5" />
+                  Professional Links
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Lock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm text-gray-600 mb-2">
+                    Professional Links is available for Pro users
+                  </p>
+                  <Link href="/pricing">
+                    <Button size="sm">Upgrade to Pro</Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Save Button */}
           <div className="flex justify-between items-center">

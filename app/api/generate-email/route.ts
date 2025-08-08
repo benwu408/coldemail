@@ -71,21 +71,8 @@ export async function POST(request: NextRequest) {
   )
   console.log('Supabase client initialized successfully')
 
-  // Parse request body with error handling
-  let body
-  try {
-    console.log('Parsing request body...')
-    body = await request.json()
-    console.log('Request body parsed successfully')
-    console.log('Request body keys:', Object.keys(body))
-  } catch (error) {
-    console.error('Error parsing request body:', error)
-    return NextResponse.json(
-      { error: 'Invalid request body' },
-      { status: 400 }
-    )
-  }
-  
+  // Extract request body
+  const body = await request.json()
   const {
     recipientName,
     recipientCompany,
@@ -93,9 +80,12 @@ export async function POST(request: NextRequest) {
     recipientLinkedIn,
     purpose,
     tone,
-    userProfile,
-    searchMode = 'basic' // 'basic' or 'deep'
+    searchModeRequested,
+    userProfile
   } = body
+
+  // Make searchMode mutable
+  let searchMode = searchModeRequested || 'basic' // Default to basic if not provided
 
   console.log('Extracted fields:', { recipientName, recipientCompany, recipientRole, recipientLinkedIn, purpose, tone, searchMode })
 
@@ -123,39 +113,26 @@ export async function POST(request: NextRequest) {
 
   // Check user's subscription and usage limits
   try {
-    // Get user's subscription details
-    const { data: subscriptionData, error: subscriptionError } = await supabase
-      .rpc('get_user_subscription', { user_uuid: userId })
+    // Get user's subscription details from profiles table
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('subscription_plan, subscription_status')
+      .eq('user_id', userId)
+      .single()
     
-    if (subscriptionError) {
-      console.error('Error getting user subscription:', subscriptionError)
+    if (profileError) {
+      console.error('Error getting user profile:', profileError)
       return NextResponse.json(
         { error: 'Failed to check subscription status' },
         { status: 500 }
       )
     }
 
-    if (!subscriptionData || subscriptionData.length === 0) {
-      console.log('No subscription found, defaulting to free plan')
-      // Default to free plan if no subscription found
-      subscriptionData.push({
-        plan_name: 'free',
-        plan_display_name: 'Free',
-        search_type: 'basic',
-        daily_generation_limit: 2,
-        tone_options: ['professional'],
-        email_editing_enabled: false,
-        priority_support: false,
-        status: 'active',
-        trial_end_date: null
-      })
-    }
-
-    const userSubscription = subscriptionData[0]
-    console.log('User subscription:', userSubscription)
+    const isPro = profileData?.subscription_plan === 'pro' && profileData?.subscription_status === 'active'
+    console.log('User subscription:', { isPro, ...profileData })
 
     // Check if user requested pro features but doesn't have pro plan
-    if (userSubscription.plan_name === 'free') {
+    if (!isPro) {
       // Check if user is trying to use deep search
       if (searchMode === 'deep') {
         return NextResponse.json(
@@ -217,10 +194,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Force basic search for free users
-    // const effectiveSearchMode = userSubscription.plan_name === 'free' ? 'basic' : searchMode
-    // const effectiveTone = userSubscription.plan_name === 'free' ? 'professional' : tone
-
-    // console.log(`User plan: ${userSubscription.plan_name}, effective search mode: ${effectiveSearchMode}, effective tone: ${effectiveTone}`)
+    if (!isPro) {
+      searchMode = 'basic'
+    }
 
   } catch (error) {
     console.error('Error in subscription check:', error)

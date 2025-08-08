@@ -22,9 +22,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid user ID' }, { status: 401 })
     }
 
-    // Fetch the user profile from the database
+    // Fetch the user profile from the database (match by user_id)
     const { data: profile, error } = await supabase
-      .from('user_profiles')
+      .from('profiles')
       .select('*')
       .eq('user_id', userId)
       .single()
@@ -75,19 +75,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user is Pro (for restricting profile fields)
-    const { data: subscriptionData, error: subError } = await supabase.rpc('get_user_subscription', {
-      user_uuid: userId
-    })
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('subscription_plan, subscription_status')
+      .eq('user_id', userId)
+      .single()
 
-    let isPro = false
-    if (!subError && subscriptionData && subscriptionData.length > 0) {
-      isPro = subscriptionData[0].plan_name === 'pro'
+    if (profileError) {
+      console.error('Error checking subscription:', profileError)
+      return NextResponse.json({ error: 'Failed to check subscription status' }, { status: 500 })
     }
 
-    console.log('User is Pro:', isPro)
+    let isPro = profile?.subscription_plan === 'pro' && profile?.subscription_status === 'active'
+    console.log('User is Pro:', isPro, 'Plan:', profile?.subscription_plan, 'Status:', profile?.subscription_status)
 
     // Prepare profile data for upsert - restrict fields for non-Pro users
-    const profileData = {
+    let payload: Record<string, any> = {
       user_id: userId,
       full_name: body.full_name || null, // Always allow name
       // Only allow these fields for Pro users
@@ -106,7 +109,6 @@ export async function POST(request: NextRequest) {
       },
       location: isPro ? (body.location || null) : null,
       industry: isPro ? (body.industry || null) : null,
-      experience_years: isPro ? (body.experience_years || null) : null,
       skills: isPro ? (body.skills || []) : [],
       interests: isPro ? (body.interests || []) : [],
       background: isPro ? (body.background || null) : null,
@@ -115,12 +117,15 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString()
     }
 
-    console.log('Saving profile data:', JSON.stringify(profileData, null, 2))
+    // Remove undefined keys to avoid noisy payload
+    payload = Object.fromEntries(Object.entries(payload).filter(([_, v]) => v !== undefined))
+
+    console.log('Saving profile data:', JSON.stringify(payload, null, 2))
 
     // Upsert the profile
     const { data, error } = await supabase
-      .from('user_profiles')
-      .upsert(profileData, {
+      .from('profiles')
+      .upsert(payload, {
         onConflict: 'user_id',
         ignoreDuplicates: false
       })

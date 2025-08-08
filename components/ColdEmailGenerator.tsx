@@ -421,12 +421,26 @@ export default function ColdEmailGenerator() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-          // Get user subscription
-          const { data: subscriptionData } = await supabase.rpc('get_user_subscription', { 
-            user_uuid: user.id 
-          })
-          if (subscriptionData && subscriptionData.length > 0) {
-            setUserSubscription(subscriptionData[0])
+          // Get user subscription from profiles table
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('subscription_plan, subscription_status')
+            .eq('user_id', user.id)
+            .single()
+
+          if (profileError) {
+            console.error('Error fetching profile:', profileError)
+            return
+          }
+
+          if (profileData) {
+            setUserSubscription({
+              plan_name: profileData.subscription_plan,
+              status: profileData.subscription_status,
+              daily_generation_limit: profileData.subscription_plan === 'pro' ? null : 2,
+              email_editing_enabled: profileData.subscription_plan === 'pro',
+              priority_support: profileData.subscription_plan === 'pro'
+            })
           }
           
           // Get current usage for the day

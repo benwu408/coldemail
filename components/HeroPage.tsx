@@ -144,15 +144,19 @@ Founder & CEO, DataSync`,
     const loadUserSubscription = async () => {
       if (user) {
         try {
-          const { data: subscriptionData, error } = await supabase.rpc('get_user_subscription', {
-            user_uuid: user.id
-          })
+          const { data: profileData, error } = await supabase
+            .from('profiles')
+            .select('subscription_plan, subscription_status')
+            .eq('user_id', user.id)
+            .single()
 
           if (error) {
-            console.error('Error fetching subscription:', error)
+            console.error('Error fetching profile:', error)
             setUserSubscription({ plan_name: 'free' })
-          } else if (subscriptionData && subscriptionData.length > 0) {
-            setUserSubscription(subscriptionData[0])
+          } else if (profileData) {
+            setUserSubscription({
+              plan_name: profileData.subscription_plan === 'pro' && profileData.subscription_status === 'active' ? 'pro' : 'free'
+            })
           } else {
             setUserSubscription({ plan_name: 'free' })
           }

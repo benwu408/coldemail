@@ -210,14 +210,16 @@ export async function POST(request: NextRequest) {
 
         // Verify the updates worked
         console.log('Verifying updates...')
-        const { data: verifyData, error: verifyError } = await supabase.rpc('get_user_subscription', {
-          user_uuid: user.id
-        })
+        const { data: verifyData, error: verifyError } = await supabase
+          .from('profiles')
+          .select('subscription_plan, subscription_status')
+          .eq('user_id', user.id)
+          .single()
 
         if (verifyError) {
           console.error('Verification failed:', verifyError)
         } else {
-          console.log('Verification result:', verifyData?.[0])
+          console.log('Verification result:', verifyData)
         }
 
         console.log('Successfully processed checkout.session.completed for user:', user.email)

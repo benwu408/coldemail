@@ -8,14 +8,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 
-interface SubscriptionStatus {
-  plan_name: string
-  status: string
-  daily_generation_limit: number | null
-  email_editing_enabled: boolean
-  priority_support: boolean
-}
-
 interface ProfileData {
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
@@ -25,7 +17,6 @@ interface ProfileData {
 
 export default function SubscriptionDashboard() {
   const { user } = useAuth()
-  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null)
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -37,74 +28,28 @@ export default function SubscriptionDashboard() {
     if (!user?.id) return
 
     try {
-      // Get subscription details
-      const { data: subscriptionData, error: subError } = await supabase.rpc('get_user_subscription', {
-        user_uuid: user.id
-      })
-
-      if (subError) {
-        console.error('Error fetching subscription:', subError)
-        // Set default subscription data on error
-        setSubscription({
-          plan_name: 'free',
-          status: 'active',
-          daily_generation_limit: 2,
-          email_editing_enabled: false,
-          priority_support: false
-        })
-      } else if (subscriptionData && subscriptionData.length > 0) {
-        setSubscription(subscriptionData[0])
-      } else {
-        // Set default subscription data if no data returned
-        setSubscription({
-          plan_name: 'free',
-          status: 'active',
-          daily_generation_limit: 2,
-          email_editing_enabled: false,
-          priority_support: false
-        })
-      }
-
-      // Get profile data with Stripe IDs (handle missing columns gracefully)
+      // Get profile data with subscription info
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('subscription_plan, subscription_status, stripe_customer_id, stripe_subscription_id')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single()
 
       if (profileError) {
         console.error('Error fetching profile:', profileError)
         // If columns don't exist or any other error, create default profile data
-        if (profileError.message?.includes('column') || profileError.code === '42703' || profileError.code === 'PGRST116') {
-          console.log('Stripe columns not found or profile not found, using default profile data')
-          setProfile({
-            stripe_customer_id: null,
-            stripe_subscription_id: null,
-            subscription_plan: 'free',
-            subscription_status: 'active'
-          })
-        } else {
-          // For any other error, also use default data
-          setProfile({
-            stripe_customer_id: null,
-            stripe_subscription_id: null,
-            subscription_plan: 'free',
-            subscription_status: 'active'
-          })
-        }
+        setProfile({
+          stripe_customer_id: null,
+          stripe_subscription_id: null,
+          subscription_plan: 'free',
+          subscription_status: 'active'
+        })
       } else {
         setProfile(profileData)
       }
     } catch (error) {
       console.error('Error in fetchSubscriptionData:', error)
       // Set default data on any error
-      setSubscription({
-        plan_name: 'free',
-        status: 'active',
-        daily_generation_limit: 2,
-        email_editing_enabled: false,
-        priority_support: false
-      })
       setProfile({
         stripe_customer_id: null,
         stripe_subscription_id: null,
@@ -180,18 +125,20 @@ export default function SubscriptionDashboard() {
     )
   }
 
+  const isPro = profile?.subscription_plan === 'pro' && profile?.subscription_status === 'active'
+
   return (
     <div className="space-y-6">
       {/* Current Plan */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {subscription?.plan_name === 'pro' ? (
+            {isPro ? (
               <Crown className="h-5 w-5 text-[#6366F1]" />
             ) : (
               <CreditCard className="h-5 w-5 text-gray-500" />
             )}
-            Current Plan: {subscription?.plan_name === 'pro' ? 'Pro' : 'Free'}
+            Current Plan: {isPro ? 'Pro' : 'Free'}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -200,7 +147,7 @@ export default function SubscriptionDashboard() {
             <div>
               <p className="font-medium">{getStatusText(profile?.subscription_status || 'unknown')}</p>
               <p className="text-sm text-gray-600">
-                {getStatusDescription(profile?.subscription_status || 'unknown', subscription?.plan_name || 'free')}
+                {getStatusDescription(profile?.subscription_status || 'unknown', profile?.subscription_plan || 'free')}
               </p>
             </div>
           </div>
@@ -210,30 +157,27 @@ export default function SubscriptionDashboard() {
             <h4 className="font-medium mb-3">Plan Features</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${subscription?.daily_generation_limit ? 'bg-amber-500' : 'bg-green-500'}`}></div>
+                <div className={`w-2 h-2 rounded-full ${!isPro ? 'bg-amber-500' : 'bg-green-500'}`}></div>
                 <span className="text-sm">
-                  {subscription?.daily_generation_limit 
-                    ? `${subscription.daily_generation_limit} emails per day` 
-                    : 'Unlimited emails'
-                  }
+                  {!isPro ? '2 emails per day' : 'Unlimited emails'}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${subscription?.email_editing_enabled ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                <div className={`w-2 h-2 rounded-full ${isPro ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                 <span className="text-sm">
-                  {subscription?.email_editing_enabled ? 'Email editing' : 'No email editing'}
+                  {isPro ? 'Email editing' : 'No email editing'}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${subscription?.plan_name === 'pro' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                <div className={`w-2 h-2 rounded-full ${isPro ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                 <span className="text-sm">
-                  {subscription?.plan_name === 'pro' ? 'Deep research (12 searches)' : 'Basic research (4 searches)'}
+                  {isPro ? 'Deep research (12 searches)' : 'Basic research (4 searches)'}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${subscription?.priority_support ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                <div className={`w-2 h-2 rounded-full ${isPro ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                 <span className="text-sm">
-                  {subscription?.priority_support ? 'Priority support' : 'Standard support'}
+                  {isPro ? 'Priority support' : 'Standard support'}
                 </span>
               </div>
             </div>
@@ -247,7 +191,7 @@ export default function SubscriptionDashboard() {
           <CardTitle>Manage Subscription</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {subscription?.plan_name === 'free' ? (
+          {!isPro ? (
             <div>
               <p className="text-gray-600 mb-4">
                 Upgrade to Pro for unlimited emails, deep research, custom tones, and priority support.
@@ -315,7 +259,7 @@ export default function SubscriptionDashboard() {
           </CardHeader>
           <CardContent>
             <pre className="text-xs bg-gray-100 p-3 rounded">
-              {JSON.stringify({ subscription, profile }, null, 2)}
+              {JSON.stringify({ profile }, null, 2)}
             </pre>
           </CardContent>
         </Card>

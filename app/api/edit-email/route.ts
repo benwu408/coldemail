@@ -51,19 +51,22 @@ export async function POST(request: NextRequest) {
 
     // Check if user has Pro subscription for email editing
     try {
-      const { data: subscriptionData, error: subscriptionError } = await supabase
-        .rpc('get_user_subscription', { user_uuid: userId })
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('subscription_plan, subscription_status')
+        .eq('user_id', userId)
+        .single()
       
-      if (subscriptionError) {
-        console.error('Error getting user subscription:', subscriptionError)
+      if (profileError) {
+        console.error('Error getting user profile:', profileError)
         return NextResponse.json(
           { error: 'Failed to check subscription status' },
           { status: 500 }
         )
       }
 
-      if (!subscriptionData || subscriptionData.length === 0) {
-        console.log('No subscription found, defaulting to free plan')
+      if (!profileData) {
+        console.log('No profile found, defaulting to free plan')
         return NextResponse.json(
           { 
             error: 'Email editing is a Pro feature',
@@ -75,18 +78,18 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const userSubscription = subscriptionData[0]
-      console.log('User subscription for editing:', userSubscription)
+      const isPro = profileData.subscription_plan === 'pro' && profileData.subscription_status === 'active'
+      console.log('User subscription for editing:', { isPro, ...profileData })
 
-      // Check if user has email editing enabled
-      if (!userSubscription.email_editing_enabled) {
+      // Check if user has Pro access
+      if (!isPro) {
         return NextResponse.json(
           { 
             error: 'Email editing is a Pro feature',
             errorType: 'SUBSCRIPTION_REQUIRED',
             requiredPlan: 'pro',
             feature: 'Email Editing',
-            currentPlan: userSubscription.plan_name
+            currentPlan: profileData.subscription_plan
           },
           { status: 403 }
         )
