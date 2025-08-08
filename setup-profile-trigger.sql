@@ -1,92 +1,51 @@
 -- Create a trigger to automatically create profiles for new users
 -- This ensures every new user gets a profile with default free plan
 
--- First, ensure the profiles table exists with the correct structure
-CREATE TABLE IF NOT EXISTS profiles (
-    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    full_name TEXT,
-    job_title TEXT,
-    company TEXT,
-    education JSONB DEFAULT '{"school": null, "degree": null, "major": null, "graduation_year": null}'::jsonb,
-    location TEXT,
-    industry TEXT,
-    skills TEXT[] DEFAULT '{}',
-    interests TEXT[] DEFAULT '{}',
-    background TEXT,
-    linkedin_url TEXT,
-    website TEXT,
-    subscription_plan TEXT DEFAULT 'free',
-    subscription_status TEXT DEFAULT 'active',
-    stripe_customer_id TEXT,
-    stripe_subscription_id TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Add missing columns if they don't exist
-DO $$
-BEGIN
-    -- Add user_id column if it doesn't exist
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'profiles' AND column_name = 'user_id') THEN
-        ALTER TABLE profiles ADD COLUMN user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
-    END IF;
-    
-    -- Add subscription_plan column if it doesn't exist
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'profiles' AND column_name = 'subscription_plan') THEN
-        ALTER TABLE profiles ADD COLUMN subscription_plan TEXT DEFAULT 'free';
-    END IF;
-    
-    -- Add subscription_status column if it doesn't exist
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'profiles' AND column_name = 'subscription_status') THEN
-        ALTER TABLE profiles ADD COLUMN subscription_status TEXT DEFAULT 'active';
-    END IF;
-    
-    -- Add stripe_customer_id column if it doesn't exist
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'profiles' AND column_name = 'stripe_customer_id') THEN
-        ALTER TABLE profiles ADD COLUMN stripe_customer_id TEXT;
-    END IF;
-    
-    -- Add stripe_subscription_id column if it doesn't exist
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'profiles' AND column_name = 'stripe_subscription_id') THEN
-        ALTER TABLE profiles ADD COLUMN stripe_subscription_id TEXT;
-    END IF;
-END $$;
-
--- Enable RLS on profiles table
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-
--- Create RLS policies for profiles table
-DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
-DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
-DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
-
-CREATE POLICY "Users can view own profile" ON profiles
-    FOR SELECT USING (auth.uid() = id OR auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own profile" ON profiles
-    FOR INSERT WITH CHECK (auth.uid() = id OR auth.uid() = user_id);
-
-CREATE POLICY "Users can update own profile" ON profiles
-    FOR UPDATE USING (auth.uid() = id OR auth.uid() = user_id);
-
 -- Create the trigger function
 CREATE OR REPLACE FUNCTION create_user_profile()
 RETURNS TRIGGER AS $$
 BEGIN
     -- Insert a new profile for the user
     INSERT INTO profiles (
-        id,
         user_id,
+        full_name,
+        job_title,
+        company,
+        email,
+        phone,
+        background,
+        education,
+        skills,
+        interests,
+        resume_text,
         subscription_plan,
         subscription_status,
+        job_experiences,
+        location,
+        industry,
+        linkedin_url,
+        website,
         created_at,
         updated_at
     ) VALUES (
         NEW.id,
-        NEW.id,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        '{"major": null, "degree": null, "school": null, "graduation_year": null}',
+        '{}',
+        '{}',
+        null,
         'free',
         'active',
+        '[]',
+        null,
+        null,
+        null,
+        null,
         NEW.created_at,
         NEW.created_at
     );

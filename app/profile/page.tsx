@@ -106,7 +106,49 @@ function ProfilePageContent() {
 
       if (response.ok) {
         const data = await response.json()
-        setProfile(data)
+        
+        // Parse JSON strings for education and job_experiences
+        let parsedData = { ...data }
+        
+        // Parse education if it's a JSON string
+        if (typeof data.education === 'string') {
+          try {
+            parsedData.education = JSON.parse(data.education)
+          } catch (e) {
+            console.error('Error parsing education:', e)
+            parsedData.education = {
+              school: null,
+              degree: null,
+              major: null,
+              graduation_year: null
+            }
+          }
+        }
+        
+        // Parse job_experiences if it's a JSON string
+        if (typeof data.job_experiences === 'string') {
+          try {
+            parsedData.job_experiences = JSON.parse(data.job_experiences)
+          } catch (e) {
+            console.error('Error parsing job_experiences:', e)
+            parsedData.job_experiences = []
+          }
+        }
+        
+        // Ensure skills and interests are arrays
+        if (!Array.isArray(parsedData.skills)) {
+          parsedData.skills = []
+        }
+        if (!Array.isArray(parsedData.interests)) {
+          parsedData.interests = []
+        }
+        
+        setProfile(parsedData)
+        
+        // Set display values for skills and interests
+        setSkillsDisplay(parsedData.skills.join(', '))
+        setInterestsDisplay(parsedData.interests.join(', '))
+        
         // Set subscription status from profile data
         setUserSubscription({
           plan_name: data.subscription_plan,

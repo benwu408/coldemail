@@ -15,7 +15,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Extract user ID from the authorization header
-    // This assumes the frontend sends the user ID in the authorization header
     const userId = authHeader.replace('Bearer ', '')
 
     if (!userId) {
@@ -56,7 +55,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('Received profile data:', body)
     
-    // Get the user from the request headers (same as GET method)
+    // Get the user from the request headers
     const authHeader = request.headers.get('authorization')
     console.log('Authorization header:', authHeader)
     
@@ -96,17 +95,17 @@ export async function POST(request: NextRequest) {
       // Only allow these fields for Pro users
       job_title: isPro ? (body.job_title || null) : null,
       company: isPro ? (body.company || null) : null,
-      education: isPro ? {
+      education: isPro ? JSON.stringify({
         school: body.education?.school || null,
         degree: body.education?.degree || null,
         major: body.education?.major || null,
         graduation_year: body.education?.graduation_year || null
-      } : {
+      }) : JSON.stringify({
         school: null,
         degree: null,
         major: null,
         graduation_year: null
-      },
+      }),
       location: isPro ? (body.location || null) : null,
       industry: isPro ? (body.industry || null) : null,
       skills: isPro ? (body.skills || []) : [],
@@ -114,6 +113,7 @@ export async function POST(request: NextRequest) {
       background: isPro ? (body.background || null) : null,
       linkedin_url: isPro ? (body.linkedin_url || null) : null,
       website: isPro ? (body.website || null) : null,
+      job_experiences: isPro ? JSON.stringify(body.job_experiences || []) : JSON.stringify([]),
       updated_at: new Date().toISOString()
     }
 
