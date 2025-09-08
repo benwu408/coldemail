@@ -1335,10 +1335,6 @@ Software Engineer & Co-founder`
               <a href="#" className="hover:text-[#111827] transition-colors duration-200 font-medium">Terms</a>
               <a href="#" className="hover:text-[#111827] transition-colors duration-200 font-medium">Privacy</a>
               <a href="#" className="hover:text-[#111827] transition-colors duration-200 font-medium">Contact</a>
-              <div className="flex items-center gap-3">
-                <a href="#" className="hover:text-[#111827] transition-colors duration-200 font-medium">X</a>
-                <a href="#" className="hover:text-[#111827] transition-colors duration-200 font-medium">LinkedIn</a>
-              </div>
             </div>
           </div>
           <div className="text-center text-sm text-gray-500 mt-8">
