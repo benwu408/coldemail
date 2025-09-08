@@ -17,7 +17,6 @@ import {
   Target,
   CheckCircle,
   Play,
-  Star,
   Quote,
   Briefcase,
   MapPin,
@@ -1238,88 +1237,6 @@ Software Engineer & Co-founder`
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl font-bold text-[#111827] mb-6 tracking-tight">Trusted by professionals</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              See how others are getting better responses with personalized emails
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-[#FAFAFA] rounded-2xl p-8 border border-gray-100 hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-center gap-1 mb-6">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
-              <p className="text-gray-700 mb-8 leading-relaxed">
-                "Reachful helped me land my dream job at Google. The personalized approach 
-                made all the difference - I got responses from 3 out of 5 emails I sent."
-              </p>
-              <div className="flex items-center gap-3">
-                <img 
-                  src="/headshots/u7958324354_professional_headshot_of_tech_bro_--v_7_aacb0aa5-e8c5-4c5d-993c-db33ff78e493_0.png" 
-                  alt="Marcus Johnson" 
-                  className="w-12 h-12 rounded-full object-cover shadow-sm"
-                />
-                <div>
-                  <div className="font-bold text-[#111827]">Marcus Johnson</div>
-                  <div className="text-sm text-gray-600">Software Engineer, Google</div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-[#FAFAFA] rounded-2xl p-8 border border-gray-100 hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-center gap-1 mb-6">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
-              <p className="text-gray-700 mb-8 leading-relaxed">
-                "As an investment banker, networking is everything. This tool has been a game-changer. 
-                The AI research feature finds connections I never would have discovered."
-              </p>
-              <div className="flex items-center gap-3">
-                <img 
-                  src="/headshots/u7958324354_professional_headshot_of_tech_bro_--v_7_aacb0aa5-e8c5-4c5d-993c-db33ff78e493_3.png" 
-                  alt="James Wilson" 
-                  className="w-12 h-12 rounded-full object-cover shadow-sm"
-                />
-                <div>
-                  <div className="font-bold text-[#111827]">James Wilson</div>
-                  <div className="text-sm text-gray-600">Investment Banker, Goldman Sachs</div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-[#FAFAFA] rounded-2xl p-8 border border-gray-100 hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-center gap-1 mb-6">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
-              <p className="text-gray-700 mb-8 leading-relaxed">
-                "Finally, an outreach tool that doesn't sound robotic. The personalization 
-                is incredible and the response rate improvement is real."
-              </p>
-              <div className="flex items-center gap-3">
-                <img 
-                  src="/headshots/u7958324354_professional_headshot_of_woman_working_in_tech_--_338a63fd-5495-4f7d-8fcd-77a14abeec14_1.png" 
-                  alt="Priya Patel" 
-                  className="w-12 h-12 rounded-full object-cover shadow-sm"
-                />
-                <div>
-                  <div className="font-bold text-[#111827]">Priya Patel</div>
-                  <div className="text-sm text-gray-600">Product Manager, Microsoft</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* CTA Section */}
       <section className="py-24 bg-[#111827] text-white">
