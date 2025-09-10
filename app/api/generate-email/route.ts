@@ -161,7 +161,6 @@ FORMAT: Create a structured report with clear sections and bullet points.`
         const researchResponse = await openai.responses.create({
           model: 'gpt-4o', // Use GPT-4o for deep search
           input: researchPrompt,
-          reasoning: { effort: "high" },
           tools: [{ type: "web_search_preview" }]
         })
 
@@ -201,7 +200,6 @@ Format the report with clear section headers using markdown.`
       const reportResponse = await openai.responses.create({
           model: model,
           input: reportPrompt,
-          reasoning: { effort: "medium" },
           tools: [{ type: "web_search_preview" }]
         })
 
@@ -244,7 +242,6 @@ Format as a brief, bulleted list of potential connection points. If no clear com
       const commonalitiesResponse = await openai.responses.create({
         model: model,
         input: commonalitiesPrompt,
-        reasoning: { effort: "low" },
       })
 
       commonalities = commonalitiesResponse.output_text || 'No specific commonalities identified'
@@ -305,7 +302,6 @@ Format the email with proper greeting, body, and signature.`
     const emailResponse = await openai.responses.create({
       model: model,
       input: emailPrompt,
-      reasoning: { effort: "medium" },
     })
 
     const generatedEmail = emailResponse.output_text || 'Unable to generate email'

@@ -96,7 +96,6 @@ FORMAT: Create a structured report with clear sections and bullet points.`
       const researchResponse = await openai.responses.create({
         model: model,
         input: researchPrompt,
-        reasoning: { effort: isPro ? "high" : "medium" },
         tools: [{ type: "web_search_preview" }]
       })
 

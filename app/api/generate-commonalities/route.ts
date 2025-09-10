@@ -127,7 +127,6 @@ Format as a clear, professional list with brief explanations for each connection
     const commonalitiesResponse = await openai.responses.create({
       model: 'o4-mini',
       input: commonalitiesPrompt,
-      reasoning: { effort: "low" }
     })
 
     const commonalities = commonalitiesResponse.output_text?.trim() || ''
