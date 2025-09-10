@@ -97,7 +97,7 @@ FORMAT: Create a structured report with clear sections and bullet points.`
         model: model,
         input: researchPrompt,
         reasoning: { effort: isPro ? "high" : "medium" },
-        tools: [{ type: "web_search" }]
+        tools: [{ type: "web_search_preview" }]
       })
 
       researchFindings = researchResponse.output_text || 'No research findings generated'

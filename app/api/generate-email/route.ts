@@ -162,7 +162,7 @@ FORMAT: Create a structured report with clear sections and bullet points.`
           model: 'gpt-5', // Use GPT-5 for deep search
           input: researchPrompt,
           reasoning: { effort: "high" },
-          tools: [{ type: "web_search" }]
+          tools: [{ type: "web_search_preview" }]
         })
 
         researchFindings = researchResponse.output_text || 'No research findings generated'
@@ -202,7 +202,7 @@ Format the report with clear section headers using markdown.`
           model: model,
           input: reportPrompt,
           reasoning: { effort: "medium" },
-          tools: [{ type: "web_search" }]
+          tools: [{ type: "web_search_preview" }]
         })
 
         researchFindings = reportResponse.output_text?.trim() || ''
