@@ -215,6 +215,17 @@ Format the report with clear section headers using markdown.`
     // Generate commonalities
     console.log('Generating commonalities...')
     
+    // Get sender profile for commonalities generation
+    const { data: senderProfileForCommonalities, error: senderProfileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single()
+
+    if (senderProfileError) {
+      console.error('Error getting sender profile for commonalities:', senderProfileError)
+    }
+    
     try {
       const commonalitiesPrompt = `Based on the research findings below, identify potential commonalities or connection points between the sender and ${recipientName}${recipientCompany ? ` at ${recipientCompany}` : ''}.
 
@@ -222,10 +233,12 @@ RESEARCH FINDINGS:
 ${researchFindings}
 
 SENDER INFORMATION:
-- Name: [Sender's Name]
-- Company: [Sender's Company]
-- Role: [Sender's Role]
-- Background: [Sender's Background]
+- Name: ${senderProfileForCommonalities?.full_name || 'Not provided'}
+- Company: ${senderProfileForCommonalities?.company || 'Not provided'}
+- Job Title: ${senderProfileForCommonalities?.job_title || 'Not provided'}
+- Location: ${senderProfileForCommonalities?.location || 'Not provided'}
+- Education: ${senderProfileForCommonalities?.education ? JSON.parse(senderProfileForCommonalities.education).school : 'Not provided'}
+- Job Experiences: ${senderProfileForCommonalities?.job_experiences || 'Not provided'}
 
 INSTRUCTIONS:
 Look for potential commonalities such as:
@@ -275,6 +288,8 @@ SENDER INFORMATION:
 - Location: ${senderProfile?.location || 'Not provided'}
 - LinkedIn: ${senderProfile?.linkedin_url || 'Not provided'}
 - Email: ${senderProfile?.email || 'Not provided'}
+- Education: ${senderProfile?.education ? JSON.parse(senderProfile.education).school : 'Not provided'}
+- Job Experiences: ${senderProfile?.job_experiences || 'Not provided'}
 
 PURPOSE: ${purpose}
 TONE: ${effectiveTone || 'Professional and friendly'}
