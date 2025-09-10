@@ -109,7 +109,7 @@ SENDER PROFILE:
 - Job Title: ${senderInfo.job_title || 'Not provided'}
 - Location: ${senderInfo.location || 'Not provided'}
 - Education: ${educationData ? `${educationData.school || 'Not specified'}${educationData.major ? `, ${educationData.major}` : ''}${educationData.graduation_year ? ` (${educationData.graduation_year})` : ''}` : 'Not provided'}
-- Job Experiences: ${jobExperiencesData && jobExperiencesData.length > 0 ? jobExperiencesData.map(job => `${job.title} at ${job.company}`).join(', ') : 'Not provided'}
+- Job Experiences: ${jobExperiencesData && jobExperiencesData.length > 0 ? jobExperiencesData.map((job: any) => `${job.title} at ${job.company}`).join(', ') : 'Not provided'}
 
 INSTRUCTIONS:
 Identify 3-5 meaningful connections or commonalities between the sender and recipient. Look for:
