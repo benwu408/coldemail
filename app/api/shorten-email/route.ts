@@ -32,7 +32,7 @@ Please return the shortened email in the same format. Keep the greeting and sign
           content: prompt
         }
       ],
-      max_tokens: 1000,
+      max_completion_tokens: 1000,
       temperature: 0.7,
     })
 

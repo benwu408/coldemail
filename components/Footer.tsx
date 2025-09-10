@@ -25,15 +25,6 @@ export default function Footer() {
             <Link href="/privacy" className="hover:text-[#111827] transition-colors duration-200 font-medium">
               Privacy
             </Link>
-            <Link href="/contact" className="hover:text-[#111827] transition-colors duration-200 font-medium">
-              Contact
-            </Link>
-            <a href="#" className="hover:text-[#111827] transition-colors duration-200 font-medium">
-              X
-            </a>
-            <a href="#" className="hover:text-[#111827] transition-colors duration-200 font-medium">
-              LinkedIn
-            </a>
           </div>
           
           {/* Copyright */}

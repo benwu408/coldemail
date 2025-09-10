@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
         const { data: existingProfile, error: profileCheckError } = await supabase
           .from('profiles')
           .select('id')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single()
 
         if (profileCheckError && profileCheckError.code === 'PGRST116') {
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
               stripe_subscription_id: subscriptionId,
               updated_at: new Date().toISOString()
             })
-            .eq('id', user.id)
+            .eq('user_id', user.id)
 
           if (updateProfileError) {
             console.error('Error updating profile:', updateProfileError)

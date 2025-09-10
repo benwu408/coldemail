@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { usePathname } from 'next/navigation'
 
 interface HeaderProps {
   showBackButton?: boolean
@@ -22,6 +23,7 @@ export default function Header({
   title,
   subtitle 
 }: HeaderProps) {
+  const pathname = usePathname()
   const [userPlan, setUserPlan] = useState<string>('free')
   const [userUsage, setUserUsage] = useState<{
     generationsToday: number
@@ -102,13 +104,24 @@ export default function Header({
                 Back
               </Button>
             )}
-            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200">
+            <Link 
+              href="/" 
+              className={`flex items-center gap-3 transition-opacity duration-200 ${
+                pathname === '/' 
+                  ? 'opacity-100' 
+                  : 'hover:opacity-80'
+              }`}
+            >
               <img 
                 src="/reachful_logo.png" 
                 alt="Reachful" 
                 className="h-16 w-auto"
               />
-              <span className="text-3xl font-bold text-[#111827]">
+              <span className={`text-3xl font-bold ${
+                pathname === '/' 
+                  ? 'text-[#6366F1]' 
+                  : 'text-[#111827]'
+              }`}>
                 Reachful
               </span>
             </Link>
@@ -120,7 +133,11 @@ export default function Header({
               {user && (
                 <Link href="/generate">
                   <Button
-                    className="bg-[#111827] hover:bg-gray-800 text-white rounded-full px-6 py-2 text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+                    className={`rounded-full px-6 py-2 text-sm font-medium shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 ${
+                      pathname === '/generate' 
+                        ? 'bg-[#6366F1] hover:bg-[#4F46E5] text-white' 
+                        : 'bg-[#111827] hover:bg-gray-800 text-white'
+                    }`}
                   >
                     Generate Email
                   </Button>
@@ -130,22 +147,54 @@ export default function Header({
                 <Link href="/past-emails">
                   <Button
                     variant="ghost"
-                    className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium"
+                    className={`transition-colors duration-200 font-medium ${
+                      pathname === '/past-emails' 
+                        ? 'text-[#6366F1] bg-indigo-50' 
+                        : 'text-gray-600 hover:text-[#111827]'
+                    }`}
                   >
                     Past Emails
                   </Button>
                 </Link>
               )}
-              <Link href="/#how-it-works" className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium">
+              <Link 
+                href="/how-it-works" 
+                className={`transition-colors duration-200 font-medium ${
+                  pathname === '/how-it-works' 
+                    ? 'text-[#6366F1] font-semibold' 
+                    : 'text-gray-600 hover:text-[#111827]'
+                }`}
+              >
                 How it works
               </Link>
-              <Link href="/about" className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium">
+              <Link 
+                href="/about" 
+                className={`transition-colors duration-200 font-medium ${
+                  pathname === '/about' 
+                    ? 'text-[#6366F1] font-semibold' 
+                    : 'text-gray-600 hover:text-[#111827]'
+                }`}
+              >
                 About
               </Link>
-              <Link href="/pricing" className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium">
+              <Link 
+                href="/pricing" 
+                className={`transition-colors duration-200 font-medium ${
+                  pathname === '/pricing' 
+                    ? 'text-[#6366F1] font-semibold' 
+                    : 'text-gray-600 hover:text-[#111827]'
+                }`}
+              >
                 Pricing
               </Link>
-              <a href="/faq" className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium">
+              <a 
+                href="/faq" 
+                className={`transition-colors duration-200 font-medium ${
+                  pathname === '/faq' 
+                    ? 'text-[#6366F1] font-semibold' 
+                    : 'text-gray-600 hover:text-[#111827]'
+                }`}
+              >
                 FAQ
               </a>
             </div>
@@ -155,17 +204,18 @@ export default function Header({
           <div className="flex items-center gap-3">
             {user ? (
               <>
-                <Link href="/profile">
-                  <Button 
-                    variant="ghost" 
-                    className="text-gray-600 hover:text-[#111827] transition-colors duration-200 font-medium"
-                  >
-                    Profile
-                  </Button>
-                </Link>
                 <div className="flex items-center gap-3">
                   <div className="text-sm">
-                    <span className="text-gray-600 font-medium">{user.email}</span>
+                    <Link 
+                      href="/profile" 
+                      className={`transition-colors duration-200 font-medium cursor-pointer ${
+                        pathname === '/profile' 
+                          ? 'text-[#6366F1] font-semibold' 
+                          : 'text-gray-600 hover:text-[#111827]'
+                      }`}
+                    >
+                      {user.email}
+                    </Link>
                   </div>
                   
                   {/* Plan Badge */}

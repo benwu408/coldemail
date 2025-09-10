@@ -111,7 +111,7 @@ export default function PricingPage() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <Search className="h-5 w-5 text-[#6366F1] flex-shrink-0" />
-                      <span><strong>Deep research</strong> - 12-phase progressive search with 3x more data</span>
+                      <span><strong>Deep research</strong> - Advanced ChatGPT web search with comprehensive analysis</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Infinity className="h-5 w-5 text-[#6366F1] flex-shrink-0" />
@@ -175,8 +175,8 @@ export default function PricingPage() {
                   <tbody className="divide-y divide-gray-100">
                     <tr>
                       <td className="py-4 px-6">Search Type</td>
-                      <td className="py-4 px-6 text-center">Basic (4 searches)</td>
-                      <td className="py-4 px-6 text-center text-[#6366F1] font-semibold">Deep (12 progressive searches)</td>
+                      <td className="py-4 px-6 text-center">Basic (ChatGPT web search)</td>
+                      <td className="py-4 px-6 text-center text-[#6366F1] font-semibold">Deep (Advanced ChatGPT web search)</td>
                     </tr>
                     <tr className="bg-gray-25">
                       <td className="py-4 px-6">Daily Generations</td>
@@ -221,7 +221,7 @@ export default function PricingPage() {
               <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 <h3 className="font-semibold text-lg mb-3">What's the difference between basic and deep search?</h3>
                 <p className="text-gray-600">
-                  Basic search uses 4 standard queries (30s), while deep search uses 12 progressive AI-guided searches (90s) for 3x more comprehensive data.
+                  Basic search uses ChatGPT web search (30s), while deep search uses advanced ChatGPT web search (90s) for more comprehensive data analysis.
                 </p>
               </div>
               <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">

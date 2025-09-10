@@ -139,7 +139,7 @@ export default function ColdEmailGenerator() {
         // Step 1: Generate research report
         toast({
           title: "Research Phase",
-          description: "Conducting comprehensive research (12 searches)...",
+          description: "Conducting comprehensive research with ChatGPT web search...",
         })
 
         const researchResponse = await fetch('/api/generate-research', {
@@ -715,7 +715,7 @@ export default function ColdEmailGenerator() {
                           if (userSubscription?.plan_name === 'free') {
                             setUpgradePrompt({
                               feature: "Deep Search",
-                              message: "Get 3x more comprehensive research with 12-phase progressive search"
+                              message: "Get more comprehensive research with advanced ChatGPT web search"
                             })
                             setShowUpgradeModal(true)
                           } else {

@@ -146,7 +146,7 @@ Generate the improved email based on the user's feedback:`
         }
       ],
       temperature: 0.7,
-      max_tokens: 600
+      max_completion_tokens: 600
     })
 
     const editedEmail = editResponse.choices[0]?.message?.content || ''

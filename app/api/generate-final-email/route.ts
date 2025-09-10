@@ -60,16 +60,35 @@ export async function POST(request: NextRequest) {
     console.log('Tone:', tone)
     console.log('Search Mode:', searchMode)
 
-    // Get sender profile from database
+    // Get user's subscription status to determine which model to use
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
+    const { data: subscriptionProfile, error: subscriptionError } = await supabase
+      .from('profiles')
+      .select('subscription_plan, subscription_status')
+      .eq('user_id', userId)
+      .single()
+    
+    if (subscriptionError) {
+      console.error('Error getting user profile:', subscriptionError)
+      // If profile doesn't exist, default to free tier
+      console.log('Profile not found, defaulting to free tier')
+    }
+
+    const isPro = subscriptionProfile?.subscription_plan === 'pro' && subscriptionProfile?.subscription_status === 'active'
+    const model = 'gpt-4o-mini' // Use gpt-4o-mini for now to test
+    
+    console.log(`Using model: ${model} (Pro: ${isPro})`)
+
+    // Get sender profile from database (using existing supabase client)
+
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId)
+      .eq('user_id', userId)
       .single()
 
     if (profileError || !profile) {
@@ -85,7 +104,7 @@ export async function POST(request: NextRequest) {
       company: profile.company,
       jobTitle: profile.job_title,
       location: profile.location,
-      linkedin: profile.linkedin,
+      linkedin: profile.linkedin_url,
       email: profile.email
     })
 
@@ -97,7 +116,7 @@ SENDER INFORMATION:
 - Company: ${profile.company || 'Not provided'}
 - Job Title: ${profile.job_title || 'Not provided'}
 - Location: ${profile.location || 'Not provided'}
-- LinkedIn: ${profile.linkedin || 'Not provided'}
+- LinkedIn: ${profile.linkedin_url || 'Not provided'}
 - Email: ${profile.email || 'Not provided'}
 
 RECIPIENT RESEARCH:
@@ -137,64 +156,30 @@ Format the email with proper greeting, body, and signature using the actual send
           content: emailPrompt
         }
       ],
-      max_tokens: 1000,
-      temperature: 0.7
+      max_completion_tokens: 1000
+      // GPT-5 models only support default temperature (1)
     })
 
-    const generatedEmail = emailResponse.choices[0]?.message?.content?.trim() || ''
+    const generatedEmail = emailResponse.choices[0]?.message?.content?.trim() || 'Unable to generate email'
+    
+    console.log('Generated email content:', generatedEmail)
+    console.log('Email response choices:', emailResponse.choices)
 
-    // Track usage for this generation
-    try {
-      const { error: usageError } = await supabase
-        .rpc('increment_user_usage', { user_uuid: userId })
-      
-      if (usageError) {
-        console.error('Error tracking usage:', usageError)
-        // Continue even if usage tracking fails
-      } else {
-        console.log('Usage tracked successfully')
-      }
-    } catch (usageException) {
-      console.error('Exception tracking usage:', usageException)
-      // Continue even if usage tracking fails
-    }
-
-    // Save to database
-    const { data: savedEmail, error: saveError } = await supabase
-      .from('generated_emails')
-      .insert({
-        user_id: userId,
-        recipient_name: recipientName,
-        recipient_company: recipientCompany || null,
-        recipient_role: recipientRole || null,
-        recipient_linkedin: recipientLinkedIn || null,
-        purpose: purpose,
-        search_mode: searchMode || 'basic',
-        research_findings: researchFindings,
-        commonalities: commonalities || null,
-        generated_email: generatedEmail
-      })
-      .select()
-      .single()
-
-    if (saveError) {
-      console.error('Error saving email to database:', saveError)
-      // Continue even if save fails
-    }
+    // Note: Database saving is handled in the main generate-email route
 
     console.log('Final email generated and saved successfully')
 
     return NextResponse.json({
       success: true,
       email: generatedEmail,
-      emailId: savedEmail?.id,
       message: 'Email generated successfully'
     })
 
   } catch (error) {
     console.error('Final email generation error:', error)
+    console.error('Error details:', JSON.stringify(error, null, 2))
     return NextResponse.json(
-      { error: 'Failed to generate final email', details: error },
+      { error: 'Failed to generate final email', details: error?.message || error },
       { status: 500 }
     )
   }

@@ -1,36 +1,99 @@
-# ColdEmail AI - AI-Powered Cold Email Generator
+# Reachful - AI-Powered Cold Email Generator
 
-An intelligent cold email generator that uses AI to research prospects, find commonalities, and create personalized outreach emails that actually get responses.
+A modern Next.js application that uses AI to generate personalized cold emails with ChatGPT web search capabilities.
 
-## ✨ Features
+## 🚀 Features
 
-- **🤖 AI-Powered Research** - Automatically researches prospects on LinkedIn, company websites, and news
-- **🔗 Smart Connections** - Finds alumni, industry, and location-based commonalities
-- **✍️ Human-like Writing** - Generates natural, conversational emails that don't sound robotic
-- **👤 Profile Integration** - Uses your background to find genuine connections
-- **⚡ Fast Generation** - Creates personalized emails in 30 seconds
-- **🔒 Privacy First** - Your data stays secure and is never shared
+- **AI-Powered Research**: Uses ChatGPT with web search to research recipients
+- **Personalized Emails**: Generates highly personalized cold emails based on research
+- **Two Search Modes**: 
+  - Basic search (Free users) - 30 seconds
+  - Deep search (Pro users) - 90 seconds with comprehensive analysis
+- **User Profiles**: Complete profile management with professional information
+- **Email History**: Track and manage all generated emails
+- **Subscription Management**: Stripe integration for Pro subscriptions
+- **Responsive Design**: Modern, mobile-friendly interface
 
-## 🚀 Live Demo
+## 🏗️ Project Structure
 
-Visit [your-deployed-url] to see the application in action.
+```
+├── app/                          # Next.js App Router
+│   ├── api/                     # API Routes
+│   │   ├── generate-email/      # Main email generation
+│   │   ├── generate-research/   # Research generation
+│   │   ├── generate-commonalities/ # Commonality analysis
+│   │   ├── profile/             # User profile management
+│   │   ├── past-emails/         # Email history
+│   │   └── stripe-webhook/      # Stripe integration
+│   ├── (pages)/                 # Public pages
+│   │   ├── about/               # About page
+│   │   ├── pricing/             # Pricing page
+│   │   ├── how-it-works/        # How it works
+│   │   ├── faq/                 # FAQ page
+│   │   ├── privacy/             # Privacy policy
+│   │   └── terms/               # Terms of service
+│   └── (auth)/                  # Authentication pages
+│       ├── login/               # Login page
+│       ├── profile/             # User profile
+│       └── generate/            # Email generation
+├── components/                   # React Components
+│   ├── ui/                      # Reusable UI components
+│   ├── Header.tsx               # Navigation header
+│   ├── Footer.tsx               # Site footer
+│   ├── HeroPage.tsx             # Landing page
+│   ├── ColdEmailGenerator.tsx   # Main email generator
+│   └── SubscriptionDashboard.tsx # Subscription management
+├── contexts/                     # React Contexts
+│   └── AuthContext.tsx          # Authentication context
+├── hooks/                        # Custom React Hooks
+│   └── use-toast.ts             # Toast notifications
+├── lib/                          # Utility Libraries
+│   ├── supabase.ts              # Supabase client
+│   └── utils.ts                 # General utilities
+├── types/                        # TypeScript Type Definitions
+│   └── index.ts                 # All type definitions
+├── constants/                    # Application Constants
+│   └── index.ts                 # All constants
+├── utils/                        # Utility Functions
+│   ├── email.ts                 # Email utilities
+│   ├── validation.ts            # Validation functions
+│   ├── formatting.ts            # Text formatting
+│   └── date.ts                  # Date utilities
+└── public/                       # Static Assets
+    ├── reachful_logo.png        # Logo
+    ├── sitemap.xml              # SEO sitemap
+    └── robots.txt               # SEO robots
+```
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: Next.js 14, TypeScript, Tailwind CSS
-- **UI Components**: Radix UI, Lucide React
-- **Authentication**: Supabase Auth
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
 - **Database**: Supabase (PostgreSQL)
-- **AI**: OpenAI GPT-4o-mini
-- **Research**: SearchAPI.io
+- **Authentication**: Supabase Auth
+- **Payments**: Stripe
+- **AI**: OpenAI GPT-5 & GPT-5-mini
+- **UI Components**: Custom components with Lucide React icons
+- **Animations**: Framer Motion
 - **Deployment**: Vercel
 
-## 📦 Installation
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+- Supabase account
+- OpenAI API key
+- Stripe account (for payments)
+
+### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/cold-email-ai.git
-   cd cold-email-ai
+   git clone <repository-url>
+   cd cold-email-writer
    ```
 
 2. **Install dependencies**
@@ -45,16 +108,18 @@ Visit [your-deployed-url] to see the application in action.
    
    Fill in your environment variables:
    ```env
-   OPENAI_API_KEY=your_openai_api_key
-   SEARCHAPI_KEY=your_searchapi_key
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+   OPENAI_API_KEY=your_openai_api_key
+   STRIPE_SECRET_KEY=your_stripe_secret_key
+   STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
    ```
 
-4. **Set up Supabase**
+4. **Set up the database**
    - Create a new Supabase project
-   - Run the SQL from `supabase-schema.sql` in your Supabase SQL editor
-   - Update your environment variables with Supabase credentials
+   - Run the SQL scripts to set up tables and functions
+   - Set up Row Level Security (RLS) policies
 
 5. **Run the development server**
    ```bash
@@ -64,98 +129,129 @@ Visit [your-deployed-url] to see the application in action.
 6. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
-## 🔧 Setup Guides
+## 📁 Key Directories
 
-- [OpenAI API Setup](QUICK_SETUP_GUIDE.md)
-- [Supabase Authentication Setup](SUPABASE_AUTH_SETUP_GUIDE.md)
-- [User Profile Setup](PROFILE_SETUP_GUIDE.md)
+### `/app/api/`
+Contains all API routes for the application:
+- **Email Generation**: Core email generation logic
+- **Research**: AI-powered recipient research
+- **Profile**: User profile management
+- **Stripe**: Payment processing
 
-## 📁 Project Structure
+### `/components/`
+React components organized by functionality:
+- **UI Components**: Reusable UI elements in `/ui/`
+- **Layout Components**: Header, Footer, etc.
+- **Feature Components**: Email generator, profile management
 
-```
-cold-email-ai/
-├── app/                    # Next.js App Router
-│   ├── api/               # API routes
-│   ├── generate/          # Email generator page
-│   ├── profile/           # User profile page
-│   ├── faq/              # FAQ page
-│   └── layout.tsx        # Root layout
-├── components/            # React components
-│   ├── ui/               # Reusable UI components
-│   ├── Header.tsx        # Navigation header
-│   ├── HeroPage.tsx      # Landing page
-│   └── ColdEmailGenerator.tsx # Main email generator
-├── contexts/             # React contexts
-├── hooks/                # Custom hooks
-├── lib/                  # Utility functions
-└── public/               # Static assets
-```
+### `/types/`
+Centralized TypeScript type definitions for:
+- User and profile data
+- API request/response types
+- Component props
+- Database schemas
 
-## 🎯 Key Features
+### `/constants/`
+Application constants including:
+- API endpoints
+- Subscription plans
+- Usage limits
+- Error messages
 
-### AI Research Integration
-- Automatically researches prospects online
-- Finds recent posts, articles, and company updates
-- Discovers education, work history, and interests
+### `/utils/`
+Utility functions organized by purpose:
+- **Email**: Email formatting and validation
+- **Validation**: Input validation functions
+- **Formatting**: Text and date formatting
+- **Date**: Date manipulation utilities
 
-### Smart Personalization
-- Uses your profile to find genuine connections
-- Mentions shared alma mater, industry, or location
-- Creates authentic rapport-building opportunities
+## 🔧 Configuration
 
-### Professional Email Generation
-- Human-like writing style
-- Proper email formatting
-- Multiple tone options
-- Subject line generation
-
-## 🔐 Environment Variables
+### Environment Variables
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `OPENAI_API_KEY` | OpenAI API key for email generation | Yes |
-| `SEARCHAPI_KEY` | SearchAPI.io key for web research | Yes |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Yes |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key | Yes |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | Yes |
+| `OPENAI_API_KEY` | OpenAI API key | Yes |
+| `STRIPE_SECRET_KEY` | Stripe secret key | Yes |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret | Yes |
+
+### Database Schema
+
+The application uses the following main tables:
+- `profiles` - User profile information
+- `past_emails` - Generated email history
+- `subscriptions` - User subscription data
 
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
 
-1. **Connect your GitHub repository to Vercel**
-2. **Add environment variables** in Vercel dashboard
-3. **Deploy** - Vercel will automatically build and deploy your app
+1. Connect your GitHub repository to Vercel
+2. Set environment variables in Vercel dashboard
+3. Deploy automatically on push to main branch
 
 ### Manual Deployment
 
-```bash
-npm run build
-npm start
+1. Build the application:
+   ```bash
+   npm run build
+   ```
+
+2. Start the production server:
+   ```bash
+   npm start
+   ```
+
+## 📝 API Documentation
+
+### Email Generation
+
+**POST** `/api/generate-email`
+
+Generates a personalized cold email based on recipient information.
+
+**Request Body:**
+```json
+{
+  "recipientName": "John Doe",
+  "recipientCompany": "Acme Corp",
+  "recipientRole": "VP of Sales",
+  "purpose": "Partnership opportunity",
+  "searchMode": "deep"
+}
 ```
+
+**Response:**
+```json
+{
+  "success": true,
+  "email": "Generated email content",
+  "subject": "Email subject",
+  "researchFindings": "Research data",
+  "commonalities": "Common connections"
+}
+```
+
+### Profile Management
+
+**GET** `/api/profile` - Get user profile
+**POST** `/api/profile` - Update user profile
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
-## 🙏 Acknowledgments
+## 🆘 Support
 
-- OpenAI for GPT-4o-mini
-- Supabase for authentication and database
-- SearchAPI.io for web research capabilities
-- Vercel for hosting and deployment
-
-## 📞 Support
-
-If you have any questions or need help, please open an issue on GitHub or contact us at [your-email].
-
----
-
-Built with ❤️ for better networking 
+For support, email support@reachful.io or create an issue in the repository.

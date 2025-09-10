@@ -171,7 +171,7 @@ export default function SubscriptionDashboard() {
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${isPro ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                 <span className="text-sm">
-                  {isPro ? 'Deep research (12 searches)' : 'Basic research (4 searches)'}
+                  {isPro ? 'Deep research with ChatGPT web search' : 'Basic research with ChatGPT web search'}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -251,19 +251,6 @@ export default function SubscriptionDashboard() {
         </CardContent>
       </Card>
 
-      {/* Debug Info (only show in development) */}
-      {process.env.NODE_ENV === 'development' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Debug Info</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="text-xs bg-gray-100 p-3 rounded">
-              {JSON.stringify({ profile }, null, 2)}
-            </pre>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 } 

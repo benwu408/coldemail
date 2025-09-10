@@ -28,6 +28,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import ProtectedRoute from './ProtectedRoute'
 import ColdEmailGenerator from './ColdEmailGenerator'
 import Header from './Header'
+import Footer from './Footer'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
@@ -330,7 +331,7 @@ Founder & CEO, DataSync`,
               <div className="space-y-3 pt-2">
                 <div className="flex items-center gap-3 text-sm">
                   <div className="w-2 h-2 bg-[#6366F1] rounded-full"></div>
-                  <span className="text-gray-700"><strong>Progressive AI Research</strong> - 12-phase deep search with 3x more data</span>
+                  <span className="text-gray-700"><strong>AI Research</strong> - ChatGPT web search with comprehensive data analysis</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                   <div className="w-2 h-2 bg-[#6366F1] rounded-full"></div>
@@ -419,32 +420,6 @@ Founder & CEO, DataSync`,
               )}
             </div>
 
-            {/* Social Proof */}
-            <div className="pt-4 border-t border-gray-100">
-              <div className="flex items-center gap-4">
-                <div className="flex -space-x-2">
-                  <img 
-                    src="/headshots/u7958324354_professional_headshot_of_tech_bro_--v_7_aacb0aa5-e8c5-4c5d-993c-db33ff78e493_0.png" 
-                    alt="User" 
-                    className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm"
-                  />
-                  <img 
-                    src="/headshots/u7958324354_professional_headshot_of_tech_bro_--v_7_aacb0aa5-e8c5-4c5d-993c-db33ff78e493_3.png" 
-                    alt="User" 
-                    className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm"
-                  />
-                  <img 
-                    src="/headshots/u7958324354_professional_headshot_of_woman_working_in_tech_--_338a63fd-5495-4f7d-8fcd-77a14abeec14_1.png" 
-                    alt="User" 
-                    className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-sm"
-                  />
-                </div>
-                <div className="text-sm">
-                  <div className="font-medium text-[#111827]">Join 2,000+ professionals</div>
-                  <div className="text-gray-600">who've improved their response rates</div>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Right side - Live email preview */}
@@ -765,11 +740,11 @@ Founder & CEO, DataSync`,
             <div className="flex justify-center gap-4 mt-8">
               <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full">
                 <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                <span className="text-sm font-medium text-gray-700">Free: Basic Search (4 queries)</span>
+                <span className="text-sm font-medium text-gray-700">Free: Basic Search with ChatGPT</span>
               </div>
               <div className="flex items-center gap-2 bg-indigo-100 px-4 py-2 rounded-full">
                 <Crown className="h-4 w-4 text-[#6366F1]" />
-                <span className="text-sm font-medium text-[#6366F1]">Pro: Deep Search (12 queries)</span>
+                <span className="text-sm font-medium text-[#6366F1]">Pro: Deep Search with ChatGPT</span>
               </div>
             </div>
           </div>
@@ -1004,7 +979,7 @@ Software Engineer & Co-founder`
                   <div className="space-y-3 text-gray-700">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                      <span><strong>Basic search</strong> - 4 targeted queries for essential insights</span>
+                      <span><strong>Basic search</strong> - ChatGPT web search for essential insights</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
@@ -1040,7 +1015,7 @@ Software Engineer & Co-founder`
                   <div className="space-y-3 text-gray-700">
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
-                      <span><strong>Deep search</strong> - 12-phase progressive research with 3x more data</span>
+                      <span><strong>Deep search</strong> - Advanced ChatGPT web search with comprehensive analysis</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-[#6366F1] flex-shrink-0" />
@@ -1190,52 +1165,6 @@ Software Engineer & Co-founder`
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section id="how-it-works" className="py-24 bg-white">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl font-bold text-[#111827] mb-6 tracking-tight">How it works</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Three simple steps to create personalized outreach emails that get responses
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-12">
-            <div className="text-center group">
-              <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-indigo-100 transition-colors duration-200">
-                <Search className="h-8 w-8 text-[#6366F1]" />
-              </div>
-              <h3 className="text-xl font-bold text-[#111827] mb-4">1. Enter prospect details</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Provide the recipient's name, role, company, and your outreach purpose. 
-                Add any context or connections you already have.
-              </p>
-            </div>
-            
-            <div className="text-center group">
-              <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-100 transition-colors duration-200">
-                <Brain className="h-8 w-8 text-[#6366F1]" />
-              </div>
-              <h3 className="text-xl font-bold text-[#111827] mb-4">2. AI research & analysis</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Our AI researches the prospect online, finds commonalities with your profile, 
-                and identifies personalization opportunities.
-              </p>
-            </div>
-            
-            <div className="text-center group">
-              <div className="w-16 h-16 bg-teal-50 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-teal-100 transition-colors duration-200">
-                <Mail className="h-8 w-8 text-[#0F766E]" />
-              </div>
-              <h3 className="text-xl font-bold text-[#111827] mb-4">3. Get your email</h3>
-              <p className="text-gray-600 leading-relaxed">
-                Receive a personalized, professional outreach email ready to send. 
-                Edit, copy, or export directly to your email client.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
 
       {/* CTA Section */}
@@ -1317,31 +1246,7 @@ Software Engineer & Co-founder`
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 py-12">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center gap-3 mb-4 md:mb-0">
-              <img 
-                src="/reachful_logo.png" 
-                alt="Reachful" 
-                className="h-8 w-auto"
-              />
-              <span className="text-lg font-bold text-[#111827]">
-                Reachful
-              </span>
-            </div>
-            <div className="flex items-center gap-6 text-sm text-gray-600">
-              <a href="#" className="hover:text-[#111827] transition-colors duration-200 font-medium">Terms</a>
-              <a href="#" className="hover:text-[#111827] transition-colors duration-200 font-medium">Privacy</a>
-              <a href="#" className="hover:text-[#111827] transition-colors duration-200 font-medium">Contact</a>
-            </div>
-          </div>
-          <div className="text-center text-sm text-gray-500 mt-8">
-            <p>&copy; 2025 Reachful. Cold outreach that feels warm.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 } 

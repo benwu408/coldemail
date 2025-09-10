@@ -36,7 +36,7 @@ const faqData: FAQItem[] = [
   },
   {
     question: "What's the difference between Basic and Deep Search?",
-    answer: "Basic Search (Free) uses 4 standard queries and takes about 30 seconds, while Deep Search (Pro) uses 12 progressive AI-guided searches for 3x more comprehensive data and takes about 90 seconds. Deep Search finds more detailed information and connections.",
+    answer: "Basic Search (Free) uses ChatGPT web search and takes about 30 seconds, while Deep Search (Pro) uses advanced ChatGPT web search for more comprehensive data analysis and takes about 90 seconds. Deep Search finds more detailed information and connections.",
     category: "AI & Research",
     icon: <Search className="h-5 w-5" />
   },

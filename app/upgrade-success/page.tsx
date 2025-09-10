@@ -67,7 +67,7 @@ export default function UpgradeSuccessPage() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <Sparkles className="h-5 w-5 text-[#6366F1] flex-shrink-0" />
-                    <span><strong>Deep Search</strong> - 12-phase progressive research</span>
+                    <span><strong>Deep Search</strong> - Advanced ChatGPT web search research</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Sparkles className="h-5 w-5 text-[#6366F1] flex-shrink-0" />

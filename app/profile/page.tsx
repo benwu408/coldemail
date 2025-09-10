@@ -218,7 +218,6 @@ function ProfilePageContent() {
   const saveProfile = async () => {
     setIsSaving(true)
     try {
-      console.log('Sending profile data:', profile)
       
       const response = await fetch('/api/profile', {
         method: 'POST',
@@ -229,9 +228,7 @@ function ProfilePageContent() {
         body: JSON.stringify(profile),
       })
 
-      console.log('Response status:', response.status)
       const responseData = await response.json()
-      console.log('Response data:', responseData)
 
       if (response.ok) {
         toast({
@@ -239,7 +236,6 @@ function ProfilePageContent() {
           description: "Your profile has been updated successfully.",
         })
       } else {
-        console.error('API error response:', responseData)
         throw new Error(responseData.error || responseData.details || 'Failed to save profile')
       }
     } catch (error) {
@@ -256,9 +252,6 @@ function ProfilePageContent() {
 
   const saveProfileSilently = useCallback(async (profileData: ProfileData) => {
     try {
-      console.log('Auto-saving profile with data:', profileData)
-      console.log('School value being saved:', profileData.education?.school)
-      console.log('School value length:', profileData.education?.school?.length)
       
       const response = await fetch('/api/profile', {
         method: 'POST',
@@ -270,11 +263,8 @@ function ProfilePageContent() {
       })
 
       if (!response.ok) {
-        console.error('Failed to save profile silently')
         const errorData = await response.json()
-        console.error('Error details:', errorData)
       } else {
-        console.log('Auto-save successful')
       }
     } catch (error) {
       console.error('Error saving profile silently:', error)
@@ -821,7 +811,6 @@ function ProfilePageContent() {
                 try {
                   const { error } = await supabase.auth.signOut()
                   if (error) {
-                    console.error('Error signing out:', error)
                     toast({
                       title: "Error",
                       description: "Failed to sign out. Please try again.",
@@ -836,7 +825,6 @@ function ProfilePageContent() {
                     window.location.href = '/'
                   }
                 } catch (error) {
-                  console.error('Sign out error:', error)
                   toast({
                     title: "Error",
                     description: "Failed to sign out. Please try again.",

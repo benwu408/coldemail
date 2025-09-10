@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('user_id', userId)
         .single()
 
       if (profileError || !profile) {
@@ -72,13 +72,29 @@ export async function POST(request: NextRequest) {
       senderInfo = profile
     }
 
+    // Parse JSON fields
+    let educationData = null
+    let jobExperiencesData = null
+    
+    try {
+      educationData = senderInfo.education ? JSON.parse(senderInfo.education) : null
+    } catch (e) {
+      console.log('Could not parse education data:', e)
+    }
+    
+    try {
+      jobExperiencesData = senderInfo.job_experiences ? JSON.parse(senderInfo.job_experiences) : null
+    } catch (e) {
+      console.log('Could not parse job experiences data:', e)
+    }
+
     console.log('Using sender profile for commonalities:', {
       fullName: senderInfo.full_name,
       company: senderInfo.company,
       jobTitle: senderInfo.job_title,
       location: senderInfo.location,
-      education: senderInfo.education,
-      pastJobs: senderInfo.past_jobs
+      education: educationData,
+      jobExperiences: jobExperiencesData
     })
 
     // Generate commonalities based on research findings and sender profile
@@ -92,8 +108,8 @@ SENDER PROFILE:
 - Company: ${senderInfo.company || 'Not provided'}
 - Job Title: ${senderInfo.job_title || 'Not provided'}
 - Location: ${senderInfo.location || 'Not provided'}
-- Education: ${senderInfo.education || 'Not provided'}
-- Past Jobs: ${senderInfo.past_jobs || 'Not provided'}
+- Education: ${educationData ? `${educationData.school || 'Not specified'}${educationData.major ? `, ${educationData.major}` : ''}${educationData.graduation_year ? ` (${educationData.graduation_year})` : ''}` : 'Not provided'}
+- Job Experiences: ${jobExperiencesData && jobExperiencesData.length > 0 ? jobExperiencesData.map(job => `${job.title} at ${job.company}`).join(', ') : 'Not provided'}
 
 INSTRUCTIONS:
 Identify 3-5 meaningful connections or commonalities between the sender and recipient. Look for:
@@ -108,23 +124,14 @@ Identify 3-5 meaningful connections or commonalities between the sender and reci
 
 Format as a clear, professional list with brief explanations for each connection. Focus on genuine, relevant connections that would make the email more personal and compelling.`
 
-    const commonalitiesResponse = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a professional networking expert who identifies meaningful connections between professionals for cold outreach.'
-        },
-        {
-          role: 'user',
-          content: commonalitiesPrompt
-        }
-      ],
-      max_tokens: 800,
-      temperature: 0.3
+    const commonalitiesResponse = await openai.responses.create({
+      model: 'gpt-5-mini',
+      input: commonalitiesPrompt,
+      reasoning: { effort: "low" },
+      text: { verbosity: "low" }
     })
 
-    const commonalities = commonalitiesResponse.choices[0]?.message?.content?.trim() || ''
+    const commonalities = commonalitiesResponse.output_text?.trim() || ''
 
     console.log('Commonalities generated successfully')
 
