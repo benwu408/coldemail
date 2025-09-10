@@ -127,8 +127,7 @@ Format as a clear, professional list with brief explanations for each connection
     const commonalitiesResponse = await openai.responses.create({
       model: 'gpt-5-mini',
       input: commonalitiesPrompt,
-      reasoning: { effort: "low" },
-      text: { verbosity: "low" }
+      reasoning: { effort: "low" }
     })
 
     const commonalities = commonalitiesResponse.output_text?.trim() || ''

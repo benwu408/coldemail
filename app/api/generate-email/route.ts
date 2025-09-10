@@ -162,7 +162,6 @@ FORMAT: Create a structured report with clear sections and bullet points.`
           model: 'gpt-5', // Use GPT-5 for deep search
           input: researchPrompt,
           reasoning: { effort: "high" },
-          text: { verbosity: "high" },
           tools: [{ type: "web_search" }]
         })
 
@@ -203,7 +202,6 @@ Format the report with clear section headers using markdown.`
           model: model,
           input: reportPrompt,
           reasoning: { effort: "medium" },
-          text: { verbosity: "medium" },
           tools: [{ type: "web_search" }]
         })
 
@@ -247,7 +245,6 @@ Format as a brief, bulleted list of potential connection points. If no clear com
         model: model,
         input: commonalitiesPrompt,
         reasoning: { effort: "low" },
-        text: { verbosity: "low" }
       })
 
       commonalities = commonalitiesResponse.output_text || 'No specific commonalities identified'
@@ -309,7 +306,6 @@ Format the email with proper greeting, body, and signature.`
       model: model,
       input: emailPrompt,
       reasoning: { effort: "medium" },
-      text: { verbosity: "medium" }
     })
 
     const generatedEmail = emailResponse.output_text || 'Unable to generate email'
