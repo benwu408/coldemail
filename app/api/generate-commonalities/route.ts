@@ -125,7 +125,7 @@ Identify 3-5 meaningful connections or commonalities between the sender and reci
 Format as a clear, professional list with brief explanations for each connection. Focus on genuine, relevant connections that would make the email more personal and compelling.`
 
     const commonalitiesResponse = await openai.responses.create({
-      model: 'gpt-5-mini',
+      model: 'o4-mini',
       input: commonalitiesPrompt,
       reasoning: { effort: "low" }
     })

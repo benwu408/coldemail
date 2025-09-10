@@ -21,7 +21,7 @@ ${email}
 Please return the shortened email in the same format. Keep the greeting and signature, but make the body more concise.`
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "o4-mini",
       messages: [
         {
           role: "system",

@@ -36,7 +36,7 @@ INSTRUCTIONS:
 FORMAT: Create a structured report with clear sections.`
 
     const researchResponse = await openai.chat.completions.create({
-      model: 'gpt-5-mini',
+      model: 'o4-mini',
       messages: [{ 
         role: 'user', 
         content: researchPrompt 

@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     }
 
     const isPro = profile?.subscription_plan === 'pro' && profile?.subscription_status === 'active'
-    const model = isPro ? 'gpt-5' : 'gpt-5-mini'
+    const model = isPro ? 'gpt-4o' : 'o4-mini'
     
     console.log(`Using model: ${model} (Pro: ${isPro})`)
 
@@ -159,7 +159,7 @@ REQUIREMENTS:
 FORMAT: Create a structured report with clear sections and bullet points.`
 
         const researchResponse = await openai.responses.create({
-          model: 'gpt-5', // Use GPT-5 for deep search
+          model: 'gpt-4o', // Use GPT-4o for deep search
           input: researchPrompt,
           reasoning: { effort: "high" },
           tools: [{ type: "web_search_preview" }]

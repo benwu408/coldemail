@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     const isPro = profile?.subscription_plan === 'pro' && profile?.subscription_status === 'active'
-    const model = isPro ? 'gpt-5' : 'gpt-5-mini'
+    const model = isPro ? 'gpt-4o' : 'o4-mini'
     
     console.log(`Using model: ${model} (Pro: ${isPro})`)
 

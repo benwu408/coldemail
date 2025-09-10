@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     const isPro = subscriptionProfile?.subscription_plan === 'pro' && subscriptionProfile?.subscription_status === 'active'
-    const model = 'gpt-4o-mini' // Use gpt-4o-mini for now to test
+    const model = isPro ? 'gpt-4o' : 'o4-mini'
     
     console.log(`Using model: ${model} (Pro: ${isPro})`)
 
@@ -145,7 +145,7 @@ INSTRUCTIONS:
 Format the email with proper greeting, body, and signature using the actual sender details.`
 
     const emailResponse = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: model,
       messages: [
         {
           role: 'system',
