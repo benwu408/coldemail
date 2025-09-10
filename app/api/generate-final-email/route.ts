@@ -175,7 +175,7 @@ Format the email with proper greeting, body, and signature using the actual send
       message: 'Email generated successfully'
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Final email generation error:', error)
     console.error('Error details:', JSON.stringify(error, null, 2))
     return NextResponse.json(
