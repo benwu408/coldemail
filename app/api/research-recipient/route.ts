@@ -42,7 +42,7 @@ FORMAT: Create a structured report with clear sections.`
         content: researchPrompt 
       }],
       max_completion_tokens: 800
-      // GPT-5 models only support default temperature (1)
+      // GPT-4o models only support default temperature (1)
     })
 
     const findings = researchResponse.choices[0].message.content || 'No research findings generated'

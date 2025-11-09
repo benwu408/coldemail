@@ -99,25 +99,47 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Database connection error' }, { status: 500 })
         }
 
-        // Find the user by email
-        console.log('Looking up user by email:', customerEmail)
-        const { data: userData, error: userError } = await supabase.auth.admin.listUsers()
-        
-        if (userError) {
-          console.error('Error fetching users:', userError)
-          return NextResponse.json({ error: 'User lookup failed' }, { status: 500 })
+        // First try to find user by Stripe customer ID in profiles table
+        console.log('Looking up user by Stripe customer ID:', customerId)
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_id, email')
+          .eq('stripe_customer_id', customerId)
+          .single()
+
+        let user: any = null
+
+        if (profileData && !profileError) {
+          console.log('Found user by Stripe customer ID:', profileData.user_id)
+          // Get user details from auth
+          const { data: authUserData, error: authError } = await supabase.auth.admin.getUserById(profileData.user_id)
+          if (!authError && authUserData.user) {
+            user = authUserData.user
+            console.log('Retrieved user from auth:', user.id, user.email)
+          }
         }
 
-        console.log('Total users found:', userData.users.length)
-        const user = userData.users.find(u => u.email === customerEmail)
-        
+        // If not found by customer ID, try by email
         if (!user) {
-          console.error('User not found for email:', customerEmail)
-          console.log('Available user emails:', userData.users.map(u => u.email))
-          return NextResponse.json({ error: 'User not found' }, { status: 404 })
-        }
+          console.log('User not found by customer ID, trying by email:', customerEmail)
+          const { data: userData, error: userError } = await supabase.auth.admin.listUsers()
+          
+          if (userError) {
+            console.error('Error fetching users:', userError)
+            return NextResponse.json({ error: 'User lookup failed' }, { status: 500 })
+          }
 
-        console.log('Found user:', user.id, user.email)
+          console.log('Total users found:', userData.users.length)
+          user = userData.users.find(u => u.email === customerEmail)
+          
+          if (!user) {
+            console.error('User not found for email:', customerEmail)
+            console.log('Available user emails:', userData.users.map(u => u.email))
+            return NextResponse.json({ error: 'User not found' }, { status: 404 })
+          }
+
+          console.log('Found user by email:', user.id, user.email)
+        }
 
         // Get Pro plan ID first
         console.log('Getting Pro plan ID...')

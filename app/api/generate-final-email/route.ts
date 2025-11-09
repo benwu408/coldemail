@@ -157,7 +157,7 @@ Format the email with proper greeting, body, and signature using the actual send
         }
       ],
       max_completion_tokens: 1000
-      // GPT-5 models only support default temperature (1)
+      // GPT-4o models only support default temperature (1)
     })
 
     const generatedEmail = emailResponse.choices[0]?.message?.content?.trim() || 'Unable to generate email'
