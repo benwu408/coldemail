@@ -13,7 +13,6 @@ import {
   Sparkles,
   Globe,
   Mail,
-  BarChart3,
   Lightbulb,
   Star,
   Award,
@@ -345,54 +344,6 @@ export default function AboutPage() {
                 <div className="text-4xl font-bold mb-2">Easy</div>
                 <div className="text-lg opacity-90">To Use</div>
                 <div className="text-sm opacity-75">Simple interface, powerful results</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Team Section */}
-        <section className="py-24 bg-gray-50">
-          <div className="container mx-auto px-6 max-w-7xl">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-6">Built by Professionals, for Professionals</h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Our team combines expertise in AI, sales, and human psychology to create 
-                the most effective cold outreach platform available.
-              </p>
-            </div>
-            
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-white rounded-2xl p-8 shadow-lg text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Brain className="h-10 w-10 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">AI Experts</h3>
-                <p className="text-gray-600">
-                  Machine learning engineers with deep expertise in natural language processing 
-                  and human communication patterns.
-                </p>
-              </div>
-              
-              <div className="bg-white rounded-2xl p-8 shadow-lg text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <BarChart3 className="h-10 w-10 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">Sales Professionals</h3>
-                <p className="text-gray-600">
-                  Former sales leaders who understand the challenges of cold outreach 
-                  and what actually works in real-world scenarios.
-                </p>
-              </div>
-              
-              <div className="bg-white rounded-2xl p-8 shadow-lg text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-rose-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Users className="h-10 w-10 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">UX Designers</h3>
-                <p className="text-gray-600">
-                  User experience experts focused on making complex AI technology 
-                  simple and intuitive for busy professionals.
-                </p>
               </div>
             </div>
           </div>
