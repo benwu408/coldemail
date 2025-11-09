@@ -1,20 +1,18 @@
 # Reachful - AI-Powered Cold Email Generator
 
-A modern Next.js application that uses AI to generate personalized cold emails with ChatGPT web search capabilities.
+A Next.js app that generates personalized cold emails using AI. It researches recipients, finds commonalities, and creates emails that actually get responses.
 
-## 🚀 Features
+## Features
 
-- **AI-Powered Research**: Uses ChatGPT with web search to research recipients
-- **Personalized Emails**: Generates highly personalized cold emails based on research
-- **Two Search Modes**: 
-  - Basic search (Free users) - 30 seconds
-  - Deep search (Pro users) - 90 seconds with comprehensive analysis
-- **User Profiles**: Complete profile management with professional information
-- **Email History**: Track and manage all generated emails
-- **Subscription Management**: Stripe integration for Pro subscriptions
-- **Responsive Design**: Modern, mobile-friendly interface
+- AI-powered recipient research using ChatGPT web search
+- Personalized email generation based on research and commonalities
+- Two search modes: Basic (30s) for free users, Deep (90s) for pro users
+- User profile management for personalization
+- Email history tracking
+- Stripe subscription management
+- Mobile-responsive design
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 ├── app/                          # Next.js App Router
@@ -65,7 +63,7 @@ A modern Next.js application that uses AI to generate personalized cold emails w
     └── robots.txt               # SEO robots
 ```
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
@@ -73,12 +71,12 @@ A modern Next.js application that uses AI to generate personalized cold emails w
 - **Database**: Supabase (PostgreSQL)
 - **Authentication**: Supabase Auth
 - **Payments**: Stripe
-- **AI**: OpenAI GPT-5 & GPT-5-mini
+- **AI**: OpenAI GPT-4o & GPT-4o-mini
 - **UI Components**: Custom components with Lucide React icons
 - **Animations**: Framer Motion
 - **Deployment**: Vercel
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -129,43 +127,15 @@ A modern Next.js application that uses AI to generate personalized cold emails w
 6. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
-## 📁 Key Directories
+## Key Directories
 
-### `/app/api/`
-Contains all API routes for the application:
-- **Email Generation**: Core email generation logic
-- **Research**: AI-powered recipient research
-- **Profile**: User profile management
-- **Stripe**: Payment processing
+- `/app/api/` - API routes for email generation, research, profile management, and Stripe
+- `/components/` - React components including UI components, Header, Footer, and main features
+- `/types/` - TypeScript type definitions
+- `/constants/` - App constants like API endpoints and subscription plans
+- `/utils/` - Utility functions for email, validation, formatting, and dates
 
-### `/components/`
-React components organized by functionality:
-- **UI Components**: Reusable UI elements in `/ui/`
-- **Layout Components**: Header, Footer, etc.
-- **Feature Components**: Email generator, profile management
-
-### `/types/`
-Centralized TypeScript type definitions for:
-- User and profile data
-- API request/response types
-- Component props
-- Database schemas
-
-### `/constants/`
-Application constants including:
-- API endpoints
-- Subscription plans
-- Usage limits
-- Error messages
-
-### `/utils/`
-Utility functions organized by purpose:
-- **Email**: Email formatting and validation
-- **Validation**: Input validation functions
-- **Formatting**: Text and date formatting
-- **Date**: Date manipulation utilities
-
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -180,78 +150,34 @@ Utility functions organized by purpose:
 
 ### Database Schema
 
-The application uses the following main tables:
+Main tables:
 - `profiles` - User profile information
 - `past_emails` - Generated email history
 - `subscriptions` - User subscription data
 
-## 🚀 Deployment
+## Deployment
 
-### Vercel (Recommended)
+### Vercel
 
 1. Connect your GitHub repository to Vercel
 2. Set environment variables in Vercel dashboard
 3. Deploy automatically on push to main branch
 
-### Manual Deployment
-
-1. Build the application:
-   ```bash
-   npm run build
-   ```
-
-2. Start the production server:
-   ```bash
-   npm start
-   ```
-
-## 📝 API Documentation
-
-### Email Generation
-
-**POST** `/api/generate-email`
-
-Generates a personalized cold email based on recipient information.
-
-**Request Body:**
-```json
-{
-  "recipientName": "John Doe",
-  "recipientCompany": "Acme Corp",
-  "recipientRole": "VP of Sales",
-  "purpose": "Partnership opportunity",
-  "searchMode": "deep"
-}
+Or build manually:
+```bash
+npm run build
+npm start
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "email": "Generated email content",
-  "subject": "Email subject",
-  "researchFindings": "Research data",
-  "commonalities": "Common connections"
-}
-```
+## API Endpoints
 
-### Profile Management
+- `POST /api/generate-email` - Generate personalized cold email
+- `POST /api/generate-research` - Research recipient using AI
+- `POST /api/generate-commonalities` - Find shared connections
+- `POST /api/edit-email` - Edit generated email
+- `GET/POST /api/profile` - User profile management
+- `GET /api/past-emails` - Email history
 
-**GET** `/api/profile` - Get user profile
-**POST** `/api/profile` - Update user profile
+## Support
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🆘 Support
-
-For support, email support@reachful.io or create an issue in the repository.
+For issues or questions, create an issue in the repository.
