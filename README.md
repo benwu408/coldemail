@@ -23,17 +23,16 @@ A Next.js app that generates personalized cold emails using AI. It researches re
 │   │   ├── profile/             # User profile management
 │   │   ├── past-emails/         # Email history
 │   │   └── stripe-webhook/      # Stripe integration
-│   ├── (pages)/                 # Public pages
-│   │   ├── about/               # About page
-│   │   ├── pricing/             # Pricing page
-│   │   ├── how-it-works/        # How it works
-│   │   ├── faq/                 # FAQ page
-│   │   ├── privacy/             # Privacy policy
-│   │   └── terms/               # Terms of service
-│   └── (auth)/                  # Authentication pages
-│       ├── login/               # Login page
-│       ├── profile/             # User profile
-│       └── generate/            # Email generation
+│   ├── about/                   # About page
+│   ├── pricing/                 # Pricing page
+│   ├── how-it-works/            # How it works
+│   ├── faq/                     # FAQ page
+│   ├── privacy/                 # Privacy policy
+│   ├── terms/                   # Terms of service
+│   ├── login/                   # Login page
+│   ├── profile/                 # User profile
+│   ├── generate/                # Email generation
+│   └── past-emails/             # Email history
 ├── components/                   # React Components
 │   ├── ui/                      # Reusable UI components
 │   ├── Header.tsx               # Navigation header
@@ -100,11 +99,8 @@ A Next.js app that generates personalized cold emails using AI. It researches re
    ```
 
 3. **Set up environment variables**
-   ```bash
-   cp .env.example .env.local
-   ```
    
-   Fill in your environment variables:
+   Create a `.env.local` file in the root directory and add:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -116,8 +112,8 @@ A Next.js app that generates personalized cold emails using AI. It researches re
 
 4. **Set up the database**
    - Create a new Supabase project
-   - Run the SQL scripts to set up tables and functions
-   - Set up Row Level Security (RLS) policies
+   - Set up the required tables: `profiles`, `generated_emails`, `subscription_plans`, `user_subscriptions`
+   - Configure Row Level Security (RLS) policies
 
 5. **Run the development server**
    ```bash
@@ -152,8 +148,9 @@ A Next.js app that generates personalized cold emails using AI. It researches re
 
 Main tables:
 - `profiles` - User profile information
-- `past_emails` - Generated email history
-- `subscriptions` - User subscription data
+- `generated_emails` - Generated email history
+- `subscription_plans` - Available subscription plans
+- `user_subscriptions` - User subscription data
 
 ## Deployment
 
@@ -174,9 +171,15 @@ npm start
 - `POST /api/generate-email` - Generate personalized cold email
 - `POST /api/generate-research` - Research recipient using AI
 - `POST /api/generate-commonalities` - Find shared connections
+- `POST /api/generate-final-email` - Generate final email with all context
 - `POST /api/edit-email` - Edit generated email
+- `POST /api/adjust-tone` - Adjust email tone
+- `POST /api/shorten-email` - Shorten email length
+- `POST /api/research-recipient` - Alternative research endpoint
 - `GET/POST /api/profile` - User profile management
 - `GET /api/past-emails` - Email history
+- `GET /api/check-user-status` - Check user usage and subscription status
+- `POST /api/stripe-webhook` - Stripe webhook handler
 
 ## Support
 
